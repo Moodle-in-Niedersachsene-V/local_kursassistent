@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/kursassistent/db" VERSION="2026071501" COMMENT="XMLDB file for Moodle local/kursassistent"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="local_kursassistent_types" COMMENT="Bausteine (Typen) des Kursassistenten">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="titel" TYPE="char" LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="icon" TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT="ti-file-text" COMMENT="Tabler-Icon-Klasse ohne ti- Praefix optional"/>
+        <FIELD NAME="typ" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="text" COMMENT="text, datei, bild, video"/>
+        <FIELD NAME="platzhalter" TYPE="text" NOTNULL="false" COMMENT="Platzhalter-HTML, nur bei typ=text relevant"/>
+        <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="aktiv" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="sortorder_idx" UNIQUE="false" FIELDS="sortorder"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_kursassistent_log" COMMENT="Protokoll eingefuegter Bausteine je Kurs">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="typeid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="cmid" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="Erzeugtes label Kursmodul"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="courseid_idx" UNIQUE="false" FIELDS="courseid"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>
