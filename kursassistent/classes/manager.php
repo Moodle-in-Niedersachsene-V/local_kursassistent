@@ -28,7 +28,22 @@ defined('MOODLE_INTERNAL') || die();
 class manager {
 
     /** Erlaubte Bausteintypen. */
-    const TYPES = ['text', 'datei', 'bild', 'video'];
+    const TYPES = ['text', 'datei', 'bild', 'video', 'aktivitaet'];
+
+    /**
+     * Liefert alle installierten, sichtbaren Aktivitätstypen (modname => Anzeigename)
+     * für die Admin-Auswahl bei Bausteinen vom Typ "aktivitaet".
+     *
+     * @return array
+     */
+    public static function get_available_modules(): array {
+        global $CFG;
+        require_once($CFG->dirroot . '/course/lib.php');
+
+        $modules = get_module_types_names();
+        asort($modules);
+        return $modules;
+    }
 
     /**
      * Liefert alle aktiven Bausteine, sortiert.
@@ -242,7 +257,7 @@ class manager {
     /** Im Plugin gebündelte Icons (Dateiname ohne .svg unter pix/). */
     const ICONS = [
         'target-arrow', 'key', 'file', 'image', 'video', 'checklist', 'file-text',
-        'bulb', 'alert-circle', 'list-numbers', 'clipboard-check',
+        'bulb', 'alert-circle', 'list-numbers', 'clipboard-check', 'link',
     ];
 
     /**

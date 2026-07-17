@@ -15,7 +15,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version details for local_kursassistent.
+ * Hook-Registrierung für local_kursassistent.
  *
  * @package    local_kursassistent
  * @copyright  2026 Moodle in Niedersachsen e. V.
@@ -24,9 +24,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'local_kursassistent';
-$plugin->version   = 2026071701;
-$plugin->requires  = 2025041400; // Moodle 5.x.
-$plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.0.0 (Build: 2026071701)';
-$plugin->maintainer = 'Moodle in Niedersachsen e. V.';
+$callbacks = [
+    [
+        'hook' => \core\hook\output\before_http_headers::class,
+        'callback' => \local_kursassistent\hook_callbacks\navigation_callback::class . '::add_assets',
+    ],
+];

@@ -47,130 +47,123 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
         $header.append($closeBtn);
         $modal.append($header);
 
+        var kategorien = [
+            {key: 'info', label: 'Lerninformationen', typen: ['text']},
+            {key: 'material', label: 'Lernmaterial', typen: ['datei', 'bild', 'video']},
+            {key: 'aktivitaet', label: 'Aktivitäten', typen: ['aktivitaet']},
+        ];
+
         var $list = $('<div>', {'class': 'local-kursassistent-liste mb-3'});
-        response.bausteine.forEach(function(b) {
-            var $item = $('<label>', {'class': 'local-kursassistent-item'});
-            var $checkbox = $('<input>', {
-                type: 'checkbox',
-                'class': 'local-kursassistent-checkbox',
-                'data-typeid': b.id,
-                'data-typ': b.typ
+
+        kategorien.forEach(function(kat) {
+            var bausteineInKat = response.bausteine.filter(function(b) {
+                return kat.typen.indexOf(b.typ) !== -1;
             });
-            var $iconwrap = $('<span>', {'class': 'local-kursassistent-icon'});
-            $iconwrap.append($('<img>', {src: b.iconurl, alt: '', 'class': 'local-kursassistent-icon-img'}));
-            var $label = $('<span>', {text: b.titel});
-            $item.append($checkbox, $iconwrap, $label);
-            $list.append($item);
-
-            if (b.typ === 'text') {
-                var $textarea = $('<textarea>', {
-                    'class': 'local-kursassistent-textinput d-none',
-                    'data-typeid': b.id,
-                    rows: 2,
-                    placeholder: b.titel
-                }).val(stripHtml(b.platzhalter));
-                $list.append($textarea);
+            if (bausteineInKat.length === 0) {
+                return;
             }
 
-            if (b.typ === 'video') {
-                var $videowrap = $('<div>', {
-                    'class': 'local-kursassistent-videowrap d-none',
-                    'data-typeid': b.id
-                });
+            var $gruppe = $('<div>', {'class': 'local-kursassistent-gruppe'});
+            var $gruppenHeader = $('<div>', {'class': 'local-kursassistent-gruppenheader'});
+            $gruppenHeader.append($('<span>', {text: kat.label}));
+            $gruppenHeader.append($('<span>', {'class': 'local-kursassistent-gruppenpfeil', text: '▸'}));
+            var $gruppenInhalt = $('<div>', {'class': 'local-kursassistent-gruppeninhalt d-none'});
+            $gruppe.append($gruppenHeader, $gruppenInhalt);
+            $list.append($gruppe);
 
-                if (!response.videoaktiv) {
-                    $videowrap.append($('<p>', {'class': 'text-muted small mb-0', text: 'Video-Funktion ist an dieser Schule nicht aktiviert.'}));
-                } else {
-                    var tabs = [];
-                    if (response.repoverfuegbar) {
-                        tabs.push('verlinken');
-                    }
-                    if (response.uploadverfuegbar) {
-                        tabs.push('hochladen');
-                    }
-                    tabs.push('link');
-
-                    var $tabbar = $('<div>', {'class': 'local-kursassistent-tabbar'});
-                    var $panes = $('<div>', {'class': 'local-kursassistent-tabpanes'});
-
-                    var tabLabels = {
-                        verlinken: 'Verlinken',
-                        hochladen: 'Hochladen',
-                        link: 'Link einfügen'
-                    };
-
-                    tabs.forEach(function(tab, idx) {
-                        var $btn = $('<button>', {
-                            type: 'button',
-                            'class': 'local-kursassistent-tabbtn' + (idx === 0 ? ' active' : ''),
-                            'data-tab': tab,
-                            text: tabLabels[tab]
-                        });
-                        $tabbar.append($btn);
-
-                        var $pane = $('<div>', {
-                            'class': 'local-kursassistent-tabpane' + (idx === 0 ? '' : ' d-none'),
-                            'data-tab': tab
-                        });
-
-                        if (tab === 'verlinken') {
-                            $pane.append($('<div>', {'class': 'local-kursassistent-videogallery', 'data-typeid': b.id, 'data-loaded': '0'}));
-                        } else if (tab === 'hochladen') {
-                            if (!response.channelready) {
-                                var $warn = $('<div>', {'class': 'local-kursassistent-warnbox'});
-                                $warn.append($('<p>', {'class': 'mb-1', text: 'Kanal noch nicht eingerichtet'}));
-                                $warn.append($('<p>', {'class': 'mb-2 small', text: 'Bevor du ein Video hochladen kannst, muss einmalig dein PeerTube-Kanal eingerichtet werden.'}));
-                                $warn.append($('<a>', {
-                                    href: M.cfg.wwwroot + '/local/peertubeupload/index.php',
-                                    target: '_blank',
-                                    'class': 'btn btn-sm btn-primary',
-                                    text: 'Kanal jetzt einrichten'
-                                }));
-                                $pane.append($warn);
-                            } else {
-                                $pane.append($('<p>', {'class': 'small mb-2', text: 'Kanal ' + response.channelname + ' ist bereit.'}));
-                                $pane.append($('<input>', {type: 'file', 'class': 'local-kursassistent-fileinput', accept: 'video/*'}));
-                            }
-                        } else if (tab === 'link') {
-                            $pane.append($('<p>', {'class': 'small text-muted mb-2', text: 'Link zu einem vorhandenen Video einfügen:'}));
-                            $pane.append($('<input>', {
-                                type: 'url',
-                                'class': 'form-control local-kursassistent-linkinput',
-                                placeholder: 'https://...'
-                            }));
-                        }
-
-                        $panes.append($pane);
-                    });
-
-                    $videowrap.append($tabbar, $panes);
-                }
-
-                $list.append($videowrap);
-            }
-
-            if (b.typ === 'datei' || b.typ === 'bild') {
-                // Datei/Bild-Bausteine navigieren direkt zur Picker-Seite (echter Moodle-Datei-Picker
-                // mit allen konfigurierten Repositories) statt einer Checkbox-Batch-Auswahl.
-                $item.addClass('local-kursassistent-navitem');
-                $checkbox.replaceWith($('<span>', {'class': 'local-kursassistent-checkbox-spacer'}));
-                $item.on('click', function(e) {
-                    e.preventDefault();
-                    var sectionnum = parseInt($overlay.find('.local-kursassistent-section').val(), 10) || 0;
-                    window.location.href = M.cfg.wwwroot + '/local/kursassistent/pick_file.php?courseid=' +
-                        courseid + '&sectionnum=' + sectionnum + '&typeid=' + b.id;
-                });
-            }
+            bausteineInKat.forEach(function(b) {
+                baueBausteinItem(b, $gruppenInhalt, response, $overlay);
+            });
         });
+
+        // Vierte Gruppe "Kurseinrichtung": statische Einträge, nicht aus den Bausteinen des
+        // Servers gespeist, da es sich um kursweite Aktionen statt Inhalts-Bausteine handelt.
+        var $kgGruppe = $('<div>', {'class': 'local-kursassistent-gruppe'});
+        var $kgHeader = $('<div>', {'class': 'local-kursassistent-gruppenheader'});
+        $kgHeader.append($('<span>', {text: 'Kurseinrichtung'}));
+        $kgHeader.append($('<span>', {'class': 'local-kursassistent-gruppenpfeil', text: '▸'}));
+        var $kgInhalt = $('<div>', {'class': 'local-kursassistent-gruppeninhalt d-none'});
+        $kgGruppe.append($kgHeader, $kgInhalt);
+        $list.append($kgGruppe);
+
+        var $formatItem = $('<label>', {'class': 'local-kursassistent-item local-kursassistent-navitem'});
+        $formatItem.append($('<span>', {'class': 'local-kursassistent-checkbox-spacer'}));
+        var $formatIcon = $('<span>', {'class': 'local-kursassistent-icon'});
+        $formatIcon.append($('<img>', {src: M.cfg.wwwroot + '/local/kursassistent/pix/layout.svg', alt: '', 'class': 'local-kursassistent-icon-img'}));
+        $formatItem.append($formatIcon, $('<span>', {text: 'Kursformat ändern'}));
+        $formatItem.on('click', function(e) {
+            e.preventDefault();
+            window.location.href = M.cfg.wwwroot + '/course/edit.php?id=' + courseid;
+        });
+        $kgInhalt.append($formatItem);
+
+        if (response.templatewizardverfuegbar) {
+            var $vorlageItem = $('<label>', {'class': 'local-kursassistent-item local-kursassistent-navitem'});
+            $vorlageItem.append($('<span>', {'class': 'local-kursassistent-checkbox-spacer'}));
+            var $vorlageIcon = $('<span>', {'class': 'local-kursassistent-icon'});
+            $vorlageIcon.append($('<img>', {src: M.cfg.wwwroot + '/local/kursassistent/pix/copy.svg', alt: '', 'class': 'local-kursassistent-icon-img'}));
+            $vorlageItem.append($vorlageIcon, $('<span>', {text: 'Kursvorlage übernehmen'}));
+            $vorlageItem.on('click', function(e) {
+                e.preventDefault();
+                window.location.href = M.cfg.wwwroot + '/local/coursetemplatewizard/list_courses_to_copy.php?targetcourseid=' + courseid;
+            });
+            $kgInhalt.append($vorlageItem);
+        }
+
         $modal.append($list);
 
         var $sectionwrap = $('<div>', {'class': 'mb-3'});
         $sectionwrap.append($('<label>', {'class': 'small text-muted d-block mb-1', text: 'Zielabschnitt'}));
+        var $sectionrow = $('<div>', {'class': 'local-kursassistent-sectionrow'});
         var $select = $('<select>', {'class': 'form-control local-kursassistent-section'});
         response.sections.forEach(function(s) {
             $select.append($('<option>', {value: s.sectionnum, text: s.name}));
         });
-        $sectionwrap.append($select);
+        var $renameBtn = $('<button>', {
+            type: 'button',
+            'class': 'btn btn-outline-secondary local-kursassistent-rename-btn',
+            title: 'Abschnitt umbenennen'
+        });
+        $renameBtn.append($('<img>', {
+            src: M.cfg.wwwroot + '/local/kursassistent/pix/pencil.svg',
+            alt: '',
+            'class': 'local-kursassistent-rename-icon'
+        }));
+        var $addBtn = $('<button>', {
+            type: 'button',
+            'class': 'btn btn-outline-secondary local-kursassistent-addsection-btn',
+            title: 'Neuen Abschnitt erstellen'
+        });
+        $addBtn.append($('<img>', {
+            src: M.cfg.wwwroot + '/local/kursassistent/pix/plus.svg',
+            alt: '',
+            'class': 'local-kursassistent-rename-icon'
+        }));
+        $sectionrow.append($select, $renameBtn, $addBtn);
+        $sectionwrap.append($sectionrow);
+
+        var $addPanel = $('<div>', {'class': 'local-kursassistent-renamepanel d-none local-kursassistent-addpanel'});
+        $addPanel.append($('<label>', {'class': 'small text-muted d-block mb-1', text: 'Name des neuen Abschnitts (optional)'}));
+        var $addInput = $('<input>', {type: 'text', 'class': 'form-control local-kursassistent-addinput mb-2', placeholder: 'z. B. Woche 5: Bruchrechnung'});
+        $addPanel.append($addInput);
+        var $addFooter = $('<div>', {'class': 'd-flex justify-content-end'});
+        var $addCancel = $('<button>', {type: 'button', 'class': 'btn btn-sm btn-secondary mr-2 local-kursassistent-add-cancel', text: 'Abbrechen'});
+        var $addSave = $('<button>', {type: 'button', 'class': 'btn btn-sm btn-primary local-kursassistent-add-save', text: 'Erstellen'});
+        $addFooter.append($addCancel, $addSave);
+        $addPanel.append($addFooter);
+        $sectionwrap.append($addPanel);
+
+        var $renamePanel = $('<div>', {'class': 'local-kursassistent-renamepanel d-none'});
+        $renamePanel.append($('<label>', {'class': 'local-kursassistent-renamelabel small text-muted d-block mb-1'}));
+        var $renameInput = $('<input>', {type: 'text', 'class': 'form-control local-kursassistent-renameinput mb-2'});
+        $renamePanel.append($renameInput);
+        var $renameFooter = $('<div>', {'class': 'd-flex justify-content-end'});
+        var $renameCancel = $('<button>', {type: 'button', 'class': 'btn btn-sm btn-secondary mr-2 local-kursassistent-rename-cancel', text: 'Abbrechen'});
+        var $renameSave = $('<button>', {type: 'button', 'class': 'btn btn-sm btn-primary local-kursassistent-rename-save', text: 'Speichern'});
+        $renameFooter.append($renameCancel, $renameSave);
+        $renamePanel.append($renameFooter);
+        $sectionwrap.append($renamePanel);
+
         $modal.append($sectionwrap);
 
         var $footer = $('<div>', {'class': 'd-flex justify-content-end'});
@@ -180,6 +173,14 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
         $modal.append($footer);
 
         $overlay.append($modal);
+
+        $list.on('click', '.local-kursassistent-gruppenheader', function() {
+            var $header = $(this);
+            var $inhalt = $header.next('.local-kursassistent-gruppeninhalt');
+            $inhalt.toggleClass('d-none');
+            var $pfeil = $header.find('.local-kursassistent-gruppenpfeil');
+            $pfeil.text($pfeil.text() === '▸' ? '▾' : '▸');
+        });
 
         $list.on('change', '.local-kursassistent-checkbox', function() {
             var $cb = $(this);
@@ -208,7 +209,213 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             $item.addClass('selected');
         });
 
+        $overlay.on('click', '.local-kursassistent-addsection-btn', function() {
+            $overlay.find('.local-kursassistent-renamepanel').not('.local-kursassistent-addpanel').addClass('d-none');
+            $overlay.find('.local-kursassistent-addinput').val('');
+            $overlay.find('.local-kursassistent-addpanel').removeClass('d-none');
+        });
+
+        $overlay.on('click', '.local-kursassistent-add-cancel', function() {
+            $overlay.find('.local-kursassistent-addpanel').addClass('d-none');
+        });
+
+        $overlay.on('click', '.local-kursassistent-add-save', function() {
+            var name = $overlay.find('.local-kursassistent-addinput').val().trim();
+            var $saveBtn = $(this);
+            $saveBtn.prop('disabled', true).text('Erstellt …');
+
+            Ajax.call([{
+                methodname: 'local_kursassistent_create_section',
+                args: {courseid: courseid, name: name}
+            }])[0].done(function(res) {
+                var $select = $overlay.find('.local-kursassistent-section');
+                $select.append($('<option>', {value: res.sectionnum, text: res.name}));
+                $select.val(res.sectionnum);
+                $overlay.find('.local-kursassistent-addpanel').addClass('d-none');
+                $saveBtn.prop('disabled', false).text('Erstellen');
+            }).fail(function() {
+                $saveBtn.prop('disabled', false).text('Erstellen');
+                Notification.alert('Fehler', 'Der Abschnitt konnte nicht erstellt werden.', 'OK');
+            });
+        });
+
+        $overlay.on('click', '.local-kursassistent-rename-btn', function() {
+            $overlay.find('.local-kursassistent-addpanel').addClass('d-none');
+            var $select = $overlay.find('.local-kursassistent-section');
+            var aktuellerName = $select.find('option:selected').text();
+            var $panel = $overlay.find('.local-kursassistent-renamepanel');
+            $panel.find('.local-kursassistent-renamelabel').text('Neuer Name für „' + aktuellerName + '"');
+            $panel.find('.local-kursassistent-renameinput').val(aktuellerName);
+            $panel.removeClass('d-none');
+            $select.prop('disabled', true);
+        });
+
+        $overlay.on('click', '.local-kursassistent-rename-cancel', function() {
+            $overlay.find('.local-kursassistent-renamepanel').addClass('d-none');
+            $overlay.find('.local-kursassistent-section').prop('disabled', false);
+        });
+
+        $overlay.on('click', '.local-kursassistent-rename-save', function() {
+            var $select = $overlay.find('.local-kursassistent-section');
+            var sectionnum = parseInt($select.val(), 10);
+            var neuerName = $overlay.find('.local-kursassistent-renameinput').val().trim();
+
+            if (!neuerName) {
+                return;
+            }
+
+            var $saveBtn = $(this);
+            $saveBtn.prop('disabled', true).text('Speichert …');
+
+            Ajax.call([{
+                methodname: 'local_kursassistent_rename_section',
+                args: {courseid: courseid, sectionnum: sectionnum, name: neuerName}
+            }])[0].done(function(res) {
+                $select.find('option:selected').text(res.name);
+                $overlay.find('.local-kursassistent-renamepanel').addClass('d-none');
+                $select.prop('disabled', false);
+                $saveBtn.prop('disabled', false).text('Speichern');
+            }).fail(function() {
+                $saveBtn.prop('disabled', false).text('Speichern');
+                Notification.alert('Fehler', 'Der Abschnitt konnte nicht umbenannt werden.', 'OK');
+            });
+        });
+
         return $overlay;
+    }
+
+    /**
+     * Baut ein einzelnes Baustein-Item (Checkbox/Navitem + zugehörige Zusatzelemente)
+     * und hängt es an den übergebenen Gruppen-Container an.
+     *
+     * @param {Object} b Baustein-Daten
+     * @param {jQuery} $container Ziel-Container (Gruppeninhalt)
+     * @param {Object} response Gesamte Serverantwort (für Video-Status etc.)
+     * @param {jQuery} $overlay Das Modal-Overlay (für Zugriff auf Zielabschnitt)
+     */
+    function baueBausteinItem(b, $container, response, $overlay) {
+        var $item = $('<label>', {'class': 'local-kursassistent-item'});
+        var $checkbox = $('<input>', {
+            type: 'checkbox',
+            'class': 'local-kursassistent-checkbox',
+            'data-typeid': b.id,
+            'data-typ': b.typ
+        });
+        var $iconwrap = $('<span>', {'class': 'local-kursassistent-icon'});
+        $iconwrap.append($('<img>', {src: b.iconurl, alt: '', 'class': 'local-kursassistent-icon-img'}));
+        var $label = $('<span>', {text: b.titel});
+        $item.append($checkbox, $iconwrap, $label);
+        $container.append($item);
+
+        if (b.typ === 'text') {
+            var $textarea = $('<textarea>', {
+                'class': 'local-kursassistent-textinput d-none',
+                'data-typeid': b.id,
+                rows: 2,
+                placeholder: b.titel
+            }).val(stripHtml(b.platzhalter));
+            $container.append($textarea);
+        }
+
+        if (b.typ === 'video') {
+            var $videowrap = $('<div>', {
+                'class': 'local-kursassistent-videowrap d-none',
+                'data-typeid': b.id
+            });
+
+            if (!response.videoaktiv) {
+                $videowrap.append($('<p>', {'class': 'text-muted small mb-0', text: 'Video-Funktion ist an dieser Schule nicht aktiviert.'}));
+            } else {
+                var tabs = [];
+                if (response.repoverfuegbar) {
+                    tabs.push('verlinken');
+                }
+                if (response.uploadverfuegbar) {
+                    tabs.push('hochladen');
+                }
+                tabs.push('link');
+
+                var $tabbar = $('<div>', {'class': 'local-kursassistent-tabbar'});
+                var $panes = $('<div>', {'class': 'local-kursassistent-tabpanes'});
+
+                var tabLabels = {
+                    verlinken: 'PeerTube-Video wählen',
+                    hochladen: 'Video hochladen',
+                    link: 'Anderer Video-Link'
+                };
+
+                tabs.forEach(function(tab, idx) {
+                    var $btn = $('<button>', {
+                        type: 'button',
+                        'class': 'local-kursassistent-tabbtn' + (idx === 0 ? ' active' : ''),
+                        'data-tab': tab,
+                        text: tabLabels[tab]
+                    });
+                    $tabbar.append($btn);
+
+                    var $pane = $('<div>', {
+                        'class': 'local-kursassistent-tabpane' + (idx === 0 ? '' : ' d-none'),
+                        'data-tab': tab
+                    });
+
+                    if (tab === 'verlinken') {
+                        $pane.append($('<p>', {'class': 'small text-muted mb-2', text: 'Wähle ein bereits auf eurem PeerTube vorhandenes Video aus:'}));
+                        $pane.append($('<div>', {'class': 'local-kursassistent-videogallery', 'data-typeid': b.id, 'data-loaded': '0'}));
+                    } else if (tab === 'hochladen') {
+                        $pane.append($('<p>', {'class': 'small text-muted mb-2', text: 'Falls du noch keinen PeerTube-Kanal hast, wirst du zuerst zur Einrichtung eines Kanals geführt. Danach kannst du hier das Video hochladen.'}));
+                        if (!response.channelready) {
+                            $pane.append($('<a>', {
+                                href: M.cfg.wwwroot + '/local/peertubeupload/index.php',
+                                target: '_blank',
+                                'class': 'btn btn-sm btn-primary',
+                                text: 'Video hochladen'
+                            }));
+                        } else {
+                            $pane.append($('<input>', {type: 'file', 'class': 'local-kursassistent-fileinput', accept: 'video/*'}));
+                        }
+                    } else if (tab === 'link') {
+                        $pane.append($('<p>', {'class': 'small text-muted mb-2', text: 'Link zu einem Video von einer anderen Plattform einfügen (z. B. YouTube, Vimeo):'}));
+                        $pane.append($('<input>', {
+                            type: 'url',
+                            'class': 'form-control local-kursassistent-linkinput',
+                            placeholder: 'https://...'
+                        }));
+                    }
+
+                    $panes.append($pane);
+                });
+
+                $videowrap.append($tabbar, $panes);
+            }
+
+            $container.append($videowrap);
+        }
+
+        if (b.typ === 'datei' || b.typ === 'bild') {
+            // Datei/Bild-Bausteine navigieren direkt zur Picker-Seite (echter Moodle-Datei-Picker
+            // mit allen konfigurierten Repositories) statt einer Checkbox-Batch-Auswahl.
+            $item.addClass('local-kursassistent-navitem');
+            $checkbox.replaceWith($('<span>', {'class': 'local-kursassistent-checkbox-spacer'}));
+            $item.on('click', function(e) {
+                e.preventDefault();
+                var sectionnum = parseInt($overlay.find('.local-kursassistent-section').val(), 10) || 0;
+                window.location.href = M.cfg.wwwroot + '/local/kursassistent/pick_file.php?courseid=' +
+                    courseid + '&sectionnum=' + sectionnum + '&typeid=' + b.id;
+            });
+        }
+
+        if (b.typ === 'aktivitaet') {
+            // Aktivitäts-Bausteine navigieren direkt zu Moodles nativem
+            // "Aktivität hinzufügen"-Formular - vorausgefüllt mit Typ, Kurs und Zielabschnitt.
+            $item.addClass('local-kursassistent-navitem');
+            $checkbox.replaceWith($('<span>', {'class': 'local-kursassistent-checkbox-spacer'}));
+            $item.on('click', function(e) {
+                e.preventDefault();
+                var sectionnum = parseInt($overlay.find('.local-kursassistent-section').val(), 10) || 0;
+                window.location.href = M.cfg.wwwroot + '/course/modedit.php?add=' + encodeURIComponent(b.modname) +
+                    '&type=&course=' + courseid + '&section=' + sectionnum + '&return=0&sr=0';
+            });
+        }
     }
 
     /**

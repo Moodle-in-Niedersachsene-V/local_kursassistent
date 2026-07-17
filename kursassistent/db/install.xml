@@ -9,7 +9,8 @@
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="titel" TYPE="char" LENGTH="255" NOTNULL="true"/>
         <FIELD NAME="icon" TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT="ti-file-text" COMMENT="Tabler-Icon-Klasse ohne ti- Praefix optional"/>
-        <FIELD NAME="typ" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="text" COMMENT="text, datei, bild, video"/>
+        <FIELD NAME="typ" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="text" COMMENT="text, datei, bild, video, aktivitaet"/>
+        <FIELD NAME="modname" TYPE="char" LENGTH="100" NOTNULL="false" COMMENT="Moodle-Modulname (z. B. assign, quiz), nur bei typ=aktivitaet relevant"/>
         <FIELD NAME="platzhalter" TYPE="text" NOTNULL="false" COMMENT="Platzhalter-HTML, nur bei typ=text relevant"/>
         <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="aktiv" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1"/>

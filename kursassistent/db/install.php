@@ -77,6 +77,22 @@ function xmldb_local_kursassistent_install() {
             'platzhalter' => '<p>Die Bewertung erfolgt anhand folgender Kriterien: ...</p>',
             'sortorder' => 6,
         ],
+        [
+            'titel' => 'Aufgabe',
+            'icon' => 'clipboard-check',
+            'typ' => 'aktivitaet',
+            'modname' => 'assign',
+            'platzhalter' => null,
+            'sortorder' => 7,
+        ],
+        [
+            'titel' => 'Test',
+            'icon' => 'checklist',
+            'typ' => 'aktivitaet',
+            'modname' => 'quiz',
+            'platzhalter' => null,
+            'sortorder' => 8,
+        ],
     ];
 
     foreach ($default as $baustein) {

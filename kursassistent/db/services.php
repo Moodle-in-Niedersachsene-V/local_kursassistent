@@ -49,4 +49,20 @@ $functions = [
         'ajax' => true,
         'capabilities' => 'local/kursassistent:use',
     ],
+    'local_kursassistent_rename_section' => [
+        'classname' => 'local_kursassistent\external\local_kursassistent_external',
+        'methodname' => 'rename_section',
+        'description' => 'Benennt einen Kursabschnitt um',
+        'type' => 'write',
+        'ajax' => true,
+        'capabilities' => 'local/kursassistent:use',
+    ],
+    'local_kursassistent_create_section' => [
+        'classname' => 'local_kursassistent\external\local_kursassistent_external',
+        'methodname' => 'create_section',
+        'description' => 'Erzeugt einen neuen Kursabschnitt',
+        'type' => 'write',
+        'ajax' => true,
+        'capabilities' => 'local/kursassistent:use',
+    ],
 ];

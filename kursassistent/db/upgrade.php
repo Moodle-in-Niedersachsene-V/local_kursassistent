@@ -72,5 +72,54 @@ function xmldb_local_kursassistent_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026071509, 'local', 'kursassistent');
     }
 
+    if ($oldversion < 2026071534) {
+        // Eigene Vorlagenkategorie-Einstellung entfernt zugunsten der Integration mit
+        // local_coursetemplatewizard (das bereits eine eigene, ausgereiftere Lösung bietet).
+        unset_config('vorlagenkategorie', 'local_kursassistent');
+
+        upgrade_plugin_savepoint(true, 2026071534, 'local', 'kursassistent');
+    }
+
+    if ($oldversion < 2026071523) {
+        $dbman = $DB->get_manager();
+        $table = new xmldb_table('local_kursassistent_types');
+        $field = new xmldb_field('modname', XMLDB_TYPE_CHAR, '100', null, false, null, null, 'typ');
+
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $now = time();
+        $max = (int) $DB->get_field_sql('SELECT MAX(sortorder) FROM {local_kursassistent_types}');
+
+        $neue = [
+            [
+                'titel' => 'Aufgabe', 'icon' => 'clipboard-check', 'typ' => 'aktivitaet',
+                'modname' => 'assign', 'sortorder' => $max + 1,
+            ],
+            [
+                'titel' => 'Test', 'icon' => 'checklist', 'typ' => 'aktivitaet',
+                'modname' => 'quiz', 'sortorder' => $max + 2,
+            ],
+        ];
+
+        foreach ($neue as $baustein) {
+            $exists = $DB->record_exists('local_kursassistent_types', [
+                'typ' => 'aktivitaet', 'modname' => $baustein['modname'],
+            ]);
+            if ($exists) {
+                continue;
+            }
+            $record = (object) $baustein;
+            $record->platzhalter = null;
+            $record->aktiv = 1;
+            $record->timecreated = $now;
+            $record->timemodified = $now;
+            $DB->insert_record('local_kursassistent_types', $record);
+        }
+
+        upgrade_plugin_savepoint(true, 2026071523, 'local', 'kursassistent');
+    }
+
     return true;
 }

@@ -34,6 +34,22 @@ if ($hassiteconfig) {
         1
     ));
 
+    $templatewizardstatus = \core_component::get_component_directory('local_coursetemplatewizard')
+        ? get_string('templatewizard_installiert', 'local_kursassistent')
+        : get_string('templatewizard_fehlt', 'local_kursassistent');
+    $settings->add(new admin_setting_heading(
+        'local_kursassistent_templatewizard',
+        get_string('kursvorlageuebernehmen', 'local_kursassistent'),
+        $templatewizardstatus
+    ));
+
+    $settings->add(new admin_setting_confightmleditor(
+        'local_kursassistent/anleitung_inhalt',
+        get_string('anleitung_inhalt', 'local_kursassistent'),
+        get_string('anleitung_inhalt_desc', 'local_kursassistent'),
+        get_string('anleitung_inhalt_default', 'local_kursassistent')
+    ));
+
     $verwaltungurl = new moodle_url('/local/kursassistent/manage.php');
     $settings->add(new admin_setting_heading(
         'local_kursassistent_verwaltung',

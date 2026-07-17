@@ -33,15 +33,9 @@ defined('MOODLE_INTERNAL') || die();
  * @param context_course $context
  */
 function local_kursassistent_extend_navigation_course($navigation, $course, $context) {
-    global $PAGE;
-
     if ($course->id == SITEID) {
         return;
     }
-
-    // CSS immer laden, auch für Betrachtende ohne Berechtigung - sie sehen die vom
-    // Assistenten erzeugten Inhalte (z. B. Video-Einbettungen) genauso wie Lehrkräfte.
-    $PAGE->requires->css('/local/kursassistent/styles.css');
 
     if (!has_capability('local/kursassistent:use', $context)) {
         return;
@@ -58,6 +52,17 @@ function local_kursassistent_extend_navigation_course($navigation, $course, $con
     $node->add_class('local-kursassistent-navlink');
     $navigation->add_node($node);
 
-    // AMD-Modul nur laden, wenn der Button tatsächlich eingehängt wurde.
-    $PAGE->requires->js_call_amd('local_kursassistent/assistent', 'init', [(int) $course->id]);
+    $anleitungnode = navigation_node::create(
+        get_string('anleitungtitel', 'local_kursassistent'),
+        new moodle_url('/local/kursassistent/anleitung.php', ['courseid' => $course->id]),
+        navigation_node::TYPE_CUSTOM,
+        null,
+        'local_kursassistent_anleitung',
+        new pix_icon('i/help', '')
+    );
+    $navigation->add_node($anleitungnode);
+
+    // CSS/JS werden bewusst NICHT hier geladen (siehe hook_callbacks/navigation_callback.php) -
+    // extend_navigation_course() kann je nach Aktivität/Theme erst nach Ausgabe des
+    // <head>-Bereichs aufgerufen werden, was $PAGE->requires->css() zum Absturz bringt.
 }

@@ -146,6 +146,125 @@ class local_kursassistent_external extends external_api {
     }
 
     /**
+     * Parameter für create_section.
+     *
+     * @return external_function_parameters
+     */
+    public static function create_section_parameters(): external_function_parameters {
+        return new external_function_parameters([
+            'courseid' => new external_value(PARAM_INT, 'Kurs-ID'),
+            'name' => new external_value(PARAM_TEXT, 'Name des neuen Abschnitts', VALUE_DEFAULT, ''),
+        ]);
+    }
+
+    /**
+     * Erzeugt einen neuen Kursabschnitt am Ende des Kurses.
+     *
+     * @param int $courseid
+     * @param string $name
+     * @return array
+     */
+    public static function create_section(int $courseid, string $name = ''): array {
+        global $CFG;
+
+        $params = self::validate_parameters(self::create_section_parameters(), [
+            'courseid' => $courseid,
+            'name' => $name,
+        ]);
+
+        $context = \context_course::instance($params['courseid']);
+        self::validate_context($context);
+        require_capability('local/kursassistent:use', $context);
+
+        $course = get_course($params['courseid']);
+
+        require_once($CFG->dirroot . '/course/lib.php');
+        $section = course_create_section($course);
+
+        $finalname = trim($params['name']);
+        if ($finalname !== '') {
+            course_update_section($course, $section, ['name' => $finalname]);
+        } else {
+            $finalname = get_section_name($course, $section);
+        }
+
+        return [
+            'sectionnum' => (int) $section->section,
+            'name' => $finalname,
+        ];
+    }
+
+    /**
+     * Rückgabestruktur für create_section.
+     *
+     * @return external_single_structure
+     */
+    public static function create_section_returns(): external_single_structure {
+        return new external_single_structure([
+            'sectionnum' => new external_value(PARAM_INT, 'Neue Abschnittsnummer'),
+            'name' => new external_value(PARAM_TEXT, 'Name des neuen Abschnitts'),
+        ]);
+    }
+
+    /**
+     * Parameter für rename_section.
+     *
+     * @return external_function_parameters
+     */
+    public static function rename_section_parameters(): external_function_parameters {
+        return new external_function_parameters([
+            'courseid' => new external_value(PARAM_INT, 'Kurs-ID'),
+            'sectionnum' => new external_value(PARAM_INT, 'Abschnittsnummer'),
+            'name' => new external_value(PARAM_TEXT, 'Neuer Abschnittsname'),
+        ]);
+    }
+
+    /**
+     * Benennt einen Kursabschnitt um.
+     *
+     * @param int $courseid
+     * @param int $sectionnum
+     * @param string $name
+     * @return array
+     */
+    public static function rename_section(int $courseid, int $sectionnum, string $name): array {
+        global $DB, $CFG;
+
+        $params = self::validate_parameters(self::rename_section_parameters(), [
+            'courseid' => $courseid,
+            'sectionnum' => $sectionnum,
+            'name' => $name,
+        ]);
+
+        $context = \context_course::instance($params['courseid']);
+        self::validate_context($context);
+        require_capability('local/kursassistent:use', $context);
+
+        $course = get_course($params['courseid']);
+        $section = $DB->get_record('course_sections', [
+            'course' => $params['courseid'],
+            'section' => $params['sectionnum'],
+        ], '*', MUST_EXIST);
+
+        require_once($CFG->dirroot . '/course/lib.php');
+        course_update_section($course, $section, ['name' => trim($params['name'])]);
+
+        return ['success' => true, 'name' => trim($params['name'])];
+    }
+
+    /**
+     * Rückgabestruktur für rename_section.
+     *
+     * @return external_single_structure
+     */
+    public static function rename_section_returns(): external_single_structure {
+        return new external_single_structure([
+            'success' => new external_value(PARAM_BOOL, 'Erfolgreich'),
+            'name' => new external_value(PARAM_TEXT, 'Gespeicherter Name'),
+        ]);
+    }
+
+    /**
      * Parameter für get_bausteine.
      *
      * @return external_function_parameters
@@ -179,6 +298,7 @@ class local_kursassistent_external extends external_api {
                 'titel' => $t->titel,
                 'iconurl' => $OUTPUT->image_url($iconname, 'local_kursassistent')->out(false),
                 'typ' => $t->typ,
+                'modname' => $t->modname ?? '',
                 'platzhalter' => $t->platzhalter ?? '',
             ];
         }
@@ -210,6 +330,7 @@ class local_kursassistent_external extends external_api {
             'uploadverfuegbar' => $uploadverfuegbar,
             'channelready' => (bool) $channel['ready'],
             'channelname' => $channel['channelname'] ?? '',
+            'templatewizardverfuegbar' => (bool) \core_component::get_component_directory('local_coursetemplatewizard'),
         ];
     }
 
@@ -225,6 +346,7 @@ class local_kursassistent_external extends external_api {
                 'titel' => new external_value(PARAM_TEXT, 'Titel'),
                 'iconurl' => new external_value(PARAM_URL, 'Icon-URL'),
                 'typ' => new external_value(PARAM_ALPHA, 'Typ'),
+                'modname' => new external_value(PARAM_ALPHANUMEXT, 'Aktivitätstyp (nur bei typ=aktivitaet)', VALUE_DEFAULT, ''),
                 'platzhalter' => new external_value(PARAM_RAW, 'Platzhalter-HTML'),
             ])),
             'sections' => new external_multiple_structure(new external_single_structure([
@@ -236,6 +358,7 @@ class local_kursassistent_external extends external_api {
             'uploadverfuegbar' => new external_value(PARAM_BOOL, 'Upload verfügbar'),
             'channelready' => new external_value(PARAM_BOOL, 'Kanal bereit'),
             'channelname' => new external_value(PARAM_TEXT, 'Kanalname', VALUE_DEFAULT, ''),
+            'templatewizardverfuegbar' => new external_value(PARAM_BOOL, 'local_coursetemplatewizard installiert'),
         ]);
     }
 

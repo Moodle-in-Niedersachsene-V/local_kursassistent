@@ -76,7 +76,11 @@ foreach ($types as $type) {
     $iconhtml = $OUTPUT->image_icon(\local_kursassistent\manager::normalize_icon($type->icon), $type->titel, 'local_kursassistent');
     echo html_writer::tag('td', $iconhtml);
     echo html_writer::tag('td', s($type->titel));
-    echo html_writer::tag('td', get_string('typ_' . $type->typ, 'local_kursassistent'));
+    $typlabel = get_string('typ_' . $type->typ, 'local_kursassistent');
+    if ($type->typ === 'aktivitaet' && !empty($type->modname)) {
+        $typlabel .= ' (' . s($type->modname) . ')';
+    }
+    echo html_writer::tag('td', $typlabel);
     $statuslabel = $type->aktiv
         ? html_writer::tag('span', get_string('aktiv', 'local_kursassistent'), ['class' => 'badge badge-success'])
         : html_writer::tag('span', get_string('deaktiviert', 'local_kursassistent'), ['class' => 'badge badge-secondary']);

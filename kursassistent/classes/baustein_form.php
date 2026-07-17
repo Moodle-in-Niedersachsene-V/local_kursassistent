@@ -54,6 +54,7 @@ class baustein_form extends \moodleform {
             'alert-circle' => get_string('icon_alert-circle', 'local_kursassistent'),
             'list-numbers' => get_string('icon_list-numbers', 'local_kursassistent'),
             'clipboard-check' => get_string('icon_clipboard-check', 'local_kursassistent'),
+            'link' => get_string('icon_link', 'local_kursassistent'),
         ];
         $mform->addElement('select', 'icon', get_string('icon', 'local_kursassistent'), $iconoptions);
         $mform->setDefault('icon', 'file-text');
@@ -63,9 +64,15 @@ class baustein_form extends \moodleform {
             'datei' => get_string('typ_datei', 'local_kursassistent'),
             'bild' => get_string('typ_bild', 'local_kursassistent'),
             'video' => get_string('typ_video', 'local_kursassistent'),
+            'aktivitaet' => get_string('typ_aktivitaet', 'local_kursassistent'),
         ];
         $mform->addElement('select', 'typ', get_string('typ', 'local_kursassistent'), $typoptions);
         $mform->setDefault('typ', 'text');
+
+        $moduloptions = ['' => get_string('bittewaehlen', 'local_kursassistent')] + manager::get_available_modules();
+        $mform->addElement('select', 'modname', get_string('modname', 'local_kursassistent'), $moduloptions);
+        $mform->setType('modname', PARAM_ALPHANUMEXT);
+        $mform->hideIf('modname', 'typ', 'neq', 'aktivitaet');
 
         $mform->addElement(
             'textarea',
