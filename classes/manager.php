@@ -177,12 +177,7 @@ class manager {
 
         if ($file) {
             $url = \moodle_url::make_pluginfile_url(
-                $modcontext->id,
-                'mod_label',
-                'intro',
-                0,
-                $file->get_filepath(),
-                $file->get_filename()
+                $modcontext->id, 'mod_label', 'intro', 0, $file->get_filepath(), $file->get_filename()
             );
             $mimetype = $file->get_mimetype();
             if ($mimetype && strpos($mimetype, 'image/') === 0) {

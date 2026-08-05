@@ -111,7 +111,7 @@ class provider implements
                 continue;
             }
 
-            $data = array_map(function ($r) {
+            $data = array_map(function($r) {
                 return [
                     'typeid' => $r->typeid,
                     'cmid' => $r->cmid,

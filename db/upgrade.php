@@ -70,14 +70,6 @@ function xmldb_local_kursassistent_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026071509, 'local', 'kursassistent');
     }
 
-    if ($oldversion < 2026071534) {
-        // Die eigene Vorlagenkategorie-Einstellung entfaellt.
-        // Stattdessen wird local_coursetemplatewizard genutzt.
-        unset_config('vorlagenkategorie', 'local_kursassistent');
-
-        upgrade_plugin_savepoint(true, 2026071534, 'local', 'kursassistent');
-    }
-
     if ($oldversion < 2026071523) {
         $dbman = $DB->get_manager();
         $table = new xmldb_table('local_kursassistent_types');
@@ -117,6 +109,14 @@ function xmldb_local_kursassistent_upgrade($oldversion) {
         }
 
         upgrade_plugin_savepoint(true, 2026071523, 'local', 'kursassistent');
+    }
+
+    if ($oldversion < 2026071534) {
+        // Die eigene Vorlagenkategorie-Einstellung entfaellt.
+        // Stattdessen wird local_coursetemplatewizard genutzt.
+        unset_config('vorlagenkategorie', 'local_kursassistent');
+
+        upgrade_plugin_savepoint(true, 2026071534, 'local', 'kursassistent');
     }
 
     return true;
