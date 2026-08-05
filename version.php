@@ -25,8 +25,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_kursassistent';
-$plugin->version   = 2026080404;
+$plugin->version   = 2026080405;
 $plugin->requires  = 2025100600;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.1.0 (Build: 2026080404)';
+$plugin->release   = '1.1.0 (Build: 2026080405)';
 $plugin->maintainer = 'Moodle in Niedersachsen e. V.';

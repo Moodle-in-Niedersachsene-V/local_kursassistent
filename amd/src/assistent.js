@@ -35,7 +35,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
         var $modal = $('<div>', {'class': 'local-kursassistent-modal'});
 
         var $header = $('<div>', {'class': 'd-flex align-items-center justify-content-between mb-2'});
-        $header.append($('<p>', {'class': 'font-weight-bold mb-0', text: M.str.local_kursassistent ? '' : ''}));
+        $header.append($('<p>', {'class': 'font-weight-bold mb-0', text: ''}));
         var $closeBtn = $('<button>', {
             'type': 'button',
             'class': 'close local-kursassistent-close',
@@ -563,6 +563,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             } else {
                 deferred.reject(data.error || 'upload_failed');
             }
+            return data;
         }).catch(function(error) {
             deferred.reject(error);
         });
