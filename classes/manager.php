@@ -1,18 +1,18 @@
 <?php
-// This file is part of Moodle - https://moodle.org/
+// This file is part of Moodle - http://moodle.org/
 //
-// Moodle is free software: you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// Moodle is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace local_kursassistent;
 
@@ -21,7 +21,7 @@ namespace local_kursassistent;
  *
  * @package    local_kursassistent
  * @copyright  2026 Moodle in Niedersachsen e. V.
- * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class manager {
     /** Erlaubte Bausteintypen. */
@@ -163,24 +163,21 @@ class manager {
         $files = $fs->get_area_files($modcontext->id, 'mod_label', 'intro', 0, 'id', false);
         $file = reset($files);
 
-        $iconhtml = $OUTPUT->image_icon(
-            self::normalize_icon($type->icon),
-            $type->titel,
-            'local_kursassistent',
-            [
-                'class' => 'local-kursassistent-label-icon',
-                'style' => 'width:22px;height:22px;vertical-align:middle;'
-                    . 'margin-right:4px;max-width:22px;max-height:22px;',
-            ]
-        );
+        $iconhtml = $OUTPUT->image_icon(self::normalize_icon($type->icon), $type->titel, 'local_kursassistent', [
+            'class' => 'local-kursassistent-label-icon',
+            'style' => 'width:22px;height:22px;vertical-align:middle;margin-right:4px;max-width:22px;max-height:22px;',
+        ]);
         $header = \html_writer::tag('h4', $iconhtml . ' ' . s($type->titel));
 
         if ($file) {
+            // Wichtig: itemid MUSS null sein, nicht 0. Modul-Intro-Bereiche wie mod_label/intro
+            // kennen keine itemid im Pfad; ein "0" darin erzeugt eine URL, die ins Leere läuft
+            // (Moodle-Core übergibt in format_module_intro() an dieser Stelle ebenfalls null).
             $url = \moodle_url::make_pluginfile_url(
                 $modcontext->id,
                 'mod_label',
                 'intro',
-                0,
+                null,
                 $file->get_filepath(),
                 $file->get_filename()
             );
@@ -221,16 +218,10 @@ class manager {
 
         $course = get_course($courseid);
 
-        $iconhtml = $OUTPUT->image_icon(
-            self::normalize_icon($type->icon),
-            $type->titel,
-            'local_kursassistent',
-            [
-                'class' => 'local-kursassistent-label-icon',
-                'style' => 'width:22px;height:22px;vertical-align:middle;'
-                    . 'margin-right:4px;max-width:22px;max-height:22px;',
-            ]
-        );
+        $iconhtml = $OUTPUT->image_icon(self::normalize_icon($type->icon), $type->titel, 'local_kursassistent', [
+            'class' => 'local-kursassistent-label-icon',
+            'style' => 'width:22px;height:22px;vertical-align:middle;margin-right:4px;max-width:22px;max-height:22px;',
+        ]);
         $header = \html_writer::tag('h4', $iconhtml . ' ' . s($type->titel));
         $fulltext = $header . $inhalt;
 

@@ -1,6 +1,6 @@
 # Kursassistent – Anleitung
 
-*Moodle in Niedersachsen e. V. · local_kursassistent, Build 2026071701, Release 1.0.0 · Stand: Juli 2026*
+*Moodle in Niedersachsen e. V. · local_kursassistent, Build 2026080804, Release 1.1.3 · Stand: August 2026*
 
 ## 1. Für Lehrkräfte
 
@@ -27,7 +27,9 @@ Der Kursassistent hilft dabei, Kursabschnitte schnell und einheitlich zu gestalt
 
 ### 1.4 Materialien und Bilder einfügen
 
-Bei „Materialien" und „Bild" (Kategorie „Lernmaterial") öffnet ein Klick direkt eine eigene Auswahlseite mit dem echten Moodle-Datei-Picker – dort stehen alle an eurer Schule eingerichteten Speicherorte zur Verfügung (z. B. Datei-Upload vom eigenen Rechner, perspektivisch auch Nextcloud oder OneDrive).
+Bei „Materialien" und „Bild" (Kategorie „Lernmaterial") öffnet ein Klick direkt eine eigene Auswahlseite mit dem echten Moodle-Datei-Picker – dort stehen alle an eurer Schule eingerichteten Speicherorte zur Verfügung: Datei-Upload vom eigenen Rechner, „Meine Dateien" und, sofern eingerichtet, auch Cloud-Speicher wie Nextcloud.
+
+Bei Cloud-Speichern, die als Referenz-Repository arbeiten (z. B. `repository_nextclouddirect`), wird die Datei in die Cloud hochgeladen und in Moodle nur eine Referenz darauf hinterlegt – es entsteht also keine zweite Kopie im Moodle-Dateibereich. Bilder werden im Baustein direkt angezeigt, andere Dateien als Download-Link.
 
 1. Klicke auf die Zeile „Materialien" bzw. „Bild".
 2. Wähle im Datei-Picker eine Datei aus einem der verfügbaren Speicherorte aus.
@@ -77,7 +79,7 @@ Unter Website-Administration → Plugins → Lokale Plugins → Kursassistent �
 
 - **Neuer Baustein:** Titel, Icon (Auswahl aus 12 mitgelieferten Symbolen), Typ (Text/Datei/Bild/Video/Aktivität) und je nach Typ ein Platzhaltertext bzw. ein Aktivitätstyp.
 - **Aktivitätstyp:** bei Typ „Aktivität" wählst du aus allen an eurer Schule installierten Aktivitäten (Aufgabe, Test, Forum, H5P, …) aus.
-- **Bearbeiten/Löschen:** über die entsprechenden Schaltflächen in der Übersicht.
+- **Bearbeiten/Löschen:** über die entsprechenden Schaltflächen in der Übersicht. Vor dem Löschen erscheint eine Sicherheitsabfrage; bereits in Kurse eingefügte Inhalte bleiben dabei unverändert erhalten.
 - **Aktiv/Deaktiviert:** deaktivierte Bausteine erscheinen nicht mehr im Assistenten, bleiben aber erhalten.
 
 Damit lassen sich jederzeit neue Bausteine ergänzen (z. B. weitere Hinweistypen oder Aktivitäten), ohne dass eine Programmänderung nötig ist. Die Zuordnung zu den vier Kategorien im Assistenten-Fenster erfolgt automatisch anhand des gewählten Typs.
@@ -106,6 +108,7 @@ Der Baustein „Kursvorlage übernehmen" (Kategorie „Kurseinrichtung") setzt d
 | local_peertubeupload | Video-Tab „Video hochladen" (ab Build 2026071501 mit channel_manager-Klasse) |
 | repository_peertubeoauth | Video-Tab „PeerTube-Video wählen" (Videogalerie) |
 | local_coursetemplatewizard | Baustein „Kursvorlage übernehmen" (Kategorie „Kurseinrichtung") |
+| repository_nextclouddirect | Optional: Nextcloud als Speicherort im Datei-Picker bei „Materialien" und „Bild" |
 
 ### 2.6 Bekannte Einschränkungen
 

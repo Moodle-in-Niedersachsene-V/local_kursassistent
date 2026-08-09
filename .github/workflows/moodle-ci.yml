@@ -2,7 +2,7 @@
 # GitHub Actions Workflow fuer Moodle-Plugin-Pruefung
 # Moodle in Niedersachsen e. V.
 #
-# Plugin: tiny_textgestaltung
+# Plugin: local_kursassistent
 # Ablage: .github/workflows/moodle-ci.yml
 #
 # Angepasst: kein templates/, kein tests/ vorhanden, daher ohne
@@ -124,5 +124,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: amd-build-${{ matrix.php }}
-          path: moodle/public/lib/editor/tiny/plugins/textgestaltung/amd/build/
+          path: moodle/public/local/kursassistent/amd/build/
           if-no-files-found: warn

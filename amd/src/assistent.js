@@ -18,7 +18,7 @@
  *
  * @module     local_kursassistent/assistent
  * @copyright  2026 Moodle in Niedersachsen e. V.
- * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notification) {
 
@@ -35,7 +35,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
         var $modal = $('<div>', {'class': 'local-kursassistent-modal'});
 
         var $header = $('<div>', {'class': 'd-flex align-items-center justify-content-between mb-2'});
-        $header.append($('<p>', {'class': 'font-weight-bold mb-0', text: ''}));
+        $header.append($('<p>', {'class': 'font-weight-bold mb-0', text: 'Kursassistent'}));
         var $closeBtn = $('<button>', {
             'type': 'button',
             'class': 'close local-kursassistent-close',
@@ -89,7 +89,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
         $formatIcon.append($('<img>', {
             src: M.cfg.wwwroot + '/local/kursassistent/pix/layout.svg',
             alt: '',
-            'class': 'local-kursassistent-icon-img',
+            'class': 'local-kursassistent-icon-img'
         }));
         $formatItem.append($formatIcon, $('<span>', {text: 'Kursformat ändern'}));
         $formatItem.on('click', function(e) {
@@ -105,14 +105,13 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             $vorlageIcon.append($('<img>', {
                 src: M.cfg.wwwroot + '/local/kursassistent/pix/copy.svg',
                 alt: '',
-                'class': 'local-kursassistent-icon-img',
+                'class': 'local-kursassistent-icon-img'
             }));
             $vorlageItem.append($vorlageIcon, $('<span>', {text: 'Kursvorlage übernehmen'}));
             $vorlageItem.on('click', function(e) {
                 e.preventDefault();
-                window.location.href = M.cfg.wwwroot
-                    + '/local/coursetemplatewizard/list_courses_to_copy.php?targetcourseid='
-                    + courseid;
+                window.location.href = M.cfg.wwwroot +
+                    '/local/coursetemplatewizard/list_courses_to_copy.php?targetcourseid=' + courseid;
             });
             $kgInhalt.append($vorlageItem);
         }
@@ -154,19 +153,19 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
         var $addInput = $('<input>', {
             type: 'text',
             'class': 'form-control local-kursassistent-addinput mb-2',
-            placeholder: 'z. B. Woche 5: Bruchrechnung',
+            placeholder: 'z. B. Woche 5: Bruchrechnung'
         });
         $addPanel.append($addInput);
         var $addFooter = $('<div>', {'class': 'd-flex justify-content-end'});
         var $addCancel = $('<button>', {
             type: 'button',
             'class': 'btn btn-sm btn-secondary mr-2 local-kursassistent-add-cancel',
-            text: 'Abbrechen',
+            text: 'Abbrechen'
         });
         var $addSave = $('<button>', {
             type: 'button',
             'class': 'btn btn-sm btn-primary local-kursassistent-add-save',
-            text: 'Erstellen',
+            text: 'Erstellen'
         });
         $addFooter.append($addCancel, $addSave);
         $addPanel.append($addFooter);
@@ -180,12 +179,12 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
         var $renameCancel = $('<button>', {
             type: 'button',
             'class': 'btn btn-sm btn-secondary mr-2 local-kursassistent-rename-cancel',
-            text: 'Abbrechen',
+            text: 'Abbrechen'
         });
         var $renameSave = $('<button>', {
             type: 'button',
             'class': 'btn btn-sm btn-primary local-kursassistent-rename-save',
-            text: 'Speichern',
+            text: 'Speichern'
         });
         $renameFooter.append($renameCancel, $renameSave);
         $renamePanel.append($renameFooter);
@@ -197,12 +196,12 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
         var $cancel = $('<button>', {
             'type': 'button',
             'class': 'btn btn-secondary mr-2 local-kursassistent-close',
-            text: 'Abbrechen',
+            text: 'Abbrechen'
         });
         var $submit = $('<button>', {
             'type': 'button',
             'class': 'btn btn-primary local-kursassistent-submit',
-            text: 'Bausteine einfügen',
+            text: 'Bausteine einfügen'
         });
         $footer.append($cancel, $submit);
         $modal.append($footer);
@@ -361,7 +360,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             if (!response.videoaktiv) {
                 $videowrap.append($('<p>', {
                     'class': 'text-muted small mb-0',
-                    text: 'Video-Funktion ist an dieser Schule nicht aktiviert.',
+                    text: 'Video-Funktion ist an dieser Schule nicht aktiviert.'
                 }));
             } else {
                 var tabs = [];
@@ -399,19 +398,18 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                     if (tab === 'verlinken') {
                         $pane.append($('<p>', {
                             'class': 'small text-muted mb-2',
-                            text: 'Wähle ein bereits auf eurem PeerTube vorhandenes Video aus:',
+                            text: 'Wähle ein bereits auf eurem PeerTube vorhandenes Video aus:'
                         }));
                         $pane.append($('<div>', {
                             'class': 'local-kursassistent-videogallery',
                             'data-typeid': b.id,
-                            'data-loaded': '0',
+                            'data-loaded': '0'
                         }));
                     } else if (tab === 'hochladen') {
                         $pane.append($('<p>', {
                             'class': 'small text-muted mb-2',
-                            text: 'Falls du noch keinen PeerTube-Kanal hast, wirst du zuerst zur '
-                                + 'Einrichtung eines Kanals geführt. Danach kannst du hier das '
-                                + 'Video hochladen.',
+                            text: 'Falls du noch keinen PeerTube-Kanal hast, wirst du zuerst zur ' +
+                                'Einrichtung eines Kanals geführt. Danach kannst du hier das Video hochladen.'
                         }));
                         if (!response.channelready) {
                             $pane.append($('<a>', {
@@ -426,7 +424,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                     } else if (tab === 'link') {
                         $pane.append($('<p>', {
                             'class': 'small text-muted mb-2',
-                            text: 'Link zu einem Video von einer anderen Plattform einfügen (z. B. YouTube, Vimeo):',
+                            text: 'Link zu einem Video von einer anderen Plattform einfügen (z. B. YouTube, Vimeo):'
                         }));
                         $pane.append($('<input>', {
                             type: 'url',
@@ -506,7 +504,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             if (!response.available) {
                 $gallery.append($('<p>', {
                     'class': 'small text-muted mb-0',
-                    text: 'Kein Video-Repository für diese Schule konfiguriert.',
+                    text: 'Kein Video-Repository für diese Schule konfiguriert.'
                 }));
                 return;
             }
@@ -600,9 +598,8 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                     var url = $wrap.find('.local-kursassistent-linkinput').val() || '';
                     if (url) {
                         var safeUrl = $('<div>').text(url).html();
-                        inhalt = '<div class="local-kursassistent-video-embed"><p>'
-                            + '<a href="' + safeUrl + '" target="_blank" rel="noopener">'
-                            + safeUrl + '</a></p></div>';
+                        inhalt = '<div class="local-kursassistent-video-embed"><p><a href="' + safeUrl +
+                            '" target="_blank" rel="noopener">' + safeUrl + '</a></p></div>';
                     } else {
                         inhalt = '<p class="text-muted">Kein Link angegeben.</p>';
                     }
@@ -616,8 +613,8 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                         // automatisch in ein eingebettetes iFrame umwandelt. Der umgebende
                         // Container begrenzt die Darstellungsgröße.
                         var safeGurl = $('<div>').text(gurl).html();
-                        inhalt = '<div class="local-kursassistent-video-embed"><p>'
-                            + '<a href="' + safeGurl + '">' + safeGurl + '</a></p></div>';
+                        inhalt = '<div class="local-kursassistent-video-embed"><p><a href="' + safeGurl +
+                            '">' + safeGurl + '</a></p></div>';
                         auswahl.push({typeid: typeid, inhalt: inhalt});
                     }
                     // Kein Video ausgewählt: Baustein wird einfach übersprungen.
@@ -669,7 +666,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
         /**
          * Initialisiert den Kursassistenten für den aktuellen Kurs.
          *
-         * @param {Number} cid ID des aktuellen Kurses.
+         * @param {Number} cid Kurs-ID
          */
         init: function(cid) {
             courseid = cid;

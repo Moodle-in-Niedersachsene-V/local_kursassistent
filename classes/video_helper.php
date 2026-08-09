@@ -1,18 +1,18 @@
 <?php
-// This file is part of Moodle - https://moodle.org/
+// This file is part of Moodle - http://moodle.org/
 //
-// Moodle is free software: you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// Moodle is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace local_kursassistent;
 
@@ -25,7 +25,7 @@ namespace local_kursassistent;
  *
  * @package    local_kursassistent
  * @copyright  2026 Moodle in Niedersachsen e. V.
- * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class video_helper {
     /**
@@ -74,14 +74,14 @@ class video_helper {
 
         $classfile = $CFG->dirroot . '/local/peertubeupload/classes/channel_manager.php';
         if (!file_exists($classfile)) {
-            // Eine aeltere Version von local_peertubeupload ohne diese Klasse.
+            // Bei aelteren Versionen von local_peertubeupload fehlt diese Klasse.
             return ['ready' => false, 'channelname' => null];
         }
         require_once($classfile);
 
         if (
             !class_exists('local_peertubeupload_channel_manager')
-            || !method_exists('local_peertubeupload_channel_manager', 'is_channel_ready')
+                || !method_exists('local_peertubeupload_channel_manager', 'is_channel_ready')
         ) {
             return ['ready' => false, 'channelname' => null];
         }
