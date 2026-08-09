@@ -135,11 +135,13 @@
     max-width: 480px;
 }
 
-.local-kursassistent-video-embed iframe {
-    width: 100% !important;
-    max-width: 480px !important;
-    height: auto !important;
-    aspect-ratio: 16 / 9 !important;
+/* Klasse verdoppelt, um die Vorgaben des PeerTube-Fallback-Renderers
+   allein über die Spezifität zu überschreiben. */
+.local-kursassistent-video-embed.local-kursassistent-video-embed iframe {
+    width: 100%;
+    max-width: 480px;
+    height: auto;
+    aspect-ratio: 16 / 9;
     display: block;
 }
 
