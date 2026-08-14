@@ -40,6 +40,7 @@ class baustein_form extends \moodleform {
         $mform->addElement('text', 'titel', get_string('titel', 'local_kursassistent'), ['size' => 40]);
         $mform->setType('titel', PARAM_TEXT);
         $mform->addRule('titel', get_string('required'), 'required', null, 'client');
+        $mform->addHelpButton('titel', 'titel', 'local_kursassistent');
 
         $iconoptions = [
             'target-arrow' => get_string('icon_target-arrow', 'local_kursassistent'),
@@ -57,6 +58,7 @@ class baustein_form extends \moodleform {
         ];
         $mform->addElement('select', 'icon', get_string('icon', 'local_kursassistent'), $iconoptions);
         $mform->setDefault('icon', 'file-text');
+        $mform->addHelpButton('icon', 'icon', 'local_kursassistent');
 
         $typoptions = [
             'text' => get_string('typ_text', 'local_kursassistent'),
@@ -67,11 +69,13 @@ class baustein_form extends \moodleform {
         ];
         $mform->addElement('select', 'typ', get_string('typ', 'local_kursassistent'), $typoptions);
         $mform->setDefault('typ', 'text');
+        $mform->addHelpButton('typ', 'typ', 'local_kursassistent');
 
         $moduloptions = ['' => get_string('bittewaehlen', 'local_kursassistent')] + manager::get_available_modules();
         $mform->addElement('select', 'modname', get_string('modname', 'local_kursassistent'), $moduloptions);
         $mform->setType('modname', PARAM_ALPHANUMEXT);
         $mform->hideIf('modname', 'typ', 'neq', 'aktivitaet');
+        $mform->addHelpButton('modname', 'modname', 'local_kursassistent');
 
         $mform->addElement(
             'textarea',
@@ -81,9 +85,11 @@ class baustein_form extends \moodleform {
         );
         $mform->setType('platzhalter', PARAM_RAW);
         $mform->hideIf('platzhalter', 'typ', 'neq', 'text');
+        $mform->addHelpButton('platzhalter', 'platzhalter', 'local_kursassistent');
 
         $mform->addElement('advcheckbox', 'aktiv', get_string('aktiv', 'local_kursassistent'));
         $mform->setDefault('aktiv', 1);
+        $mform->addHelpButton('aktiv', 'aktiv', 'local_kursassistent');
 
         $this->add_action_buttons();
     }

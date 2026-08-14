@@ -1,6 +1,6 @@
 # Kursassistent – Anleitung
 
-*Moodle in Niedersachsen e. V. · local_kursassistent, Build 2026080804, Release 1.1.3 · Stand: August 2026*
+*Moodle in Niedersachsen e. V. · local_kursassistent, Build 2026080902, Release 1.2.0 · Stand: August 2026*
 
 ## 1. Für Lehrkräfte
 
@@ -83,6 +83,8 @@ Unter Website-Administration → Plugins → Lokale Plugins → Kursassistent �
 - **Aktiv/Deaktiviert:** deaktivierte Bausteine erscheinen nicht mehr im Assistenten, bleiben aber erhalten.
 
 Damit lassen sich jederzeit neue Bausteine ergänzen (z. B. weitere Hinweistypen oder Aktivitäten), ohne dass eine Programmänderung nötig ist. Die Zuordnung zu den vier Kategorien im Assistenten-Fenster erfolgt automatisch anhand des gewählten Typs.
+
+Zu jedem Feld des Formulars gibt es einen Hilfe-Button (blauer Kreis mit Fragezeichen), der erklärt, wofür das Feld gedacht ist und was die einzelnen Optionen bewirken.
 
 ### 2.2 Video-Funktion konfigurieren
 

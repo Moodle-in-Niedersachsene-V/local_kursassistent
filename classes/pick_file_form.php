@@ -50,6 +50,7 @@ class pick_file_form extends \moodleform {
         ];
 
         $mform->addElement('filepicker', 'datei', get_string('dateiauswaehlen', 'local_kursassistent'), null, $options);
+        $mform->addHelpButton('datei', 'dateiauswaehlen', 'local_kursassistent');
         // Bewusst KEINE client-seitige 'required'-Regel: diese erkennt externe
         // Repository-Referenzen (z. B. PeerTube-Auswahl) nicht zuverlässig als
         // ausgefüllt und blockiert dann fälschlich das Absenden. Die serverseitige
