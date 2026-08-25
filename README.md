@@ -13,7 +13,7 @@ Inhalt aus. Die Bausteine sind von der Schul-Administration frei erweiterbar.
 - **Lernmaterial** – Dateien und Bilder über den Moodle-Datei-Picker, Videos per PeerTube-Auswahl,
   Direkt-Upload oder externem Link
 - **Aktivitäten** – Sprung in Moodles „Aktivität hinzufügen" mit vorausgewähltem Typ und Zielabschnitt
-- **Kurseinrichtung** – Kursformat ändern, Kursvorlage übernehmen
+- **Kurseinrichtung** – Kursformat ändern, Inhalte einer Kursvorlage übernehmen
 - **Abschnittsverwaltung** – Kursabschnitte direkt im Assistenten umbenennen oder neu anlegen
 - **Anleitung** – von der Administration frei editierbarer Hilfetext für Lehrkräfte
 
@@ -33,7 +33,6 @@ Installationsreihenfolge ist nicht erforderlich.
 |---|---|
 | `repository_peertubeoauth` | Auswahl vorhandener PeerTube-Videos |
 | `local_peertubeupload` | Video-Upload durch die Lehrkraft |
-| `local_coursetemplatewizard` | Baustein „Kursvorlage übernehmen" |
 | `repository_nextclouddirect` | Nextcloud als Speicherort im Datei-Picker |
 
 ## Installation

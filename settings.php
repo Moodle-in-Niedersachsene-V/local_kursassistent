@@ -34,13 +34,14 @@ if ($hassiteconfig) {
         1
     ));
 
-    $templatewizardstatus = \core_component::get_component_directory('local_coursetemplatewizard')
-        ? get_string('templatewizard_installiert', 'local_kursassistent')
-        : get_string('templatewizard_fehlt', 'local_kursassistent');
-    $settings->add(new admin_setting_heading(
-        'local_kursassistent_templatewizard',
-        get_string('kursvorlageuebernehmen', 'local_kursassistent'),
-        $templatewizardstatus
+    $kategorien = ['0' => get_string('vorlagenkategorie_keine', 'local_kursassistent')]
+        + \core_course_category::make_categories_list();
+    $settings->add(new admin_setting_configselect(
+        'local_kursassistent/vorlagenkategorie',
+        get_string('vorlagenkategorie', 'local_kursassistent'),
+        get_string('vorlagenkategorie_desc', 'local_kursassistent'),
+        '0',
+        $kategorien
     ));
 
     $settings->add(new admin_setting_confightmleditor(

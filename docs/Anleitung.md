@@ -1,6 +1,6 @@
 # Kursassistent – Anleitung
 
-*Moodle in Niedersachsen e. V. · local_kursassistent, Build 2026080902, Release 1.2.0 · Stand: August 2026*
+*Moodle in Niedersachsen e. V. · local_kursassistent, Build 2026080904, Release 1.3.0 · Stand: August 2026*
 
 ## 1. Für Lehrkräfte
 
@@ -61,7 +61,7 @@ Neben dem Zielabschnitt-Dropdown findest du zwei kleine Schaltflächen:
 Die vierte Kategorie „Kurseinrichtung" bündelt zwei kursweite Aktionen:
 
 - **Kursformat ändern:** führt direkt zu Moodles regulärer Kurs-Einstellungsseite, auf der sich unter anderem das Kursformat (z. B. Themenformat, Wochenformat) anpassen lässt.
-- **Kursvorlage übernehmen:** nur sichtbar, wenn an eurer Schule zusätzlich das Plugin local_coursetemplatewizard installiert ist. Führt zu einer Galerie mit allen freigegebenen Vorlagenkursen; die Übernahme läuft automatisiert im Hintergrund (Sicherung und Wiederherstellung in einem Schritt).
+- **Kursvorlage übernehmen:** zeigt eine Übersicht aller Kurse aus dem Kursbereich, den die Administration als Vorlagenbereich festgelegt hat – mit Kursbild und Kurzbeschreibung. Nach Auswahl und Bestätigung werden die Inhalte der Vorlage in deinen Kurs übernommen. Vorhandene Inhalte bleiben dabei erhalten, die Vorlage wird ergänzt. Nutzerdaten wie Abgaben oder Bewertungen werden nicht übertragen.
 
 ### 1.9 Anleitung zum Kursassistenten
 
@@ -100,7 +100,15 @@ Unter den Plugin-Einstellungen → „Anleitungstext für Lehrkräfte" lässt si
 
 ### 2.4 Kursvorlagen-Funktion
 
-Der Baustein „Kursvorlage übernehmen" (Kategorie „Kurseinrichtung") setzt das zusätzliche Plugin local_coursetemplatewizard voraus. Ist es nicht installiert, bleibt der Baustein einfach verborgen – local_kursassistent funktioniert unabhängig davon weiter uneingeschränkt. Die Vorlagen-Kategorie sowie alle weiteren Einstellungen dazu werden direkt in den Einstellungen von local_coursetemplatewizard gepflegt, nicht in local_kursassistent.
+Die Funktion ist vollständig in local_kursassistent enthalten, ein Zusatzplugin wird nicht benötigt.
+
+Unter den Plugin-Einstellungen legst du mit „Kursbereich mit den Vorlagen" fest, welcher Kursbereich die Vorlagen enthält. Alle Kurse in diesem Bereich stehen Lehrkräften anschliessend zur Auswahl. Ohne Auswahl erscheint der Baustein gar nicht erst.
+
+Zum Vorgehen bei der Übernahme:
+
+- Die Inhalte der Vorlage werden dem Zielkurs **hinzugefügt**; vorhandene Inhalte bleiben unverändert erhalten. Es wird nichts gelöscht oder überschrieben.
+- **Nutzerdaten werden nicht übertragen** – also keine Abgaben, Bewertungen oder Einschreibungen aus dem Vorlagenkurs.
+- Die Sicherung des Vorlagenkurses läuft technisch unter der Websiteadministration, weil Lehrkräfte im Vorlagenbereich normalerweise nicht eingeschrieben sind. Abgesichert ist das dadurch, dass ausschliesslich Kurse aus dem eingestellten Vorlagenbereich verwendet werden können. Das Einfügen in den Zielkurs erfolgt mit den Rechten der aufrufenden Lehrkraft.
 
 ### 2.5 Voraussetzungen
 
@@ -109,7 +117,6 @@ Der Baustein „Kursvorlage übernehmen" (Kategorie „Kurseinrichtung") setzt d
 | local_kursassistent | Grundfunktion (alle vier Kategorien außer Video-Verlinken/-Hochladen und Kursvorlagen) |
 | local_peertubeupload | Video-Tab „Video hochladen" (ab Build 2026071501 mit channel_manager-Klasse) |
 | repository_peertubeoauth | Video-Tab „PeerTube-Video wählen" (Videogalerie) |
-| local_coursetemplatewizard | Baustein „Kursvorlage übernehmen" (Kategorie „Kurseinrichtung") |
 | repository_nextclouddirect | Optional: Nextcloud als Speicherort im Datei-Picker bei „Materialien" und „Bild" |
 
 ### 2.6 Bekannte Einschränkungen

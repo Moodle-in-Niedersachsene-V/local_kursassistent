@@ -98,7 +98,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
         });
         $kgInhalt.append($formatItem);
 
-        if (response.templatewizardverfuegbar) {
+        if (response.vorlagenverfuegbar) {
             var $vorlageItem = $('<label>', {'class': 'local-kursassistent-item local-kursassistent-navitem'});
             $vorlageItem.append($('<span>', {'class': 'local-kursassistent-checkbox-spacer'}));
             var $vorlageIcon = $('<span>', {'class': 'local-kursassistent-icon'});
@@ -111,7 +111,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             $vorlageItem.on('click', function(e) {
                 e.preventDefault();
                 window.location.href = M.cfg.wwwroot +
-                    '/local/coursetemplatewizard/list_courses_to_copy.php?targetcourseid=' + courseid;
+                    '/local/kursassistent/vorlagen.php?courseid=' + courseid;
             });
             $kgInhalt.append($vorlageItem);
         }

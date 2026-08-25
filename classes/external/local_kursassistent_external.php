@@ -329,7 +329,7 @@ class local_kursassistent_external extends external_api {
             'uploadverfuegbar' => $uploadverfuegbar,
             'channelready' => (bool) $channel['ready'],
             'channelname' => $channel['channelname'] ?? '',
-            'templatewizardverfuegbar' => (bool) \core_component::get_component_directory('local_coursetemplatewizard'),
+            'vorlagenverfuegbar' => \local_kursassistent\vorlagen_manager::is_aktiv(),
         ];
     }
 
@@ -357,7 +357,7 @@ class local_kursassistent_external extends external_api {
             'uploadverfuegbar' => new external_value(PARAM_BOOL, 'Upload verfügbar'),
             'channelready' => new external_value(PARAM_BOOL, 'Kanal bereit'),
             'channelname' => new external_value(PARAM_TEXT, 'Kanalname', VALUE_DEFAULT, ''),
-            'templatewizardverfuegbar' => new external_value(PARAM_BOOL, 'local_coursetemplatewizard installiert'),
+            'vorlagenverfuegbar' => new external_value(PARAM_BOOL, 'Kursvorlagen konfiguriert'),
         ]);
     }
 
