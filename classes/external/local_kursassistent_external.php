@@ -67,42 +67,33 @@ class local_kursassistent_external extends external_api {
             return ['available' => false, 'videos' => []];
         }
 
-        $coursecontext = \context_course::instance($params['courseid']);
-        $systemcontext = \context_system::instance();
+        global $USER;
 
-        $instanceid = $DB->get_field_sql(
-            "SELECT ri.id
-               FROM {repository_instances} ri
-               JOIN {repository} r ON r.id = ri.typeid
-              WHERE r.type = :type
-                AND ri.contextid = :contextid",
-            ['type' => 'peertubeoauth', 'contextid' => $coursecontext->id]
-        );
+        // Reihenfolge ist entscheidend: Die persoenliche Instanz im Nutzerkontext traegt den
+        // Kanalnamen der Lehrkraft und zeigt deren eigene Videos. Instanzen im Kurs- oder
+        // Systemkontext haben in der Regel keinen Kanalnamen und liefern stattdessen alle
+        // Videos des Moderator-Kontos.
+        $kontexte = [
+            \context_user::instance($USER->id)->id,
+            \context_course::instance($params['courseid'])->id,
+            \context_system::instance()->id,
+        ];
 
-        if (!$instanceid) {
+        $instanceid = null;
+        foreach ($kontexte as $kontextid) {
             $instanceid = $DB->get_field_sql(
                 "SELECT ri.id
                    FROM {repository_instances} ri
                    JOIN {repository} r ON r.id = ri.typeid
                   WHERE r.type = :type
-                    AND ri.contextid = :contextid",
-                ['type' => 'peertubeoauth', 'contextid' => $systemcontext->id]
-            );
-        }
-
-        if (!$instanceid) {
-            // Fallback: irgendeine vorhandene Instanz (z. B. eine andere Kursinstanz),
-            // damit die Galerie auch dann funktioniert, wenn (noch) keine Instanz für
-            // diesen konkreten Kurs oder auf Systemebene existiert.
-            $instanceid = $DB->get_field_sql(
-                "SELECT ri.id
-                   FROM {repository_instances} ri
-                   JOIN {repository} r ON r.id = ri.typeid
-                  WHERE r.type = :type
+                    AND ri.contextid = :contextid
                ORDER BY ri.id ASC",
-                ['type' => 'peertubeoauth'],
+                ['type' => 'peertubeoauth', 'contextid' => $kontextid],
                 IGNORE_MULTIPLE
             );
+            if ($instanceid) {
+                break;
+            }
         }
 
         if (!$instanceid) {

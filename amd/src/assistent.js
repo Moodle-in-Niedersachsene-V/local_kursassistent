@@ -23,6 +23,7 @@
 define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notification) {
 
     var courseid = null;
+    var etwasEingefuegt = false;
 
     /**
      * Baut das Modal-Markup basierend auf den geladenen Bausteinen.
@@ -94,7 +95,8 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
         $formatItem.append($formatIcon, $('<span>', {text: 'Kursformat ändern'}));
         $formatItem.on('click', function(e) {
             e.preventDefault();
-            window.location.href = M.cfg.wwwroot + '/course/edit.php?id=' + courseid;
+            navigiereMitWarnung($overlay, M.cfg.wwwroot + '/course/edit.php?id=' + courseid,
+                'Kursformat ändern');
         });
         $kgInhalt.append($formatItem);
 
@@ -110,8 +112,8 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             $vorlageItem.append($vorlageIcon, $('<span>', {text: 'Kursvorlage übernehmen'}));
             $vorlageItem.on('click', function(e) {
                 e.preventDefault();
-                window.location.href = M.cfg.wwwroot +
-                    '/local/kursassistent/vorlagen.php?courseid=' + courseid;
+                navigiereMitWarnung($overlay, M.cfg.wwwroot +
+                    '/local/kursassistent/vorlagen.php?courseid=' + courseid, 'Kursvorlage übernehmen');
             });
             $kgInhalt.append($vorlageItem);
         }
@@ -192,11 +194,14 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
 
         $modal.append($sectionwrap);
 
+        var $meldung = $('<div>', {'class': 'local-kursassistent-meldung d-none'});
+        $modal.append($meldung);
+
         var $footer = $('<div>', {'class': 'd-flex justify-content-end'});
         var $cancel = $('<button>', {
             'type': 'button',
-            'class': 'btn btn-secondary mr-2 local-kursassistent-close',
-            text: 'Abbrechen'
+            'class': 'btn btn-secondary mr-2 local-kursassistent-fertig',
+            text: 'Fertig'
         });
         var $submit = $('<button>', {
             'type': 'button',
@@ -450,8 +455,8 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             $item.on('click', function(e) {
                 e.preventDefault();
                 var sectionnum = parseInt($overlay.find('.local-kursassistent-section').val(), 10) || 0;
-                window.location.href = M.cfg.wwwroot + '/local/kursassistent/pick_file.php?courseid=' +
-                    courseid + '&sectionnum=' + sectionnum + '&typeid=' + b.id;
+                navigiereMitWarnung($overlay, M.cfg.wwwroot + '/local/kursassistent/pick_file.php?courseid=' +
+                    courseid + '&sectionnum=' + sectionnum + '&typeid=' + b.id, b.titel);
             });
         }
 
@@ -463,8 +468,9 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             $item.on('click', function(e) {
                 e.preventDefault();
                 var sectionnum = parseInt($overlay.find('.local-kursassistent-section').val(), 10) || 0;
-                window.location.href = M.cfg.wwwroot + '/course/modedit.php?add=' + encodeURIComponent(b.modname) +
-                    '&type=&course=' + courseid + '&section=' + sectionnum + '&return=0&sr=0';
+                navigiereMitWarnung($overlay, M.cfg.wwwroot + '/course/modedit.php?add=' +
+                    encodeURIComponent(b.modname) + '&type=&course=' + courseid +
+                    '&section=' + sectionnum + '&return=0&sr=0', b.titel);
             });
         }
     }
@@ -570,13 +576,93 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
     }
 
     /**
+     * Zeigt eine Meldung im Kopfbereich des Fensters an.
+     *
+     * @param {jQuery} $overlay
+     * @param {String} text
+     * @param {String} art 'erfolg' oder 'hinweis'
+     */
+    function zeigeMeldung($overlay, text, art) {
+        var $meldung = $overlay.find('.local-kursassistent-meldung');
+        $meldung
+            .removeClass('d-none local-kursassistent-meldung-erfolg local-kursassistent-meldung-hinweis')
+            .addClass('local-kursassistent-meldung-' + art)
+            .text(text);
+    }
+
+    /**
+     * Prüft, ob im Fenster noch nicht eingefügte Auswahlen stehen.
+     *
+     * @param {jQuery} $overlay
+     * @return {Boolean}
+     */
+    function hatOffeneEingaben($overlay) {
+        return $overlay.find('.local-kursassistent-checkbox:checked').length > 0;
+    }
+
+    /**
+     * Wechselt zu einer anderen Seite und warnt vorher, falls noch Eingaben offen sind.
+     *
+     * @param {jQuery} $overlay
+     * @param {String} url Ziel-URL
+     * @param {String} bausteinname Name des angeklickten Bausteins
+     */
+    function navigiereMitWarnung($overlay, url, bausteinname) {
+        if (!hatOffeneEingaben($overlay)) {
+            window.location.href = url;
+            return;
+        }
+
+        var $panel = $('<div>', {'class': 'local-kursassistent-abfrage'});
+        $panel.append($('<p>', {'class': 'font-weight-bold mb-1', text: 'Noch nicht eingefügte Eingaben'}));
+        $panel.append($('<p>', {
+            'class': 'small mb-3',
+            text: 'Du hast Bausteine ausgewählt, die noch nicht eingefügt wurden. „' + bausteinname +
+                '" öffnet eine neue Seite - deine Eingaben gehen dabei verloren, wenn sie nicht vorher eingefügt werden.'
+        }));
+
+        var $erst = $('<button>', {
+            type: 'button',
+            'class': 'btn btn-primary btn-sm d-block mb-2 local-kursassistent-abfrage-speichern',
+            text: 'Erst einfügen, dann weiter'
+        });
+        var $ohne = $('<button>', {
+            type: 'button',
+            'class': 'btn btn-outline-secondary btn-sm d-block mb-2 local-kursassistent-abfrage-weiter',
+            text: 'Ohne Speichern weiter'
+        });
+        var $ab = $('<button>', {
+            type: 'button',
+            'class': 'btn btn-link btn-sm d-block local-kursassistent-abfrage-abbrechen',
+            text: 'Abbrechen'
+        });
+        $panel.append($erst, $ohne, $ab);
+
+        $erst.on('click', function() {
+            sendeAuswahl($overlay, function() {
+                window.location.href = url;
+            });
+        });
+        $ohne.on('click', function() {
+            window.location.href = url;
+        });
+        $ab.on('click', function() {
+            $panel.remove();
+        });
+
+        $overlay.find('.local-kursassistent-modal').append($panel);
+        $panel[0].scrollIntoView({block: 'nearest'});
+    }
+
+    /**
      * Sammelt die Auswahl aus dem Modal und sendet sie an den Server.
      * Video-Uploads laufen separat (echter Datei-Upload), alles andere über
      * den bestehenden Batch-Webservice-Aufruf.
      *
      * @param {jQuery} $overlay
+     * @param {Function} weiter Wird nach erfolgreichem Einfügen aufgerufen
      */
-    function sendeAuswahl($overlay) {
+    function sendeAuswahl($overlay, weiter) {
         var sectionnum = parseInt($overlay.find('.local-kursassistent-section').val(), 10);
         var auswahl = [];
         var videouploads = [];
@@ -654,7 +740,36 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
         });
 
         $.when.apply($, promises).done(function() {
-            window.location.reload();
+            etwasEingefuegt = true;
+
+            var anzahl = auswahl.length + videouploads.length;
+            zeigeMeldung($overlay, anzahl === 1
+                ? 'Ein Baustein wurde eingefügt.'
+                : anzahl + ' Bausteine wurden eingefügt.', 'erfolg');
+
+            // Haken loesen, Eingaben aber stehen lassen: die Lehrkraft sieht weiterhin,
+            // was sie geschrieben hat, ein zweiter Klick erzeugt aber nicht versehentlich
+            // eine Dublette. Wer bewusst einen weiteren Baustein will, hakt erneut an.
+            $overlay.find('.local-kursassistent-checkbox:checked').each(function() {
+                var $cb = $(this);
+                $cb.prop('checked', false);
+                var typeid = $cb.data('typeid');
+                $overlay.find('[data-typeid="' + typeid + '"]')
+                    .not('.local-kursassistent-checkbox').addClass('d-none');
+                var $zeile = $cb.closest('.local-kursassistent-item');
+                if (!$zeile.find('.local-kursassistent-eingefuegt').length) {
+                    $zeile.append($('<span>', {
+                        'class': 'local-kursassistent-eingefuegt',
+                        text: 'bereits eingefügt'
+                    }));
+                }
+            });
+
+            $submitBtn.prop('disabled', false).text('Bausteine einfügen');
+
+            if (typeof weiter === 'function') {
+                weiter();
+            }
         }).fail(function(error) {
             $submitBtn.prop('disabled', false).text('Bausteine einfügen');
             Notification.alert('Fehler beim Einfügen',
@@ -684,6 +799,21 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
 
             $(document).on('click', '.local-kursassistent-close', function() {
                 $(this).closest('.local-kursassistent-overlay').remove();
+                if (etwasEingefuegt) {
+                    window.location.reload();
+                }
+            });
+
+            $(document).on('click', '.local-kursassistent-fertig', function() {
+                var $overlay = $(this).closest('.local-kursassistent-overlay');
+                if (hatOffeneEingaben($overlay)) {
+                    navigiereMitWarnung($overlay, window.location.href, 'Fertig');
+                    return;
+                }
+                $overlay.remove();
+                if (etwasEingefuegt) {
+                    window.location.reload();
+                }
             });
 
             $(document).on('click', '.local-kursassistent-submit', function() {

@@ -1,6 +1,6 @@
 # Kursassistent – Anleitung
 
-*Moodle in Niedersachsen e. V. · local_kursassistent, Build 2026080904, Release 1.3.0 · Stand: August 2026*
+*Moodle in Niedersachsen e. V. · local_kursassistent, Build 2026080905, Release 1.3.1 · Stand: August 2026*
 
 ## 1. Für Lehrkräfte
 
@@ -21,9 +21,14 @@ Der Kursassistent hilft dabei, Kursabschnitte schnell und einheitlich zu gestalt
 1. Klappe die Kategorie „Lerninformationen" auf und hake die gewünschten Bausteine an.
 2. Für jeden angehakten Text-Baustein erscheint ein Eingabefeld – trage dort deinen Text ein.
 3. Wähle unten den Zielabschnitt aus, in den die Bausteine eingefügt werden sollen.
-4. Klicke auf „Bausteine einfügen". Die Seite lädt neu und die Bausteine erscheinen im gewählten Abschnitt.
+4. Klicke auf „Bausteine einfügen". Die Bausteine werden gespeichert, das Fenster bleibt geöffnet.
+5. Du kannst nun weitere Bausteine auswählen. Erst „Fertig" schließt den Assistenten und lädt den Kurs neu.
 
 *Du kannst beliebig viele Text-Bausteine gleichzeitig auswählen und in einem Schritt einfügen.*
+
+Nach dem Einfügen bleibt dein Text im Feld stehen, der Haken wird aber entfernt und die Zeile mit „bereits eingefügt" markiert. So siehst du weiterhin, was du geschrieben hast, ohne dass ein zweiter Klick versehentlich einen doppelten Baustein erzeugt. Wer bewusst einen weiteren, abgewandelten Baustein möchte, hakt die Zeile einfach erneut an.
+
+Bausteine, die eine neue Seite öffnen – Materialien, Bild, Aktivitäten, Kursformat und Kursvorlage –, fragen nach, solange noch nicht eingefügte Auswahlen offen sind. Du kannst dann erst einfügen und danach weitergehen, ohne dass etwas verlorengeht.
 
 ### 1.4 Materialien und Bilder einfügen
 

@@ -307,3 +307,43 @@
     color: #495057;
     flex: 1;
 }
+
+.local-kursassistent-meldung {
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    font-size: 13px;
+}
+
+.local-kursassistent-meldung-erfolg {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.local-kursassistent-meldung-hinweis {
+    background: #fff3cd;
+    border: 1px solid #ffe69c;
+    color: #856404;
+}
+
+.local-kursassistent-eingefuegt {
+    margin-left: auto;
+    font-size: 11px;
+    color: #6c757d;
+    font-style: italic;
+    white-space: nowrap;
+}
+
+.local-kursassistent-abfrage {
+    border: 1px solid #ffe69c;
+    background: #fff3cd;
+    border-radius: 6px;
+    padding: 12px;
+    margin-top: 12px;
+}
+
+.local-kursassistent-abfrage .btn {
+    width: 100%;
+    text-align: left;
+}
