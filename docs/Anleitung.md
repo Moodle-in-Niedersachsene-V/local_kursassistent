@@ -1,6 +1,6 @@
 # Kursassistent – Anleitung
 
-*Moodle in Niedersachsen e. V. · local_kursassistent, Build 2026080905, Release 1.3.1 · Stand: August 2026*
+*Moodle in Niedersachsen e. V. · local_kursassistent, Build 2026080906, Release 1.3.1 · Stand: August 2026*
 
 ## 1. Für Lehrkräfte
 
