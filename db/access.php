@@ -43,4 +43,14 @@ $capabilities = [
             'manager' => CAP_ALLOW,
         ],
     ],
+    'local/kursassistent:viewownprogress' => [
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => [
+            'student' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'teacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+        ],
+    ],
 ];

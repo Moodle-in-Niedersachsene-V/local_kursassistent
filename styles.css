@@ -347,3 +347,422 @@
     width: 100%;
     text-align: left;
 }
+
+/* ============================================================
+   Subpanel: Abschluss, Voraussetzungen, Lernpfad, Übersicht
+   ============================================================ */
+
+.local-kursassistent-subpanel {
+    padding: 4px 0;
+}
+
+.local-kursassistent-zurueck {
+    font-size: 13px;
+}
+
+.local-kursassistent-hauptinhalt-hidden.local-kursassistent-hauptinhalt-hidden {
+    display: none;
+}
+
+/* Aktivitäts-Liste (gemeinsam für alle Panels) */
+.local-kursassistent-av-liste {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.local-kursassistent-av-sectionheader {
+    background: #f1f3f5;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.local-kursassistent-av-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #f1f3f5;
+    font-size: 13px;
+}
+
+.local-kursassistent-av-row:last-child {
+    border-bottom: none;
+}
+
+.local-kursassistent-av-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.local-kursassistent-av-row select {
+    width: 140px;
+    flex-shrink: 0;
+}
+
+/* Voraussetzungen-Panel */
+.local-kursassistent-va-row {
+    flex-wrap: wrap;
+}
+
+.local-kursassistent-va-name {
+    flex: 1;
+    min-width: 120px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.local-kursassistent-va-select {
+    width: 160px;
+    flex-shrink: 0;
+}
+
+.local-kursassistent-va-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.local-kursassistent-va-remove {
+    background: none;
+    border: none;
+    color: #0c5460;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0 2px;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.local-kursassistent-va-remove:hover {
+    opacity: 1;
+    color: #dc3545;
+}
+
+/* Lernpfad-Panel */
+.local-kursassistent-lp-liste {
+    cursor: default;
+}
+
+.local-kursassistent-lp-row {
+    cursor: pointer;
+    margin: 0;
+}
+
+.local-kursassistent-lp-row:hover {
+    background: #f8f9fa;
+}
+
+.local-kursassistent-lp-check {
+    flex-shrink: 0;
+}
+
+/* Abschluss-Panel: Sub-Optionen (Ansicht/Bestehen) */
+.local-kursassistent-av-row-wrap {
+    flex-wrap: wrap;
+}
+
+.local-kursassistent-av-subopts {
+    width: 100%;
+    display: flex;
+    gap: 12px;
+    padding: 4px 0 2px 0;
+}
+
+.local-kursassistent-av-subopt {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #495057;
+    cursor: pointer;
+    margin: 0;
+}
+
+/* Voraussetzungen-Panel: Typ-Auswahl und Bewertungseingabe */
+.local-kursassistent-va-controls {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+    align-items: center;
+}
+
+.local-kursassistent-va-typeselect {
+    width: 110px;
+    flex-shrink: 0;
+}
+
+.local-kursassistent-va-mingrade {
+    width: 70px;
+    flex-shrink: 0;
+}
+
+/* Übersicht-Tabelle */
+.local-kursassistent-uebersicht-table {
+    font-size: 13px;
+}
+
+.local-kursassistent-uebersicht-table th {
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.local-kursassistent-uebersicht-table td {
+    vertical-align: middle;
+}
+
+/* Sichtbarkeits-Toggle */
+.local-kursassistent-vis-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    line-height: 1;
+    opacity: 0.8;
+    transition: opacity 0.15s;
+}
+
+.local-kursassistent-vis-toggle:hover {
+    opacity: 1;
+}
+
+.local-kursassistent-vis-hidden {
+    opacity: 0.35;
+}
+
+.local-kursassistent-vis-hidden:hover {
+    opacity: 0.6;
+}
+
+.local-kursassistent-vis-icon {
+    width: 18px;
+    height: 18px;
+}
+
+/* Abschnittsvorlagen-Panel */
+.local-kursassistent-sectpl-row {
+    justify-content: space-between;
+}
+
+.local-kursassistent-sectpl-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.local-kursassistent-sectpl-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+    align-items: center;
+}
+
+.local-kursassistent-sectpl-neu {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 12px;
+    background: #f8f9fa;
+}
+
+.local-kursassistent-sectpl-baustein-liste {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.local-kursassistent-sectpl-baustein-liste .local-kursassistent-av-row {
+    padding: 6px 10px;
+}
+
+.local-kursassistent-sectpl-delconfirm {
+    padding: 6px 0;
+}
+
+.local-kursassistent-sectpl-confirm {
+    margin-top: 8px;
+}
+
+/* ── Statistik-Panel ── */
+
+.local-kursassistent-stat-summary {
+    background: #f0f4ff;
+    border-radius: 8px;
+    border: 1px solid #c8d6e5;
+}
+
+.local-kursassistent-stat-headline {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.local-kursassistent-stat-percent {
+    font-size: 1.4rem;
+    color: #0d6efd;
+}
+
+.local-kursassistent-stat-section-header {
+    font-weight: 600;
+    font-size: .85rem;
+    color: #495057;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 2px;
+}
+
+/* Fortschrittsbalken */
+.local-kursassistent-bar-track {
+    width: 100%;
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.local-kursassistent-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width .4s ease;
+}
+
+.local-kursassistent-bar-high {
+    background: #198754;
+}
+
+.local-kursassistent-bar-mid {
+    background: #ffc107;
+}
+
+.local-kursassistent-bar-low {
+    background: #dc3545;
+}
+
+/* Detail-Tabelle */
+.local-kursassistent-stat-table-wrap {
+    overflow-x: auto;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.local-kursassistent-stat-table {
+    font-size: .8rem;
+    white-space: nowrap;
+}
+
+.local-kursassistent-stat-table th {
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 2;
+}
+
+.local-kursassistent-stat-th-activity {
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.local-kursassistent-stat-sticky {
+    position: sticky;
+    left: 0;
+    background: #fff;
+    z-index: 1;
+}
+
+.local-kursassistent-stat-table thead .local-kursassistent-stat-sticky {
+    z-index: 3;
+}
+
+.local-kursassistent-stat-done {
+    color: #198754;
+    font-weight: bold;
+}
+
+.local-kursassistent-stat-open {
+    color: #adb5bd;
+}
+
+.local-kursassistent-stat-table tfoot td {
+    border-top: 2px solid #495057;
+    font-weight: 600;
+    background: #f8f9fa;
+}
+
+/* Kommentar-Spalte in der Statistik-Tabelle. */
+.local-kursassistent-stat-comment-th {
+    min-width: 180px;
+}
+
+.local-kursassistent-stat-comment-cell {
+    min-width: 180px;
+    max-width: 260px;
+}
+
+.local-kursassistent-comment-display {
+    cursor: default;
+    min-height: 28px;
+}
+
+.local-kursassistent-comment-edit {
+    font-size: 0.85rem;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+}
+
+.local-kursassistent-stat-comment-cell:hover .local-kursassistent-comment-edit {
+    opacity: 1;
+}
+
+.local-kursassistent-comment-editarea textarea {
+    font-size: 0.8rem;
+    resize: vertical;
+}
+
+/* Lehrkraft-Kommentar in der Schüler-Fortschrittsansicht. */
+.local-kursassistent-teacher-comment {
+    background: #e8f4fd;
+    border-left: 3px solid #0d6efd;
+    border-radius: 4px;
+}
+
+/* Hilfe-Icon und Popover. Klasse verdoppelt, damit die Link-Vorgaben des
+   Themes ohne Wichtigkeitsmarkierung überschrieben werden. */
+.local-kursassistent-helpicon.local-kursassistent-helpicon {
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    text-decoration: none;
+    position: relative;
+}
+
+.local-kursassistent-helpicon .fa-question-circle {
+    font-size: 1rem;
+}
+
+.local-kursassistent-helppopover {
+    position: absolute;
+    z-index: 1060;
+    max-width: 350px;
+    min-width: 250px;
+    margin-top: 4px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+.local-kursassistent-helppopover .popover-body {
+    font-size: 0.85rem;
+    line-height: 1.5;
+}

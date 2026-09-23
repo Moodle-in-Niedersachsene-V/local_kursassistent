@@ -48,6 +48,20 @@ class provider implements
             'timecreated' => 'privacy:metadata:local_kursassistent_log:timecreated',
         ], 'privacy:metadata:local_kursassistent_log');
 
+        $collection->add_database_table('local_kursassistent_comment', [
+            'studentid' => 'privacy:metadata:local_kursassistent_comment:studentid',
+            'teacherid' => 'privacy:metadata:local_kursassistent_comment:teacherid',
+            'commenttext' => 'privacy:metadata:local_kursassistent_comment:commenttext',
+            'timecreated' => 'privacy:metadata:local_kursassistent_comment:timecreated',
+        ], 'privacy:metadata:local_kursassistent_comment');
+
+        $collection->add_database_table('local_kursassistent_sectpl', [
+            'userid' => 'privacy:metadata:local_kursassistent_sectpl:userid',
+            'name' => 'privacy:metadata:local_kursassistent_sectpl:name',
+            'description' => 'privacy:metadata:local_kursassistent_sectpl:description',
+            'timecreated' => 'privacy:metadata:local_kursassistent_sectpl:timecreated',
+        ], 'privacy:metadata:local_kursassistent_sectpl');
+
         return $collection;
     }
 
@@ -69,6 +83,27 @@ class provider implements
             'userid' => $userid,
         ]);
 
+        // Kommentare: sowohl als Student als auch als Lehrkraft.
+        $sql = "SELECT ctx.id
+                  FROM {local_kursassistent_comment} c
+                  JOIN {context} ctx ON ctx.instanceid = c.courseid AND ctx.contextlevel = :contextlevel
+                 WHERE c.studentid = :studentid OR c.teacherid = :teacherid";
+        $contextlist->add_from_sql($sql, [
+            'contextlevel' => CONTEXT_COURSE,
+            'studentid' => $userid,
+            'teacherid' => $userid,
+        ]);
+
+        // Abschnittsvorlagen haben keinen Kursbezug, sie gehoeren der anlegenden Person.
+        $sql = "SELECT ctx.id
+                  FROM {local_kursassistent_sectpl} t
+                  JOIN {context} ctx ON ctx.instanceid = t.userid AND ctx.contextlevel = :contextlevel
+                 WHERE t.userid = :userid";
+        $contextlist->add_from_sql($sql, [
+            'contextlevel' => CONTEXT_USER,
+            'userid' => $userid,
+        ]);
+
         return $contextlist;
     }
 
@@ -79,12 +114,24 @@ class provider implements
      */
     public static function get_users_in_context(userlist $userlist): void {
         $context = $userlist->get_context();
+
+        if ($context instanceof \context_user) {
+            $sql = "SELECT userid FROM {local_kursassistent_sectpl} WHERE userid = :userid";
+            $userlist->add_from_sql('userid', $sql, ['userid' => $context->instanceid]);
+            return;
+        }
+
         if (!$context instanceof \context_course) {
             return;
         }
 
         $sql = "SELECT userid FROM {local_kursassistent_log} WHERE courseid = :courseid";
         $userlist->add_from_sql('userid', $sql, ['courseid' => $context->instanceid]);
+
+        $sql = "SELECT studentid AS userid FROM {local_kursassistent_comment} WHERE courseid = :courseid";
+        $userlist->add_from_sql('userid', $sql, ['courseid' => $context->instanceid]);
+        $sql = "SELECT teacherid AS userid FROM {local_kursassistent_comment} WHERE courseid = :courseid2";
+        $userlist->add_from_sql('userid', $sql, ['courseid2' => $context->instanceid]);
     }
 
     /**
@@ -98,6 +145,24 @@ class provider implements
         $userid = $contextlist->get_user()->id;
 
         foreach ($contextlist->get_contexts() as $context) {
+            if ($context instanceof \context_user && (int) $context->instanceid === (int) $userid) {
+                $vorlagen = $DB->get_records('local_kursassistent_sectpl', ['userid' => $userid]);
+                if (!empty($vorlagen)) {
+                    $vdaten = array_map(function ($v) {
+                        return [
+                            'name' => $v->name,
+                            'description' => $v->description,
+                            'timecreated' => \core_privacy\local\request\transform::datetime($v->timecreated),
+                        ];
+                    }, array_values($vorlagen));
+                    writer::with_context($context)->export_data(
+                        [get_string('pluginname', 'local_kursassistent')],
+                        (object) ['abschnittsvorlagen' => $vdaten]
+                    );
+                }
+                continue;
+            }
+
             if (!$context instanceof \context_course) {
                 continue;
             }
@@ -123,6 +188,30 @@ class provider implements
                 [get_string('pluginname', 'local_kursassistent')],
                 (object) ['eintraege' => $data]
             );
+
+            // Kommentare exportieren (als Student oder Lehrkraft).
+            $comments = $DB->get_records_select(
+                'local_kursassistent_comment',
+                'courseid = :courseid AND (studentid = :studentid OR teacherid = :teacherid)',
+                ['courseid' => $context->instanceid, 'studentid' => $userid, 'teacherid' => $userid]
+            );
+
+            if (!empty($comments)) {
+                $commentdata = array_map(function ($c) {
+                    return [
+                        'studentid' => $c->studentid,
+                        'teacherid' => $c->teacherid,
+                        'commenttext' => $c->commenttext,
+                        'timecreated' => \core_privacy\local\request\transform::datetime($c->timecreated),
+                        'timemodified' => \core_privacy\local\request\transform::datetime($c->timemodified),
+                    ];
+                }, array_values($comments));
+
+                writer::with_context($context)->export_data(
+                    [get_string('pluginname', 'local_kursassistent'), 'kommentare'],
+                    (object) ['kommentare' => $commentdata]
+                );
+            }
         }
     }
 
@@ -134,11 +223,17 @@ class provider implements
     public static function delete_data_for_all_users_in_context(\context $context): void {
         global $DB;
 
+        if ($context instanceof \context_user) {
+            $DB->delete_records('local_kursassistent_sectpl', ['userid' => $context->instanceid]);
+            return;
+        }
+
         if (!$context instanceof \context_course) {
             return;
         }
 
         $DB->delete_records('local_kursassistent_log', ['courseid' => $context->instanceid]);
+        $DB->delete_records('local_kursassistent_comment', ['courseid' => $context->instanceid]);
     }
 
     /**
@@ -152,6 +247,11 @@ class provider implements
         $userid = $contextlist->get_user()->id;
 
         foreach ($contextlist->get_contexts() as $context) {
+            if ($context instanceof \context_user && (int) $context->instanceid === (int) $userid) {
+                $DB->delete_records('local_kursassistent_sectpl', ['userid' => $userid]);
+                continue;
+            }
+
             if (!$context instanceof \context_course) {
                 continue;
             }
@@ -159,6 +259,12 @@ class provider implements
                 'courseid' => $context->instanceid,
                 'userid' => $userid,
             ]);
+            // Kommentare löschen, bei denen der Nutzer Student oder Lehrkraft ist.
+            $DB->delete_records_select(
+                'local_kursassistent_comment',
+                'courseid = :courseid AND (studentid = :studentid OR teacherid = :teacherid)',
+                ['courseid' => $context->instanceid, 'studentid' => $userid, 'teacherid' => $userid]
+            );
         }
     }
 
@@ -171,6 +277,14 @@ class provider implements
         global $DB;
 
         $context = $userlist->get_context();
+
+        if ($context instanceof \context_user) {
+            foreach ($userlist->get_userids() as $userid) {
+                $DB->delete_records('local_kursassistent_sectpl', ['userid' => $userid]);
+            }
+            return;
+        }
+
         if (!$context instanceof \context_course) {
             return;
         }
@@ -180,6 +294,11 @@ class provider implements
                 'courseid' => $context->instanceid,
                 'userid' => $userid,
             ]);
+            $DB->delete_records_select(
+                'local_kursassistent_comment',
+                'courseid = :courseid AND (studentid = :studentid OR teacherid = :teacherid)',
+                ['courseid' => $context->instanceid, 'studentid' => $userid, 'teacherid' => $userid]
+            );
         }
     }
 }

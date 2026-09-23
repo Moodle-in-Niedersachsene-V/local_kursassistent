@@ -73,10 +73,11 @@ class navigation_callback {
         $PAGE->requires->css('/local/kursassistent/styles.css');
 
         $context = \context_course::instance($course->id);
-        if (!has_capability('local/kursassistent:use', $context)) {
-            return;
-        }
 
-        $PAGE->requires->js_call_amd('local_kursassistent/assistent', 'init', [(int) $course->id]);
+        if (has_capability('local/kursassistent:use', $context)) {
+            $PAGE->requires->js_call_amd('local_kursassistent/assistent', 'init', [(int) $course->id]);
+        } else if (has_capability('local/kursassistent:viewownprogress', $context)) {
+            $PAGE->requires->js_call_amd('local_kursassistent/fortschritt', 'init', [(int) $course->id]);
+        }
     }
 }

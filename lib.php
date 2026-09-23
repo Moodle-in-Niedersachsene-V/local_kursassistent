@@ -35,30 +35,43 @@ function local_kursassistent_extend_navigation_course($navigation, $course, $con
         return;
     }
 
-    if (!has_capability('local/kursassistent:use', $context)) {
-        return;
+    $canuse = has_capability('local/kursassistent:use', $context);
+    $canviewprogress = has_capability('local/kursassistent:viewownprogress', $context);
+
+    if ($canuse) {
+        $node = navigation_node::create(
+            get_string('assistentbutton', 'local_kursassistent'),
+            new moodle_url('#'),
+            navigation_node::TYPE_CUSTOM,
+            null,
+            'local_kursassistent_open',
+            new pix_icon('i/settings', '')
+        );
+        $node->add_class('local-kursassistent-navlink');
+        $navigation->add_node($node);
+
+        $anleitungnode = navigation_node::create(
+            get_string('anleitungtitel', 'local_kursassistent'),
+            new moodle_url('/local/kursassistent/anleitung.php', ['courseid' => $course->id]),
+            navigation_node::TYPE_CUSTOM,
+            null,
+            'local_kursassistent_anleitung',
+            new pix_icon('i/help', '')
+        );
+        $navigation->add_node($anleitungnode);
+    } else if ($canviewprogress) {
+        // Schüler ohne :use-Recht erhalten einen eigenen Fortschritts-Button.
+        $node = navigation_node::create(
+            get_string('meinfortschritt', 'local_kursassistent'),
+            new moodle_url('#'),
+            navigation_node::TYPE_CUSTOM,
+            null,
+            'local_kursassistent_progress',
+            new pix_icon('i/completion-auto-y', '')
+        );
+        $node->add_class('local-kursassistent-progresslink');
+        $navigation->add_node($node);
     }
-
-    $node = navigation_node::create(
-        get_string('assistentbutton', 'local_kursassistent'),
-        new moodle_url('#'),
-        navigation_node::TYPE_CUSTOM,
-        null,
-        'local_kursassistent_open',
-        new pix_icon('i/settings', '')
-    );
-    $node->add_class('local-kursassistent-navlink');
-    $navigation->add_node($node);
-
-    $anleitungnode = navigation_node::create(
-        get_string('anleitungtitel', 'local_kursassistent'),
-        new moodle_url('/local/kursassistent/anleitung.php', ['courseid' => $course->id]),
-        navigation_node::TYPE_CUSTOM,
-        null,
-        'local_kursassistent_anleitung',
-        new pix_icon('i/help', '')
-    );
-    $navigation->add_node($anleitungnode);
 
     // CSS/JS werden bewusst NICHT hier geladen (siehe hook_callbacks/navigation_callback.php) -
     // extend_navigation_course() kann je nach Aktivität/Theme erst nach Ausgabe des

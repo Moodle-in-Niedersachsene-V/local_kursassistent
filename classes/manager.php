@@ -259,6 +259,118 @@ class manager {
         return (int) $created->coursemodule;
     }
 
+    /**
+     * Erzeugt eine Standard-Aktivität (Aufgabe, Forum, Test …) in einer Kurssektion.
+     *
+     * Nutzt die Moodle-Core-Funktion create_module(), die alle internen
+     * Schritte übernimmt (Modul-Instanz, course_modules, Sektion, Events).
+     *
+     * @param int $courseid
+     * @param int $sectionnum
+     * @param string $modname z. B. 'assign', 'forum', 'quiz'
+     * @param string $name Anzeigename der Aktivität
+     * @param string $intro Beschreibungstext (HTML)
+     * @return int cmid des erzeugten Moduls
+     */
+    public static function create_activity(int $courseid, int $sectionnum, string $modname, string $name, string $intro = ''): int {
+        global $CFG, $DB;
+
+        require_once($CFG->dirroot . '/course/modlib.php');
+
+        $course = get_course($courseid);
+        $module = $DB->get_record('modules', ['name' => $modname, 'visible' => 1], '*', MUST_EXIST);
+
+        $moduleinfo = new \stdClass();
+        $moduleinfo->modulename = $modname;
+        $moduleinfo->module = $module->id;
+        $moduleinfo->course = $course->id;
+        $moduleinfo->section = $sectionnum;
+        $moduleinfo->visible = 1;
+        $moduleinfo->name = $name;
+        $moduleinfo->introeditor = [
+            'text' => $intro,
+            'format' => FORMAT_HTML,
+            'itemid' => 0,
+        ];
+        $moduleinfo->cmidnumber = '';
+        $moduleinfo->groupmode = 0;
+        $moduleinfo->groupingid = 0;
+        $moduleinfo->visibleoncoursepage = 1;
+        $moduleinfo->completion = 0;
+
+        // Modulspezifische Pflichtfelder mit sinnvollen Defaults.
+        switch ($modname) {
+            case 'assign':
+                $moduleinfo->submissiondrafts = 0;
+                $moduleinfo->requiresubmissionstatement = 0;
+                $moduleinfo->sendnotifications = 0;
+                $moduleinfo->sendlatenotifications = 0;
+                $moduleinfo->sendstudentnotifications = 1;
+                $moduleinfo->grade = 100;
+                $moduleinfo->teamsubmission = 0;
+                $moduleinfo->blindmarking = 0;
+                $moduleinfo->markingworkflow = 0;
+                $moduleinfo->assignsubmission_onlinetext_enabled = 1;
+                $moduleinfo->assignsubmission_file_enabled = 1;
+                $moduleinfo->assignsubmission_file_maxfiles = 1;
+                $moduleinfo->assignsubmission_file_maxsizebytes = 0;
+                $moduleinfo->assignfeedback_comments_enabled = 1;
+                break;
+            case 'forum':
+                $moduleinfo->type = 'general';
+                $moduleinfo->forcesubscribe = 0;
+                break;
+            case 'quiz':
+                $moduleinfo->preferredbehaviour = 'deferredfeedback';
+                $moduleinfo->grade = 100;
+                $moduleinfo->questionsperpage = 1;
+                $moduleinfo->navmethod = 'free';
+                break;
+            case 'glossary':
+                $moduleinfo->mainglossary = 0;
+                $moduleinfo->globalglossary = 0;
+                $moduleinfo->defaultapproval = 1;
+                break;
+            case 'wiki':
+                $moduleinfo->wikimode = 'collaborative';
+                $moduleinfo->firstpagetitle = $name;
+                break;
+            case 'choice':
+                $moduleinfo->allowupdate = 0;
+                $moduleinfo->limitanswers = 0;
+                // Mindestens zwei Optionen.
+                $moduleinfo->option = ['Option 1', 'Option 2'];
+                $moduleinfo->limit = [0, 0];
+                break;
+        }
+
+        $created = create_module($moduleinfo);
+
+        return (int) $created->coursemodule;
+    }
+
+    /**
+     * Liefert die gängigen Aktivitätstypen für die Vorlagen-Auswahl.
+     *
+     * @return array Array von [modname => Anzeigename]
+     */
+    public static function get_common_activity_types(): array {
+        global $DB;
+
+        $common = ['assign', 'forum', 'quiz', 'glossary', 'wiki', 'choice',
+                    'feedback', 'workshop', 'data', 'lesson', 'book', 'page', 'url', 'folder'];
+
+        $installed = $DB->get_records_menu('modules', ['visible' => 1], '', 'name, id');
+
+        $result = [];
+        foreach ($common as $mod) {
+            if (isset($installed[$mod])) {
+                $result[$mod] = get_string('modulename', $mod);
+            }
+        }
+        return $result;
+    }
+
     /** Im Plugin gebündelte Icons (Dateiname ohne .svg unter pix/). */
     const ICONS = [
         'target-arrow', 'key', 'file', 'image', 'video', 'checklist', 'file-text',
