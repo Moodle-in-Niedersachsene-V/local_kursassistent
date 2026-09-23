@@ -896,6 +896,8 @@ class local_kursassistent_external extends external_api {
      * @param int $courseid
      * @param int $cmid
      * @param int $requiredcmid
+     * @param string $restrictiontype Bedingungstyp: completion oder grade
+     * @param float $mingrade Mindestbewertung in Prozent, nur bei grade
      * @return array
      */
     public static function set_restriction(
@@ -1191,6 +1193,9 @@ class local_kursassistent_external extends external_api {
      * @param int $courseid
      * @param array $cmids
      * @param bool $setcompletion
+     * @param string $completiontype Art des Abschlusses: manual oder automatic
+     * @param string $chaintype Verkettungsart: completion oder grade
+     * @param float $mingrade Mindestbewertung in Prozent, nur bei chaintype grade
      * @return array
      */
     public static function create_lernpfad(

@@ -1340,7 +1340,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             });
 
             // Vorhandene Werte vorauswählen.
-            var completionRestrictions = relevantRestrictions.filter(function(r) { return r.type === 'completion'; });
+            var completionRestrictions = relevantRestrictions.filter(function(r) {
+                return r.type === 'completion';
+            });
             if (completionRestrictions.length > 0) {
                 $actSelect.val(completionRestrictions[0].cmid);
             }
@@ -1674,7 +1676,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
 
         var $tbody = $('<tbody>');
         var lastSection = -1;
-        var completionLabels = {0: 'Keine', 1: 'Manuell', 2: 'Automatisch'};
+        var completionLabels = {'0': 'Keine', '1': 'Manuell', '2': 'Automatisch'};
 
         // Abschnitte für Sichtbarkeits-Toggle sammeln.
         var sectionsSeen = {};
@@ -1713,37 +1715,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 lastSection = act.sectionnum;
             }
 
-            var completionText = completionLabels[act.completion] || 'Keine';
-            if (act.completion === 2) {
-                var details = [];
-                if (act.completionview) {
-                    details.push('Ansicht');
-                }
-                if (act.completionsubmit) {
-                    details.push('Abgabe');
-                }
-                if (act.completiongrade) {
-                    details.push('Bewertung');
-                }
-                if (act.completionpassgrade) {
-                    details.push('Bestehen');
-                }
-                if (details.length > 0) {
-                    completionText += ' (' + details.join(', ') + ')';
-                }
-            }
-            var restrictionTexts = [];
-            act.restrictions.forEach(function(r) {
-                if (r.type === 'completion') {
-                    restrictionTexts.push('Abschluss von: ' + r.cmname);
-                } else if (r.type === 'date') {
-                    restrictionTexts.push('Datum: ' + r.description);
-                } else if (r.type === 'grade') {
-                    restrictionTexts.push('Bewertung: ' + r.description);
-                } else {
-                    restrictionTexts.push(r.type);
-                }
-            });
+            var completionText = baueAbschlussText(act, completionLabels);
+            var restrictionTexts = baueBedingungsTexte(act.restrictions);
 
             var actVisible = act.visible !== undefined ? act.visible : 1;
             var $row = $('<tr>');
@@ -1776,8 +1749,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             $row.append($visCell);
 
             var $completionCell = $('<td>');
-            var badgeClass = act.completion === 0 ? 'badge-secondary' :
-                (act.completion === 1 ? 'badge-primary' : 'badge-success');
+            var badgeClasses = {'0': 'badge-secondary', '1': 'badge-primary', '2': 'badge-success'};
+            var badgeClass = badgeClasses[String(act.completion)] || 'badge-success';
             $completionCell.append($('<span>', {
                 'class': 'badge ' + badgeClass,
                 text: completionText
@@ -1812,9 +1785,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 $btn.find('img').attr('src', M.cfg.wwwroot + '/local/kursassistent/pix/' +
                     (newVisible ? 'eye.svg' : 'eye-off.svg'))
                     .attr('alt', newVisible ? 'Sichtbar' : 'Verborgen');
-                $btn.attr('title', type === 'section'
-                    ? (newVisible ? 'Abschnitt ausblenden' : 'Abschnitt einblenden')
-                    : (newVisible ? 'Aktivität ausblenden' : 'Aktivität einblenden'));
+                var objekt = type === 'section' ? 'Abschnitt' : 'Aktivität';
+                var aktion = newVisible ? ' ausblenden' : ' einblenden';
+                $btn.attr('title', objekt + aktion);
                 $btn.toggleClass('local-kursassistent-vis-hidden', !newVisible);
                 $btn.css('opacity', 1);
 
@@ -2138,17 +2111,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                         }
                     }])[0].done(function() {
                         $snapSaveBtn.prop('disabled', false).text('Als Vorlage speichern');
-                        Ajax.call([{
-                            methodname: 'local_kursassistent_get_section_templates',
-                            args: {courseid: courseid}
-                        }])[0].done(function(newResponse) {
-                            rendereVorlagenListe($container, newResponse, $overlay);
-                            $container.find('.local-kursassistent-meldung').remove();
-                            $container.append($('<div>', {
-                                'class': 'local-kursassistent-meldung local-kursassistent-meldung-erfolg mt-2',
-                                text: 'Abschnittsvorlage wurde gespeichert.'
-                            }));
-                        });
+                        ladeVorlagenListeNeu($container, $overlay);
                     }).fail(function() {
                         $snapSaveBtn.prop('disabled', false).text('Als Vorlage speichern');
                         Notification.alert('Fehler', 'Konnte nicht gespeichert werden.', 'OK');
@@ -2332,6 +2295,85 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
         $neuerBereich.append($nameInput, $descInput, $tabBar, $bausteinPane, $aktivitaetenPane, $globalCheck, $saveBtn);
         $content.append($neuerBereich);
         $container.append($content);
+    }
+
+    /**
+     * Baut den Anzeigetext für die Abschlussverfolgung einer Aktivität.
+     *
+     * Ausgelagert, damit die Rendering-Schleife übersichtlich bleibt.
+     *
+     * @param {Object} act Aktivitätsdaten
+     * @param {Object} labels Zuordnung Abschlussart zu Anzeigetext
+     * @return {String}
+     */
+    function baueAbschlussText(act, labels) {
+        var text = labels[act.completion] || 'Keine';
+        if (act.completion !== 2) {
+            return text;
+        }
+
+        var bedingungen = [
+            {feld: act.completionview, name: 'Ansicht'},
+            {feld: act.completionsubmit, name: 'Abgabe'},
+            {feld: act.completiongrade, name: 'Bewertung'},
+            {feld: act.completionpassgrade, name: 'Bestehen'}
+        ];
+        var details = bedingungen.filter(function(b) {
+            return b.feld;
+        }).map(function(b) {
+            return b.name;
+        });
+
+        if (details.length > 0) {
+            text += ' (' + details.join(', ') + ')';
+        }
+        return text;
+    }
+
+    /**
+     * Baut die Anzeigetexte für die Voraussetzungen einer Aktivität.
+     *
+     * @param {Array} restrictions Liste der Bedingungen
+     * @return {Array} Lesbare Texte
+     */
+    function baueBedingungsTexte(restrictions) {
+        var praefixe = {
+            completion: 'Abschluss von: ',
+            date: 'Datum: ',
+            grade: 'Bewertung: '
+        };
+
+        return restrictions.map(function(r) {
+            if (r.type === 'completion') {
+                return praefixe.completion + r.cmname;
+            }
+            if (praefixe[r.type]) {
+                return praefixe[r.type] + r.description;
+            }
+            return r.type;
+        });
+    }
+
+    /**
+     * Lädt die Vorlagenliste neu und zeigt eine Erfolgsmeldung an.
+     *
+     * Bewusst als eigene Funktion, damit die Aufrufkette flach bleibt.
+     *
+     * @param {jQuery} $container
+     * @param {jQuery} $overlay
+     */
+    function ladeVorlagenListeNeu($container, $overlay) {
+        Ajax.call([{
+            methodname: 'local_kursassistent_get_section_templates',
+            args: {courseid: courseid}
+        }])[0].done(function(newResponse) {
+            rendereVorlagenListe($container, newResponse, $overlay);
+            $container.find('.local-kursassistent-meldung').remove();
+            $container.append($('<div>', {
+                'class': 'local-kursassistent-meldung local-kursassistent-meldung-erfolg mt-2',
+                text: 'Abschnittsvorlage wurde gespeichert.'
+            }));
+        });
     }
 
     /**
@@ -2862,13 +2904,15 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
         });
         var overallDone = 0;
         var overallTotal = response.activities.length * response.users.length;
-        response.activities.forEach(function(a) { overallDone += a.completedusers; });
+        response.activities.forEach(function(a) {
+            overallDone += a.completedusers;
+        });
         var overallPct = overallTotal > 0 ? Math.round((overallDone / overallTotal) * 100) : 0;
         $footRow.append($('<td>', {
             'class': 'text-center small font-weight-bold',
             text: overallDone + '/' + overallTotal + ' (' + overallPct + '%)'
         }));
-        $footRow.append($('<td>'));  // Leere Zelle unter Kommentarspalte.
+        $footRow.append($('<td>')); // Leere Zelle unter Kommentarspalte.
         $tfoot.append($footRow);
         $table.append($tfoot);
 
