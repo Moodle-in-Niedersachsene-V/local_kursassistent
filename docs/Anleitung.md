@@ -1,6 +1,6 @@
 # Kursassistent – Anleitung
 
-*Moodle in Niedersachsen e. V. · local_kursassistent, Build 2026080906, Release 1.3.1 · Stand: August 2026*
+*Moodle in Niedersachsen e. V. · local_kursassistent, Build 2026092309, Release 2.1.6 · Stand: September 2026*
 
 ## 1. Für Lehrkräfte
 
@@ -8,13 +8,17 @@
 
 Der Kursassistent hilft dabei, Kursabschnitte schnell und einheitlich zu gestalten – ohne dass du dich mit Icons, Formatierung oder Moodle-Technik beschäftigen musst. Du wählst aus, welche Bausteine (z. B. „Lernziele", „Materialien", „Video", „Aufgabe") du einfügen möchtest, füllst sie kurz aus und der Assistent erledigt den Rest.
 
+Darüber hinaus bündelt der Assistent Einstellungen, die sonst über viele Moodle-Seiten verstreut sind: Abschlussverfolgung, Voraussetzungen und Lernpfade, die Sichtbarkeit von Abschnitten und Aktivitäten, Abschnittsvorlagen sowie eine Statistik über den Lernfortschritt der Teilnehmenden.
+
 ### 1.2 Assistent öffnen
 
 1. Öffne den gewünschten Kurs.
 2. In der Zeile mit den Reitern „Kurs, Einstellungen, Teilnehmer/innen …" findest du die Einträge „Kursassistent" und „Anleitung zum Kursassistenten" (ggf. im Menü „Mehr", je nach Bildschirmbreite).
-3. Ein Fenster öffnet sich mit allen verfügbaren Bausteinen, gruppiert in vier Kategorien: Lerninformationen, Lernmaterial, Aktivitäten und Kurseinrichtung.
+3. Ein Fenster öffnet sich mit allen verfügbaren Bausteinen, gruppiert in fünf Kategorien: Lerninformationen, Lernmaterial, Aktivitäten, Lernpfade und Statistik sowie Kurseinrichtung.
 
 *Jede Kategorie ist zunächst eingeklappt, damit die Liste übersichtlich bleibt – ein Klick auf die Kategorie-Überschrift klappt sie auf.*
+
+Neben jeder Kategorie-Überschrift steht ein Hilfe-Symbol, das kurz erklärt, wofür die Kategorie gedacht ist.
 
 ### 1.3 Text-Bausteine einfügen (z. B. Lernziele, Voraussetzungen, Tipp)
 
@@ -61,24 +65,45 @@ Neben dem Zielabschnitt-Dropdown findest du zwei kleine Schaltflächen:
 - **Stift-Symbol:** benennt den aktuell ausgewählten Abschnitt um. Namen eintragen, „Speichern" klicken – die Änderung ist sofort sichtbar, ganz ohne Neuladen der Seite.
 - **Plus-Symbol:** erstellt einen neuen, leeren Abschnitt am Ende des Kurses. Ein Name ist optional; ohne Angabe vergibt Moodle automatisch einen Standardnamen. Der neue Abschnitt wird direkt als Zielabschnitt ausgewählt.
 
-### 1.8 Kurseinrichtung
+### 1.8 Lernpfade und Statistik
+
+Diese Kategorie bündelt fünf Werkzeuge, mit denen du steuerst, wie sich dein Kurs für die Teilnehmenden verhält. Alle arbeiten auf einer gemeinsamen Tabelle aller Aktivitäten des Kurses.
+
+- **Abschlussverfolgung:** Lege je Aktivität fest, wie ihr Abschluss erfasst wird – gar nicht, manuell durch Abhaken, oder automatisch anhand von Bedingungen wie Ansicht, Abgabe, Bewertung oder Bestehen. Über die Schaltflächen „Alle manuell", „Alle automatisch" und „Alle deaktivieren" änderst du mehrere Aktivitäten auf einmal.
+- **Voraussetzungen:** Bestimme, welche Bedingung erfüllt sein muss, bevor eine Aktivität zugänglich wird – entweder der Abschluss einer anderen Aktivität oder eine Mindestbewertung.
+- **Lernpfad erstellen:** Erzeugt einen linearen Pfad: Jede ausgewählte Aktivität wird erst freigeschaltet, wenn die vorherige abgeschlossen ist. Du wählst die Aktivitäten in der gewünschten Reihenfolge aus und legst fest, ob die Verkettung über den Abschluss oder über eine Mindestbewertung läuft.
+- **Übersicht:** Zeigt alle Abschluss- und Voraussetzungseinstellungen des Kurses auf einen Blick. Hier kannst du außerdem Abschnitte und einzelne Aktivitäten über das Augensymbol aus- und wieder einblenden.
+- **Statistik:** Zeigt je Aktivität, wie viele Teilnehmende sie bereits abgeschlossen haben. Zu jeder Person lässt sich zusätzlich eine kurze Notiz hinterlegen, die nur Lehrkräfte des Kurses sehen.
+
+*Abschlussverfolgung, Voraussetzungen und Lernpfade setzen voraus, dass die Abschlussverfolgung in den Kurseinstellungen aktiviert ist. Ist sie das nicht, weist der Assistent darauf hin.*
+
+### 1.9 Kurseinrichtung
 
 Die vierte Kategorie „Kurseinrichtung" bündelt zwei kursweite Aktionen:
 
 - **Kursformat ändern:** führt direkt zu Moodles regulärer Kurs-Einstellungsseite, auf der sich unter anderem das Kursformat (z. B. Themenformat, Wochenformat) anpassen lässt.
 - **Kursvorlage übernehmen:** zeigt eine Übersicht aller Kurse aus dem Kursbereich, den die Administration als Vorlagenbereich festgelegt hat – mit Kursbild und Kurzbeschreibung. Nach Auswahl und Bestätigung werden die Inhalte der Vorlage in deinen Kurs übernommen. Vorhandene Inhalte bleiben dabei erhalten, die Vorlage wird ergänzt. Nutzerdaten wie Abgaben oder Bewertungen werden nicht übertragen.
+- **Abschnittsvorlagen:** eine Vorlage für einen einzelnen Kursabschnitt. Du kannst eine vorhandene Vorlage auf den gewählten Abschnitt anwenden oder aus deiner aktuellen Baustein-Auswahl eine eigene Vorlage speichern. Ebenso lässt sich der Inhalt eines bestehenden Abschnitts als Vorlage sichern. Eigene Vorlagen stehen zunächst nur dir zur Verfügung; sie lassen sich beim Speichern für alle Lehrkräfte freigeben.
 
-### 1.9 Anleitung zum Kursassistenten
+### 1.10 Anleitung zum Kursassistenten
 
 Über den Link „Anleitung zum Kursassistenten" neben dem Kursassistenten-Button gelangst du zu einer Hilfeseite. Deren Inhalt kann von der Schul-Administration frei angepasst werden – hier findest du also aktuelle, schulspezifische Hinweise zur Nutzung.
 
-### 1.10 Kanal noch nicht eingerichtet?
+### 1.11 Kanal noch nicht eingerichtet?
 
 Falls beim Hochladen der Hinweis zur Kanal-Einrichtung erscheint: Klicke auf den Button, richte den PeerTube-Kanal kurz ein (öffnet in einem neuen Tab) und komme danach zum Kursassistenten zurück, um den Video-Upload zu starten.
 
-## 2. Für Administrator:innen
+## 2. Für Teilnehmende
 
-### 2.1 Bausteine verwalten
+### 2.1 Mein Fortschritt
+
+Teilnehmende finden im Kurs den Eintrag „Mein Fortschritt". Er zeigt eine Übersicht aller Aktivitäten des Kurses und was davon bereits abgeschlossen ist – gegliedert nach Kursabschnitten.
+
+Die Ansicht setzt voraus, dass die Abschlussverfolgung im Kurs aktiviert ist und die Lehrkraft für die Aktivitäten festgelegt hat, wie deren Abschluss erfasst wird. Es werden ausschliesslich die eigenen Daten angezeigt; der Fortschritt anderer Personen ist darüber nicht einsehbar.
+
+## 3. Für Administrator:innen
+
+### 3.1 Bausteine verwalten
 
 Unter Website-Administration → Plugins → Lokale Plugins → Kursassistent → „Bausteine verwalten" legst du fest, welche Bausteine den Lehrkräften zur Auswahl stehen.
 
@@ -91,7 +116,7 @@ Damit lassen sich jederzeit neue Bausteine ergänzen (z. B. weitere Hinweistypen
 
 Zu jedem Feld des Formulars gibt es einen Hilfe-Button (blauer Kreis mit Fragezeichen), der erklärt, wofür das Feld gedacht ist und was die einzelnen Optionen bewirken.
 
-### 2.2 Video-Funktion konfigurieren
+### 3.2 Video-Funktion konfigurieren
 
 Unter den Plugin-Einstellungen gibt es einen Schalter „Video-Funktion aktivieren". Ist er ausgeschaltet, erscheint der Video-Baustein für Lehrkräfte gar nicht erst. Ist er eingeschaltet, zeigt der Assistent automatisch nur die Tabs an, für die auch tatsächlich ein passendes Plugin installiert ist:
 
@@ -99,11 +124,11 @@ Unter den Plugin-Einstellungen gibt es einen Schalter „Video-Funktion aktivier
 - Tab „Video hochladen" erscheint nur, wenn local_peertubeupload installiert ist.
 - Tab „Anderer Video-Link" ist immer verfügbar, unabhängig von weiteren Plugins.
 
-### 2.3 Anleitungstext pflegen
+### 3.3 Anleitungstext pflegen
 
-Unter den Plugin-Einstellungen → „Anleitungstext für Lehrkräfte" lässt sich der Inhalt der Hilfeseite (siehe 1.9) frei mit dem gewohnten Rich-Text-Editor bearbeiten. Ein sinnvoller Standardtext ist vorbelegt und kann jederzeit angepasst oder ersetzt werden.
+Unter den Plugin-Einstellungen → „Anleitungstext für Lehrkräfte" lässt sich der Inhalt der Hilfeseite (siehe 1.10) frei mit dem gewohnten Rich-Text-Editor bearbeiten. Ein sinnvoller Standardtext ist vorbelegt und kann jederzeit angepasst oder ersetzt werden.
 
-### 2.4 Kursvorlagen-Funktion
+### 3.4 Kursvorlagen-Funktion
 
 Die Funktion ist vollständig in local_kursassistent enthalten, ein Zusatzplugin wird nicht benötigt.
 
@@ -115,7 +140,19 @@ Zum Vorgehen bei der Übernahme:
 - **Nutzerdaten werden nicht übertragen** – also keine Abgaben, Bewertungen oder Einschreibungen aus dem Vorlagenkurs.
 - Die Sicherung des Vorlagenkurses läuft technisch unter der Websiteadministration, weil Lehrkräfte im Vorlagenbereich normalerweise nicht eingeschrieben sind. Abgesichert ist das dadurch, dass ausschliesslich Kurse aus dem eingestellten Vorlagenbereich verwendet werden können. Das Einfügen in den Zielkurs erfolgt mit den Rechten der aufrufenden Lehrkraft.
 
-### 2.5 Voraussetzungen
+### 3.5 Berechtigungen
+
+Das Plugin bringt drei Berechtigungen mit:
+
+| Berechtigung | Standardrollen | Zweck |
+|---|---|---|
+| `local/kursassistent:use` | Trainer/in, Trainer/in ohne Bearbeitungsrecht, Manager/in | Kursassistent im Kurs nutzen |
+| `local/kursassistent:manage` | Manager/in | Bausteine websiteweit verwalten |
+| `local/kursassistent:viewownprogress` | Teilnehmer/in und höher | Eigenen Fortschritt einsehen |
+
+Die Statistik und die Notizen zu einzelnen Teilnehmenden sind an `local/kursassistent:use` gebunden. Diese Berechtigung haben standardmässig auch Trainer/innen ohne Bearbeitungsrecht. Wenn an eurer Schule nur bearbeitende Trainer/innen Notizen sehen sollen, muss die Berechtigung für die Rolle „Trainer/in ohne Bearbeitungsrecht" entzogen werden.
+
+### 3.6 Voraussetzungen
 
 | Plugin | Erforderlich für |
 |---|---|
@@ -124,7 +161,8 @@ Zum Vorgehen bei der Übernahme:
 | repository_peertubeoauth | Video-Tab „PeerTube-Video wählen" (Videogalerie) |
 | repository_nextclouddirect | Optional: Nextcloud als Speicherort im Datei-Picker bei „Materialien" und „Bild" |
 
-### 2.6 Bekannte Einschränkungen
+### 3.7 Bekannte Einschränkungen
 
 - Über den Tab „PeerTube-Video wählen" bzw. Materialien/Bild eingefügte Videos/Dateien erscheinen als klickbarer Link bzw. eingebettetes Vorschaubild – eine automatische iFrame-Einbettung erfolgt nur, wenn der bestehende Fallback-Renderer von repository_peertubeoauth die URL erkennt.
 - Über repository_peertubeoauth eingebettete Videos erscheinen aktuell größer als über den Kursassistenten eingefügte – eine Anpassung ist im repository_peertubeoauth-Plugin separat vorgesehen.
+- Notizen zu Teilnehmenden sind personenbezogene Daten. Sie sind über die Moodle-Datenanfragen exportier- und löschbar, sollten aber im Verarbeitungsverzeichnis der Schule berücksichtigt werden.
