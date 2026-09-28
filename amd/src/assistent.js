@@ -20,7 +20,8 @@
  * @copyright  2026 Moodle in Niedersachsen e. V.
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Ajax, Notification, Str) {
+define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_list'],
+        function($, Ajax, Notification, Str, SortableList) {
 
     var courseid = null;
     var etwasEingefuegt = false;
@@ -1627,6 +1628,317 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
     }
 
     /**
+     * Aktiviert das Umsortieren der Aktivitäten per Ziehen.
+     *
+     * Nutzt Moodles core/sortable_list, damit Verhalten und Tastaturbedienung
+     * denen der Kursseite entsprechen.
+     *
+     * @param {jQuery} $container Panel mit der Übersichtstabelle
+     */
+    function aktiviereSortierung($container) {
+        var $tbody = $container.find('.local-kursassistent-uebersicht-table tbody');
+        if (!$tbody.length) {
+            return;
+        }
+
+        new SortableList($tbody, {
+            moveHandlerSelector: '.local-kursassistent-griff'
+        });
+
+        $tbody.find('.local-kursassistent-sortrow').on(SortableList.EVENTS.DROP, function() {
+            var $zeile = $(this);
+            speichereReihenfolge($container, $zeile);
+        });
+    }
+
+    /**
+     * Speichert die neue Position einer verschobenen Aktivität.
+     *
+     * @param {jQuery} $container
+     * @param {jQuery} $zeile Die verschobene Tabellenzeile
+     */
+    function speichereReihenfolge($container, $zeile) {
+        var cmid = parseInt($zeile.data('cmid'), 10);
+
+        // Abschnitt aus der vorausgehenden Abschnittszeile ableiten.
+        var sectionnum = null;
+        $zeile.prevAll('tr').each(function() {
+            if (sectionnum !== null) {
+                return;
+            }
+            var $vor = $(this);
+            if ($vor.hasClass('local-kursassistent-section-row')) {
+                sectionnum = parseInt($vor.find('.local-kursassistent-vis-toggle').data('id'), 10);
+            }
+        });
+        if (sectionnum === null) {
+            sectionnum = parseInt($zeile.data('sectionnum'), 10) || 0;
+        }
+
+        // Nachfolgende Aktivität bestimmen, vor die einsortiert wird.
+        var beforecmid = 0;
+        var $naechste = $zeile.nextAll('.local-kursassistent-sortrow').first();
+        if ($naechste.length) {
+            beforecmid = parseInt($naechste.data('cmid'), 10) || 0;
+        }
+
+        Ajax.call([{
+            methodname: 'local_kursassistent_move_activity',
+            args: {courseid: courseid, cmid: cmid, sectionnum: sectionnum, beforecmid: beforecmid}
+        }])[0].done(function() {
+            $zeile.data('sectionnum', sectionnum);
+            zeigePanelMeldung($container, 'Die neue Reihenfolge wurde gespeichert.', 'erfolg');
+        }).fail(function() {
+            Notification.alert('Fehler', 'Die Reihenfolge konnte nicht gespeichert werden.', 'OK');
+        });
+    }
+
+    /**
+     * Zeigt eine kurze Meldung oberhalb eines Panels an.
+     *
+     * @param {jQuery} $container
+     * @param {String} text
+     * @param {String} art 'erfolg' oder 'hinweis'
+     */
+    function zeigePanelMeldung($container, text, art) {
+        $container.find('.local-kursassistent-panelmeldung').remove();
+        $container.prepend($('<div>', {
+            'class': 'local-kursassistent-panelmeldung local-kursassistent-meldung ' +
+                'local-kursassistent-meldung-' + art,
+            text: text
+        }));
+    }
+
+    /**
+     * Öffnet den Dialog zum Duplizieren einer Aktivität.
+     *
+     * @param {jQuery} $container
+     * @param {Number} cmid
+     * @param {String} name Name der Aktivität
+     */
+    function oeffneDuplizierenDialog($container, cmid, name) {
+        $container.find('.local-kursassistent-dupl-panel').remove();
+
+        var $panel = $('<div>', {'class': 'local-kursassistent-dupl-panel'});
+        $panel.append($('<p>', {'class': 'font-weight-bold mb-1', text: 'Aktivität duplizieren'}));
+        $panel.append($('<p>', {'class': 'small text-muted mb-3', text: name}));
+
+        var gruppe = 'ka-dupl-ziel-' + cmid;
+
+        var $optHier = $('<label>', {'class': 'local-kursassistent-dupl-option'});
+        var $radioHier = $('<input>', {type: 'radio', name: gruppe, value: 'hier', checked: true});
+        $optHier.append($radioHier, $('<span>').append(
+            $('<span>', {'class': 'd-block', text: 'In diesen Kurs'}),
+            $('<span>', {'class': 'small text-muted', text: 'Kopie landet direkt hinter dem Original'})
+        ));
+
+        var $optAnder = $('<label>', {'class': 'local-kursassistent-dupl-option'});
+        var $radioAnder = $('<input>', {type: 'radio', name: gruppe, value: 'anderer'});
+        $optAnder.append($radioAnder, $('<span>').append(
+            $('<span>', {'class': 'd-block', text: 'In einen anderen Kurs'}),
+            $('<span>', {'class': 'small text-muted', text: 'Nur Kurse, in denen du bearbeiten darfst'})
+        ));
+
+        var $zielBereich = $('<div>', {'class': 'local-kursassistent-dupl-ziel d-none'});
+        var $kursSuche = $('<input>', {
+            type: 'text',
+            'class': 'form-control form-control-sm mb-2 local-kursassistent-dupl-suche',
+            placeholder: 'Kurs suchen …'
+        });
+        var $kursListe = $('<select>', {
+            'class': 'form-control form-control-sm mb-2 local-kursassistent-dupl-kurs',
+            size: 5
+        });
+        var $abschnittListe = $('<select>', {
+            'class': 'form-control form-control-sm local-kursassistent-dupl-abschnitt'
+        });
+        $zielBereich.append($kursSuche, $kursListe, $abschnittListe);
+
+        var $fuss = $('<div>', {'class': 'd-flex justify-content-end mt-3'});
+        var $abbrechen = $('<button>', {
+            type: 'button',
+            'class': 'btn btn-sm btn-secondary mr-2 local-kursassistent-dupl-abbrechen',
+            text: 'Abbrechen'
+        });
+        var $starten = $('<button>', {
+            type: 'button',
+            'class': 'btn btn-sm btn-primary local-kursassistent-dupl-start',
+            text: 'Duplizieren'
+        });
+        $fuss.append($abbrechen, $starten);
+
+        $panel.append($optHier, $optAnder, $zielBereich, $fuss);
+        $container.append($panel);
+
+        $panel.find('input[type="radio"]').on('change', function() {
+            var anderer = $radioAnder.is(':checked');
+            $zielBereich.toggleClass('d-none', !anderer);
+            if (anderer && !$kursListe.children().length) {
+                ladeZielkurse($kursListe, $abschnittListe, '');
+            }
+        });
+
+        var suchTimer = null;
+        $kursSuche.on('input', function() {
+            var begriff = $(this).val();
+            window.clearTimeout(suchTimer);
+            suchTimer = window.setTimeout(function() {
+                ladeZielkurse($kursListe, $abschnittListe, begriff);
+            }, 300);
+        });
+
+        $kursListe.on('change', function() {
+            ladeZielabschnitte($abschnittListe, parseInt($(this).val(), 10));
+        });
+
+        $abbrechen.on('click', function() {
+            $panel.remove();
+        });
+
+        $starten.on('click', function() {
+            var zielkurs = 0;
+            var zielabschnitt = -1;
+            if ($radioAnder.is(':checked')) {
+                zielkurs = parseInt($kursListe.val(), 10) || 0;
+                zielabschnitt = parseInt($abschnittListe.val(), 10);
+                if (!zielkurs) {
+                    zeigePanelMeldung($container, 'Bitte zuerst einen Zielkurs auswählen.', 'hinweis');
+                    return;
+                }
+            }
+            fuehreDuplizierenAus($container, $panel, $starten, cmid, zielkurs, zielabschnitt);
+        });
+
+        $panel[0].scrollIntoView({block: 'nearest'});
+    }
+
+    /**
+     * Lädt die Kurse, in die eingefügt werden darf.
+     *
+     * @param {jQuery} $kursListe
+     * @param {jQuery} $abschnittListe
+     * @param {String} begriff Suchbegriff
+     */
+    function ladeZielkurse($kursListe, $abschnittListe, begriff) {
+        $kursListe.empty().append($('<option>', {text: 'Lade Kurse …', disabled: true}));
+
+        Ajax.call([{
+            methodname: 'local_kursassistent_get_target_courses',
+            args: {courseid: courseid, query: begriff}
+        }])[0].done(function(response) {
+            $kursListe.empty();
+            if (!response.courses.length) {
+                $kursListe.append($('<option>', {text: 'Kein passender Kurs gefunden.', disabled: true}));
+                $abschnittListe.empty();
+                return;
+            }
+            response.courses.forEach(function(kurs) {
+                var beschriftung = kurs.fullname + (kurs.iscurrent ? ' (aktueller Kurs)' : '');
+                $kursListe.append($('<option>', {value: kurs.id, text: beschriftung}));
+            });
+            ladeZielabschnitte($abschnittListe, parseInt($kursListe.val(), 10));
+        }).fail(function() {
+            $kursListe.empty().append($('<option>', {text: 'Kurse konnten nicht geladen werden.', disabled: true}));
+        });
+    }
+
+    /**
+     * Lädt die Abschnitte des gewählten Zielkurses.
+     *
+     * @param {jQuery} $abschnittListe
+     * @param {Number} zielkursid
+     */
+    function ladeZielabschnitte($abschnittListe, zielkursid) {
+        if (!zielkursid) {
+            $abschnittListe.empty();
+            return;
+        }
+        $abschnittListe.empty().append($('<option>', {text: 'Lade Abschnitte …', disabled: true}));
+
+        Ajax.call([{
+            methodname: 'local_kursassistent_get_course_sections_list',
+            args: {courseid: zielkursid}
+        }])[0].done(function(response) {
+            $abschnittListe.empty();
+            response.sections.forEach(function(abschnitt) {
+                $abschnittListe.append($('<option>', {
+                    value: abschnitt.sectionnum,
+                    text: abschnitt.name
+                }));
+            });
+        }).fail(function() {
+            $abschnittListe.empty().append($('<option>', {text: 'Abschnitte nicht verfügbar', disabled: true}));
+        });
+    }
+
+    /**
+     * Führt das Duplizieren aus und meldet das Ergebnis zurück.
+     *
+     * @param {jQuery} $container
+     * @param {jQuery} $panel
+     * @param {jQuery} $starten Schaltfläche, die währenddessen gesperrt wird
+     * @param {Number} cmid
+     * @param {Number} zielkurs 0 für denselben Kurs
+     * @param {Number} zielabschnitt -1 für hinter dem Original
+     */
+    function fuehreDuplizierenAus($container, $panel, $starten, cmid, zielkurs, zielabschnitt) {
+        $starten.prop('disabled', true).text('Kopie wird erstellt …');
+
+        Ajax.call([{
+            methodname: 'local_kursassistent_duplicate_activity',
+            args: {
+                courseid: courseid,
+                cmid: cmid,
+                targetcourseid: zielkurs,
+                targetsectionnum: zielabschnitt
+            }
+        }])[0].done(function(response) {
+            $panel.remove();
+            if (response.targetcourseid === courseid) {
+                zeigePanelMeldung($container, 'Die Kopie wurde erstellt.', 'erfolg');
+                ladeUebersichtNeu($container);
+                return;
+            }
+            $container.find('.local-kursassistent-panelmeldung').remove();
+            var $meldung = $('<div>', {
+                'class': 'local-kursassistent-panelmeldung local-kursassistent-meldung ' +
+                    'local-kursassistent-meldung-erfolg'
+            });
+            $meldung.append($('<span>', {text: 'Die Kopie wurde im anderen Kurs angelegt. '}));
+            $meldung.append($('<a>', {
+                href: response.targetcourseurl,
+                target: '_blank',
+                text: 'Zum Zielkurs'
+            }));
+            $container.prepend($meldung);
+        }).fail(function() {
+            $starten.prop('disabled', false).text('Duplizieren');
+            Notification.alert('Fehler', 'Die Aktivität konnte nicht dupliziert werden.', 'OK');
+        });
+    }
+
+    /**
+     * Lädt die Übersicht neu, etwa nach dem Duplizieren im selben Kurs.
+     *
+     * @param {jQuery} $container
+     */
+    function ladeUebersichtNeu($container) {
+        Ajax.call([{
+            methodname: 'local_kursassistent_get_course_activities',
+            args: {courseid: courseid}
+        }])[0].done(function(response) {
+            var $meldung = $container.find('.local-kursassistent-panelmeldung').detach();
+            $container.empty();
+            if ($meldung.length) {
+                $container.append($meldung);
+            }
+            rendereUebersichtPanel($container, response);
+        }).fail(function() {
+            Notification.alert('Fehler', 'Die Übersicht konnte nicht neu geladen werden.', 'OK');
+        });
+    }
+
+    /**
      * Rendert das Übersichts-Panel mit Sichtbarkeitssteuerung.
      *
      * @param {jQuery} $container
@@ -1666,8 +1978,10 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
         var $tabelle = $('<table>', {'class': 'table table-sm table-striped local-kursassistent-uebersicht-table'});
         var $thead = $('<thead>').append(
             $('<tr>').append(
+                $('<th>', {text: '', style: 'width:28px'}),
                 $('<th>', {text: 'Aktivität'}),
                 $('<th>', {text: 'Sichtbar', 'class': 'text-center', style: 'width:70px'}),
+                $('<th>', {text: 'Kopie', 'class': 'text-center', style: 'width:60px'}),
                 $('<th>', {text: 'Abschluss'}),
                 $('<th>', {text: 'Voraussetzungen'})
             )
@@ -1709,8 +2023,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                     $sectionToggle.addClass('local-kursassistent-vis-hidden');
                 }
                 $sectionVisCell.append($sectionToggle);
-                $sectionRow.append($sectionTd, $sectionVisCell,
-                    $('<td>'), $('<td>'));
+                $sectionRow.append($('<td>'), $sectionTd, $sectionVisCell,
+                    $('<td>'), $('<td>'), $('<td>'));
                 $tbody.append($sectionRow);
                 lastSection = act.sectionnum;
             }
@@ -1719,7 +2033,22 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             var restrictionTexts = baueBedingungsTexte(act.restrictions);
 
             var actVisible = act.visible !== undefined ? act.visible : 1;
-            var $row = $('<tr>');
+            var $row = $('<tr>', {
+                'class': 'local-kursassistent-sortrow',
+                'data-cmid': act.cmid,
+                'data-sectionnum': act.sectionnum
+            });
+
+            // Anfasser zum Umsortieren.
+            var $griffCell = $('<td>', {'class': 'local-kursassistent-griffzelle'});
+            $griffCell.append($('<span>', {
+                'class': 'local-kursassistent-griff',
+                title: 'Zum Verschieben ziehen',
+                'aria-hidden': 'true',
+                text: '⠿'
+            }));
+            $row.append($griffCell);
+
             var $nameCell = $('<td>', {text: act.name});
             if (!actVisible) {
                 $nameCell.addClass('text-muted');
@@ -1747,6 +2076,23 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             }
             $visCell.append($visToggle);
             $row.append($visCell);
+
+            // Duplizieren.
+            var $duplCell = $('<td>', {'class': 'text-center'});
+            var $duplBtn = $('<button>', {
+                type: 'button',
+                'class': 'btn btn-sm p-0 local-kursassistent-dupl-btn',
+                'data-cmid': act.cmid,
+                'data-name': act.name,
+                title: 'Aktivität duplizieren'
+            });
+            $duplBtn.append($('<img>', {
+                src: M.cfg.wwwroot + '/local/kursassistent/pix/copy.svg',
+                alt: 'Duplizieren',
+                'class': 'local-kursassistent-vis-icon'
+            }));
+            $duplCell.append($duplBtn);
+            $row.append($duplCell);
 
             var $completionCell = $('<td>');
             var badgeClasses = {'0': 'badge-secondary', '1': 'badge-primary', '2': 'badge-success'};
@@ -1808,6 +2154,17 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
         $alleAusBtn.on('click', function() {
             massenSichtbarkeit($container, 0);
         });
+
+        // Umsortieren per Ziehen aktivieren.
+        aktiviereSortierung($container);
+
+        // Duplizieren-Schaltflächen.
+        $container.off('click.kaduplizieren').on('click.kaduplizieren',
+            '.local-kursassistent-dupl-btn', function() {
+                var $btn = $(this);
+                oeffneDuplizierenDialog($container, parseInt($btn.data('cmid'), 10),
+                    String($btn.data('name')));
+            });
     }
 
     /**

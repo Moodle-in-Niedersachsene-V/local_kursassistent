@@ -2401,4 +2401,325 @@ class local_kursassistent_external extends external_api {
             ])),
         ]);
     }
+
+    /**
+     * Parameter für move_activity.
+     *
+     * @return external_function_parameters
+     */
+    public static function move_activity_parameters(): external_function_parameters {
+        return new external_function_parameters([
+            'courseid' => new external_value(PARAM_INT, 'Kurs-ID'),
+            'cmid' => new external_value(PARAM_INT, 'Zu verschiebendes Kursmodul'),
+            'sectionnum' => new external_value(PARAM_INT, 'Zielabschnitt'),
+            'beforecmid' => new external_value(PARAM_INT, 'Kursmodul, vor das eingefügt wird; 0 für ans Ende', VALUE_DEFAULT, 0),
+        ]);
+    }
+
+    /**
+     * Verschiebt eine Aktivität an eine andere Position.
+     *
+     * @param int $courseid
+     * @param int $cmid
+     * @param int $sectionnum
+     * @param int $beforecmid
+     * @return array
+     */
+    public static function move_activity(int $courseid, int $cmid, int $sectionnum, int $beforecmid = 0): array {
+        global $CFG, $DB;
+
+        $params = self::validate_parameters(self::move_activity_parameters(), [
+            'courseid' => $courseid,
+            'cmid' => $cmid,
+            'sectionnum' => $sectionnum,
+            'beforecmid' => $beforecmid,
+        ]);
+
+        $context = \context_course::instance($params['courseid']);
+        self::validate_context($context);
+        require_capability('local/kursassistent:use', $context);
+        require_capability('moodle/course:manageactivities', $context);
+
+        require_once($CFG->dirroot . '/course/lib.php');
+
+        // Beide Kursmodule müssen zu diesem Kurs gehören.
+        $cm = $DB->get_record('course_modules', [
+            'id' => $params['cmid'],
+            'course' => $params['courseid'],
+        ], '*', MUST_EXIST);
+
+        $section = $DB->get_record('course_sections', [
+            'course' => $params['courseid'],
+            'section' => $params['sectionnum'],
+        ], '*', MUST_EXIST);
+
+        $beforemod = null;
+        if (!empty($params['beforecmid'])) {
+            $beforemod = $DB->get_record('course_modules', [
+                'id' => $params['beforecmid'],
+                'course' => $params['courseid'],
+            ], '*', MUST_EXIST);
+        }
+
+        moveto_module($cm, $section, $beforemod);
+        rebuild_course_cache($params['courseid'], true);
+
+        return ['success' => true];
+    }
+
+    /**
+     * Rückgabestruktur für move_activity.
+     *
+     * @return external_single_structure
+     */
+    public static function move_activity_returns(): external_single_structure {
+        return new external_single_structure([
+            'success' => new external_value(PARAM_BOOL, 'Erfolgreich'),
+        ]);
+    }
+
+    /**
+     * Parameter für get_target_courses.
+     *
+     * @return external_function_parameters
+     */
+    public static function get_target_courses_parameters(): external_function_parameters {
+        return new external_function_parameters([
+            'courseid' => new external_value(PARAM_INT, 'Aktueller Kurs'),
+            'query' => new external_value(PARAM_TEXT, 'Suchbegriff', VALUE_DEFAULT, ''),
+        ]);
+    }
+
+    /**
+     * Liefert Kurse, in die die aufrufende Person Inhalte einfügen darf.
+     *
+     * Grundlage ist moodle/restore:restoretargetimport. Damit erscheinen nur Kurse
+     * in der Auswahl, in denen die Person tatsächlich arbeiten darf.
+     *
+     * @param int $courseid
+     * @param string $query
+     * @return array
+     */
+    public static function get_target_courses(int $courseid, string $query = ''): array {
+        $params = self::validate_parameters(self::get_target_courses_parameters(), [
+            'courseid' => $courseid,
+            'query' => $query,
+        ]);
+
+        $context = \context_course::instance($params['courseid']);
+        self::validate_context($context);
+        require_capability('local/kursassistent:use', $context);
+
+        $kurse = get_user_capability_course(
+            'moodle/restore:restoretargetimport',
+            null,
+            true,
+            'fullname, shortname, category'
+        );
+
+        if ($kurse === false) {
+            return ['courses' => []];
+        }
+
+        $suche = \core_text::strtolower(trim($params['query']));
+        $treffer = [];
+
+        foreach ($kurse as $kurs) {
+            if ((int) $kurs->id === SITEID) {
+                continue;
+            }
+            $name = format_string($kurs->fullname);
+            if ($suche !== '' && strpos(\core_text::strtolower($name . ' ' . $kurs->shortname), $suche) === false) {
+                continue;
+            }
+            $treffer[] = [
+                'id' => (int) $kurs->id,
+                'fullname' => $name,
+                'shortname' => $kurs->shortname,
+                'iscurrent' => ((int) $kurs->id === (int) $params['courseid']),
+            ];
+            if (count($treffer) >= 30) {
+                break;
+            }
+        }
+
+        return ['courses' => $treffer];
+    }
+
+    /**
+     * Rückgabestruktur für get_target_courses.
+     *
+     * @return external_single_structure
+     */
+    public static function get_target_courses_returns(): external_single_structure {
+        return new external_single_structure([
+            'courses' => new external_multiple_structure(new external_single_structure([
+                'id' => new external_value(PARAM_INT, 'Kurs-ID'),
+                'fullname' => new external_value(PARAM_TEXT, 'Kursname'),
+                'shortname' => new external_value(PARAM_TEXT, 'Kurzname'),
+                'iscurrent' => new external_value(PARAM_BOOL, 'Ist der aktuelle Kurs'),
+            ])),
+        ]);
+    }
+
+    /**
+     * Parameter für get_course_sections_list.
+     *
+     * @return external_function_parameters
+     */
+    public static function get_course_sections_list_parameters(): external_function_parameters {
+        return new external_function_parameters([
+            'courseid' => new external_value(PARAM_INT, 'Kurs, dessen Abschnitte geliefert werden'),
+        ]);
+    }
+
+    /**
+     * Liefert die Abschnitte eines Kurses, in den eingefügt werden darf.
+     *
+     * @param int $courseid
+     * @return array
+     */
+    public static function get_course_sections_list(int $courseid): array {
+        $params = self::validate_parameters(self::get_course_sections_list_parameters(), [
+            'courseid' => $courseid,
+        ]);
+
+        $context = \context_course::instance($params['courseid']);
+        self::validate_context($context);
+        require_capability('local/kursassistent:use', $context);
+        require_capability('moodle/restore:restoretargetimport', $context);
+
+        $course = get_course($params['courseid']);
+        $modinfo = get_fast_modinfo($course);
+
+        $abschnitte = [];
+        foreach ($modinfo->get_section_info_all() as $section) {
+            $abschnitte[] = [
+                'sectionnum' => (int) $section->section,
+                'name' => get_section_name($course, $section),
+            ];
+        }
+
+        return ['sections' => $abschnitte];
+    }
+
+    /**
+     * Rückgabestruktur für get_course_sections_list.
+     *
+     * @return external_single_structure
+     */
+    public static function get_course_sections_list_returns(): external_single_structure {
+        return new external_single_structure([
+            'sections' => new external_multiple_structure(new external_single_structure([
+                'sectionnum' => new external_value(PARAM_INT, 'Abschnittsnummer'),
+                'name' => new external_value(PARAM_TEXT, 'Abschnittsname'),
+            ])),
+        ]);
+    }
+
+    /**
+     * Parameter für duplicate_activity.
+     *
+     * @return external_function_parameters
+     */
+    public static function duplicate_activity_parameters(): external_function_parameters {
+        return new external_function_parameters([
+            'courseid' => new external_value(PARAM_INT, 'Quellkurs'),
+            'cmid' => new external_value(PARAM_INT, 'Zu duplizierendes Kursmodul'),
+            'targetcourseid' => new external_value(PARAM_INT, 'Zielkurs; 0 für denselben Kurs', VALUE_DEFAULT, 0),
+            'targetsectionnum' => new external_value(PARAM_INT, 'Zielabschnitt; -1 für hinter dem Original', VALUE_DEFAULT, -1),
+        ]);
+    }
+
+    /**
+     * Dupliziert eine Aktivität innerhalb des Kurses oder in einen anderen Kurs.
+     *
+     * Nutzerdaten wie Abgaben oder Bewertungen werden dabei nicht übertragen.
+     *
+     * @param int $courseid
+     * @param int $cmid
+     * @param int $targetcourseid
+     * @param int $targetsectionnum
+     * @return array
+     */
+    public static function duplicate_activity(int $courseid, int $cmid, int $targetcourseid = 0,
+            int $targetsectionnum = -1): array {
+        global $CFG, $DB;
+
+        $params = self::validate_parameters(self::duplicate_activity_parameters(), [
+            'courseid' => $courseid,
+            'cmid' => $cmid,
+            'targetcourseid' => $targetcourseid,
+            'targetsectionnum' => $targetsectionnum,
+        ]);
+
+        $context = \context_course::instance($params['courseid']);
+        self::validate_context($context);
+        require_capability('local/kursassistent:use', $context);
+        require_capability('moodle/backup:backuptargetimport', $context);
+
+        require_once($CFG->dirroot . '/course/lib.php');
+
+        // Das Kursmodul muss zum aufgerufenen Kurs gehören.
+        $cmrecord = $DB->get_record('course_modules', [
+            'id' => $params['cmid'],
+            'course' => $params['courseid'],
+        ], '*', MUST_EXIST);
+
+        $course = get_course($params['courseid']);
+        $cm = get_coursemodule_from_id('', $cmrecord->id, $course->id, false, MUST_EXIST);
+
+        $zielkursid = empty($params['targetcourseid']) ? (int) $course->id : (int) $params['targetcourseid'];
+
+        if ($zielkursid === (int) $course->id) {
+            $neuecm = duplicate_module($course, $cm);
+            $neuecmid = (int) $neuecm->id;
+
+            if ($params['targetsectionnum'] >= 0 && $params['targetsectionnum'] !== (int) $cm->sectionnum) {
+                $zielabschnitt = $DB->get_record('course_sections', [
+                    'course' => $course->id,
+                    'section' => $params['targetsectionnum'],
+                ], '*', MUST_EXIST);
+                $verschieben = $DB->get_record('course_modules', ['id' => $neuecmid], '*', MUST_EXIST);
+                moveto_module($verschieben, $zielabschnitt);
+            }
+
+            rebuild_course_cache($course->id, true);
+
+            return [
+                'success' => true,
+                'targetcourseid' => (int) $course->id,
+                'targetcourseurl' => (new \moodle_url('/course/view.php', ['id' => $course->id]))->out(false),
+            ];
+        }
+
+        // Ab hier: Kopie in einen anderen Kurs.
+        $zielcontext = \context_course::instance($zielkursid);
+        require_capability('moodle/restore:restoretargetimport', $zielcontext);
+
+        \local_kursassistent\aktivitaet_kopierer::in_anderen_kurs(
+            (int) $cm->id,
+            $zielkursid,
+            (int) $params['targetsectionnum']
+        );
+
+        return [
+            'success' => true,
+            'targetcourseid' => $zielkursid,
+            'targetcourseurl' => (new \moodle_url('/course/view.php', ['id' => $zielkursid]))->out(false),
+        ];
+    }
+
+    /**
+     * Rückgabestruktur für duplicate_activity.
+     *
+     * @return external_single_structure
+     */
+    public static function duplicate_activity_returns(): external_single_structure {
+        return new external_single_structure([
+            'success' => new external_value(PARAM_BOOL, 'Erfolgreich'),
+            'targetcourseid' => new external_value(PARAM_INT, 'Kurs, in dem die Kopie liegt'),
+            'targetcourseurl' => new external_value(PARAM_URL, 'Link zum Zielkurs'),
+        ]);
+    }
 }

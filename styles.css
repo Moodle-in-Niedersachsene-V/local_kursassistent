@@ -766,3 +766,52 @@
     font-size: 0.85rem;
     line-height: 1.5;
 }
+
+.local-kursassistent-griffzelle {
+    width: 28px;
+    padding-right: 0;
+}
+
+.local-kursassistent-griff {
+    cursor: grab;
+    color: #868e96;
+    font-size: 15px;
+    line-height: 1;
+    user-select: none;
+}
+
+.local-kursassistent-griff:active {
+    cursor: grabbing;
+}
+
+.local-kursassistent-sortrow.sortable-list-is-dragged {
+    background: #eaf2fb;
+}
+
+.local-kursassistent-dupl-panel {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 12px;
+    margin-top: 12px;
+    background: #f8f9fa;
+}
+
+.local-kursassistent-dupl-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: #fff;
+    cursor: pointer;
+}
+
+.local-kursassistent-dupl-ziel {
+    margin: 0 0 8px 32px;
+}
+
+.local-kursassistent-panelmeldung {
+    margin-bottom: 10px;
+}

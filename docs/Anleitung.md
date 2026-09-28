@@ -1,6 +1,6 @@
 # Kursassistent – Anleitung
 
-*Moodle in Niedersachsen e. V. · local_kursassistent, Build 2026092309, Release 2.1.6 · Stand: September 2026*
+*Moodle in Niedersachsen e. V. · local_kursassistent, Build 2026092402, Release 2.2.0 · Stand: September 2026*
 
 ## 1. Für Lehrkräfte
 
@@ -72,7 +72,10 @@ Diese Kategorie bündelt fünf Werkzeuge, mit denen du steuerst, wie sich dein K
 - **Abschlussverfolgung:** Lege je Aktivität fest, wie ihr Abschluss erfasst wird – gar nicht, manuell durch Abhaken, oder automatisch anhand von Bedingungen wie Ansicht, Abgabe, Bewertung oder Bestehen. Über die Schaltflächen „Alle manuell", „Alle automatisch" und „Alle deaktivieren" änderst du mehrere Aktivitäten auf einmal.
 - **Voraussetzungen:** Bestimme, welche Bedingung erfüllt sein muss, bevor eine Aktivität zugänglich wird – entweder der Abschluss einer anderen Aktivität oder eine Mindestbewertung.
 - **Lernpfad erstellen:** Erzeugt einen linearen Pfad: Jede ausgewählte Aktivität wird erst freigeschaltet, wenn die vorherige abgeschlossen ist. Du wählst die Aktivitäten in der gewünschten Reihenfolge aus und legst fest, ob die Verkettung über den Abschluss oder über eine Mindestbewertung läuft.
-- **Übersicht:** Zeigt alle Abschluss- und Voraussetzungseinstellungen des Kurses auf einen Blick. Hier kannst du außerdem Abschnitte und einzelne Aktivitäten über das Augensymbol aus- und wieder einblenden.
+- **Übersicht:** Zeigt alle Abschluss- und Voraussetzungseinstellungen des Kurses auf einen Blick. Hier kannst du außerdem:
+  - Abschnitte und einzelne Aktivitäten über das Augensymbol aus- und wieder einblenden,
+  - die **Reihenfolge ändern**, indem du eine Zeile am Anfasser links greifst und an die gewünschte Stelle ziehst – auch über Abschnittsgrenzen hinweg. Die neue Position wird sofort gespeichert,
+  - eine Aktivität **duplizieren**. Über das Kopiersymbol wählst du, ob die Kopie in diesem Kurs landen soll (direkt hinter dem Original oder in einem anderen Abschnitt) oder in einem anderen Kurs. Zur Auswahl stehen dabei nur Kurse, in denen du selbst bearbeiten darfst. Nutzerdaten wie Abgaben oder Bewertungen werden nicht mitkopiert.
 - **Statistik:** Zeigt je Aktivität, wie viele Teilnehmende sie bereits abgeschlossen haben. Zu jeder Person lässt sich zusätzlich eine kurze Notiz hinterlegen, die nur Lehrkräfte des Kurses sehen.
 
 *Abschlussverfolgung, Voraussetzungen und Lernpfade setzen voraus, dass die Abschlussverfolgung in den Kurseinstellungen aktiviert ist. Ist sie das nicht, weist der Assistent darauf hin.*
@@ -83,7 +86,7 @@ Die vierte Kategorie „Kurseinrichtung" bündelt zwei kursweite Aktionen:
 
 - **Kursformat ändern:** führt direkt zu Moodles regulärer Kurs-Einstellungsseite, auf der sich unter anderem das Kursformat (z. B. Themenformat, Wochenformat) anpassen lässt.
 - **Kursvorlage übernehmen:** zeigt eine Übersicht aller Kurse aus dem Kursbereich, den die Administration als Vorlagenbereich festgelegt hat – mit Kursbild und Kurzbeschreibung. Nach Auswahl und Bestätigung werden die Inhalte der Vorlage in deinen Kurs übernommen. Vorhandene Inhalte bleiben dabei erhalten, die Vorlage wird ergänzt. Nutzerdaten wie Abgaben oder Bewertungen werden nicht übertragen.
-- **Abschnittsvorlagen:** eine Vorlage für einen einzelnen Kursabschnitt. Du kannst eine vorhandene Vorlage auf den gewählten Abschnitt anwenden oder aus deiner aktuellen Baustein-Auswahl eine eigene Vorlage speichern. Ebenso lässt sich der Inhalt eines bestehenden Abschnitts als Vorlage sichern. Eigene Vorlagen stehen zunächst nur dir zur Verfügung; sie lassen sich beim Speichern für alle Lehrkräfte freigeben.
+- **Abschnittsvorlagen:** eine Vorlage für einen einzelnen Kursabschnitt. Du kannst eine vorhandene Vorlage auf den gewählten Abschnitt anwenden oder aus deiner aktuellen Baustein-Auswahl eine eigene Vorlage speichern. Ebenso lässt sich der Inhalt eines bestehenden Abschnitts als Vorlage sichern. Von dir angelegte Vorlagen stehen nur dir zur Verfügung. Zusätzlich siehst du alle Vorlagen, die die Administration für die gesamte Website freigegeben hat. Das Freigeben einer Vorlage für alle setzt die Berechtigung „Bausteine verwalten" voraus und ist damit der Administration vorbehalten.
 
 ### 1.10 Anleitung zum Kursassistenten
 
@@ -165,4 +168,5 @@ Die Statistik und die Notizen zu einzelnen Teilnehmenden sind an `local/kursassi
 
 - Über den Tab „PeerTube-Video wählen" bzw. Materialien/Bild eingefügte Videos/Dateien erscheinen als klickbarer Link bzw. eingebettetes Vorschaubild – eine automatische iFrame-Einbettung erfolgt nur, wenn der bestehende Fallback-Renderer von repository_peertubeoauth die URL erkennt.
 - Über repository_peertubeoauth eingebettete Videos erscheinen aktuell größer als über den Kursassistenten eingefügte – eine Anpassung ist im repository_peertubeoauth-Plugin separat vorgesehen.
+- Das Duplizieren läuft intern über Sicherung und Wiederherstellung und kann bei umfangreichen Aktivitäten einige Sekunden dauern. Solange läuft eine Rückmeldung im Fenster.
 - Notizen zu Teilnehmenden sind personenbezogene Daten. Sie sind über die Moodle-Datenanfragen exportier- und löschbar, sollten aber im Verarbeitungsverzeichnis der Schule berücksichtigt werden.

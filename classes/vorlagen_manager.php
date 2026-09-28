@@ -193,21 +193,38 @@ class vorlagen_manager {
             $sicherungsnutzer
         );
         $backupid = $bc->get_backupid();
-        $bc->execute_plan();
-        $bc->destroy();
+        $arbeitsverzeichnis = $bc->get_plan()->get_basepath();
+        $rc = null;
 
-        // Schritt 2: Wiederherstellung in den Zielkurs, vorhandene Inhalte bleiben erhalten.
-        $rc = new restore_controller(
-            $backupid,
-            $targetcourseid,
-            backup::INTERACTIVE_NO,
-            backup::MODE_IMPORT,
-            $USER->id,
-            backup::TARGET_EXISTING_ADDING
-        );
-        $rc->execute_precheck();
-        $rc->execute_plan();
-        $rc->destroy();
+        // Abgesichert mit finally, damit die Controller auch bei einem Abbruch freigegeben
+        // und das Arbeitsverzeichnis entfernt wird. Ohne das bleiben unter moodledata/temp/backup
+        // bei jedem fehlgeschlagenen Versuch Verzeichnisse liegen, die erst die geplante
+        // Aufgabe file_temp_cleanup_task wieder abräumt.
+        try {
+            $bc->execute_plan();
+
+            // Schritt 2: Wiederherstellung in den Zielkurs, vorhandene Inhalte bleiben erhalten.
+            $rc = new restore_controller(
+                $backupid,
+                $targetcourseid,
+                backup::INTERACTIVE_NO,
+                backup::MODE_IMPORT,
+                $USER->id,
+                backup::TARGET_EXISTING_ADDING
+            );
+            $rc->execute_precheck();
+            $rc->execute_plan();
+        } finally {
+            $bc->destroy();
+            if ($rc !== null) {
+                $rc->destroy();
+            }
+            // Einstellung keeptempdirectoriesonbackup respektieren, damit die Fehlersuche
+            // bei Bedarf weiterhin auf das Arbeitsverzeichnis zugreifen kann.
+            if (empty($CFG->keeptempdirectoriesonbackup)) {
+                fulldelete($arbeitsverzeichnis);
+            }
+        }
 
         rebuild_course_cache($targetcourseid, true);
     }
