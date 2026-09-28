@@ -31,7 +31,6 @@ use restore_controller;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class aktivitaet_kopierer {
-
     /**
      * Kopiert ein Kursmodul in einen anderen Kurs.
      *
@@ -53,8 +52,12 @@ class aktivitaet_kopierer {
         \core_php_time_limit::raise(600);
         raise_memory_limit(MEMORY_EXTRA);
 
-        $vorher = $DB->get_fieldset_select('course_modules', 'id', 'course = :course',
-            ['course' => $zielkursid]);
+        $vorher = $DB->get_fieldset_select(
+            'course_modules',
+            'id',
+            'course = :course',
+            ['course' => $zielkursid]
+        );
 
         $bc = new backup_controller(
             backup::TYPE_1ACTIVITY,
@@ -96,8 +99,12 @@ class aktivitaet_kopierer {
 
         // Die neu entstandene Kursmodul-ID ermitteln, um die Kopie anschliessend
         // in den gewünschten Abschnitt verschieben zu können.
-        $nachher = $DB->get_fieldset_select('course_modules', 'id', 'course = :course',
-            ['course' => $zielkursid]);
+        $nachher = $DB->get_fieldset_select(
+            'course_modules',
+            'id',
+            'course = :course',
+            ['course' => $zielkursid]
+        );
         $neue = array_values(array_diff($nachher, $vorher));
         $neuecmid = empty($neue) ? 0 : (int) max($neue);
 

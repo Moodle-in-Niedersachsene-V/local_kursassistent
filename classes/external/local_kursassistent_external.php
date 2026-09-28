@@ -2642,8 +2642,12 @@ class local_kursassistent_external extends external_api {
      * @param int $targetsectionnum
      * @return array
      */
-    public static function duplicate_activity(int $courseid, int $cmid, int $targetcourseid = 0,
-            int $targetsectionnum = -1): array {
+    public static function duplicate_activity(
+        int $courseid,
+        int $cmid,
+        int $targetcourseid = 0,
+        int $targetsectionnum = -1
+    ): array {
         global $CFG, $DB;
 
         $params = self::validate_parameters(self::duplicate_activity_parameters(), [
