@@ -1628,6 +1628,26 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
     }
 
     /**
+     * Zeigt einen Serverfehler mit der tatsächlichen Meldung an.
+     *
+     * Ohne das geht der Grund verloren und es bleibt nur ein allgemeiner Hinweis,
+     * mit dem sich ein Problem nicht eingrenzen lässt.
+     *
+     * @param {Object} fehler Fehlerobjekt aus core/ajax
+     * @param {String} fallback Text, wenn der Server keine Meldung liefert
+     */
+    function zeigeServerfehler(fehler, fallback) {
+        var text = fallback;
+        if (fehler && fehler.message) {
+            text = fehler.message;
+        }
+        if (fehler && fehler.debuginfo) {
+            text += ' (' + fehler.debuginfo + ')';
+        }
+        Notification.alert('Fehler', text, 'OK');
+    }
+
+    /**
      * Aktiviert das Umsortieren der Aktivitäten per Ziehen.
      *
      * Nutzt Moodles core/sortable_list, damit Verhalten und Tastaturbedienung
@@ -1688,8 +1708,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
         }])[0].done(function() {
             $zeile.data('sectionnum', sectionnum);
             zeigePanelMeldung($container, 'Die neue Reihenfolge wurde gespeichert.', 'erfolg');
-        }).fail(function() {
-            Notification.alert('Fehler', 'Die Reihenfolge konnte nicht gespeichert werden.', 'OK');
+        }).fail(function(fehler) {
+            zeigeServerfehler(fehler, 'Die Reihenfolge konnte nicht gespeichert werden.');
         });
     }
 
@@ -1911,9 +1931,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 text: 'Zum Zielkurs'
             }));
             $container.prepend($meldung);
-        }).fail(function() {
+        }).fail(function(fehler) {
             $starten.prop('disabled', false).text('Duplizieren');
-            Notification.alert('Fehler', 'Die Aktivität konnte nicht dupliziert werden.', 'OK');
+            zeigeServerfehler(fehler, 'Die Aktivität konnte nicht dupliziert werden.');
         });
     }
 

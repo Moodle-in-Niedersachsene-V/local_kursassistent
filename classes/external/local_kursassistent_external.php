@@ -471,8 +471,19 @@ class local_kursassistent_external extends external_api {
 
         $activities = [];
         foreach ($modinfo->get_cms() as $cm) {
-            // Labels überspringen, aber versteckte Module einbeziehen.
+            // Labels überspringen, aber von Lehrkräften verborgene Module einbeziehen.
             if ($cm->modname === 'label') {
+                continue;
+            }
+
+            // Modultypen, die nicht auf der Kursseite erscheinen, überspringen. Dazu zählt
+            // etwa die Fragensammlung, die Moodle als eigenes Modul in Abschnitt 0 führt.
+            // Sie gehören nicht in die Übersicht und lassen sich auch nicht verschieben
+            // oder duplizieren.
+            if (
+                method_exists('\course_modinfo', 'is_mod_type_visible_on_course')
+                    && !\course_modinfo::is_mod_type_visible_on_course($cm->modname)
+            ) {
                 continue;
             }
 
@@ -1398,7 +1409,11 @@ class local_kursassistent_external extends external_api {
                 if (!$cm) {
                     continue;
                 }
-                set_coursemodule_visible($cmid, $visible);
+                \local_kursassistent\cm_aktionen::sichtbarkeit(
+                    get_course($params['courseid']),
+                    $cmid,
+                    $visible
+                );
                 $updated[] = ['id' => $cmid, 'type' => 'activity', 'visible' => $visible];
             } else if ($upd['type'] === 'section') {
                 $sectionnum = (int) $upd['id'];
@@ -2443,25 +2458,30 @@ class local_kursassistent_external extends external_api {
         require_once($CFG->dirroot . '/course/lib.php');
 
         // Beide Kursmodule müssen zu diesem Kurs gehören.
-        $cm = $DB->get_record('course_modules', [
+        $DB->get_record('course_modules', [
             'id' => $params['cmid'],
             'course' => $params['courseid'],
         ], '*', MUST_EXIST);
 
-        $section = $DB->get_record('course_sections', [
-            'course' => $params['courseid'],
-            'section' => $params['sectionnum'],
-        ], '*', MUST_EXIST);
-
-        $beforemod = null;
         if (!empty($params['beforecmid'])) {
-            $beforemod = $DB->get_record('course_modules', [
+            $DB->get_record('course_modules', [
                 'id' => $params['beforecmid'],
                 'course' => $params['courseid'],
             ], '*', MUST_EXIST);
         }
 
-        moveto_module($cm, $section, $beforemod);
+        $course = get_course($params['courseid']);
+        $abschnittid = \local_kursassistent\cm_aktionen::abschnitt_id(
+            $params['courseid'],
+            $params['sectionnum']
+        );
+
+        \local_kursassistent\cm_aktionen::verschieben(
+            $course,
+            $params['cmid'],
+            $abschnittid,
+            (int) $params['beforecmid']
+        );
         rebuild_course_cache($params['courseid'], true);
 
         return ['success' => true];
@@ -2676,17 +2696,20 @@ class local_kursassistent_external extends external_api {
         $zielkursid = empty($params['targetcourseid']) ? (int) $course->id : (int) $params['targetcourseid'];
 
         if ($zielkursid === (int) $course->id) {
-            $neuecm = duplicate_module($course, $cm);
-            $neuecmid = (int) $neuecm->id;
-
-            if ($params['targetsectionnum'] >= 0 && $params['targetsectionnum'] !== (int) $cm->sectionnum) {
-                $zielabschnitt = $DB->get_record('course_sections', [
-                    'course' => $course->id,
-                    'section' => $params['targetsectionnum'],
-                ], '*', MUST_EXIST);
-                $verschieben = $DB->get_record('course_modules', ['id' => $neuecmid], '*', MUST_EXIST);
-                moveto_module($verschieben, $zielabschnitt);
+            // Ohne ausdrücklichen Zielabschnitt landet die Kopie im Abschnitt des Originals.
+            $zielabschnittid = null;
+            if ($params['targetsectionnum'] >= 0) {
+                $zielabschnittid = \local_kursassistent\cm_aktionen::abschnitt_id(
+                    (int) $course->id,
+                    (int) $params['targetsectionnum']
+                );
             }
+
+            \local_kursassistent\cm_aktionen::duplizieren(
+                $course,
+                (int) $cm->id,
+                $zielabschnittid
+            );
 
             rebuild_course_cache($course->id, true);
 

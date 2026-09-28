@@ -109,13 +109,16 @@ class aktivitaet_kopierer {
         $neuecmid = empty($neue) ? 0 : (int) max($neue);
 
         if ($neuecmid && $zielabschnitt >= 0) {
-            $abschnitt = $DB->get_record('course_sections', [
+            $abschnittid = $DB->get_field('course_sections', 'id', [
                 'course' => $zielkursid,
                 'section' => $zielabschnitt,
             ]);
-            if ($abschnitt) {
-                $modul = $DB->get_record('course_modules', ['id' => $neuecmid], '*', MUST_EXIST);
-                moveto_module($modul, $abschnitt);
+            if ($abschnittid) {
+                cm_aktionen::verschieben(
+                    get_course($zielkursid),
+                    $neuecmid,
+                    (int) $abschnittid
+                );
             }
         }
 
