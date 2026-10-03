@@ -1,6 +1,6 @@
 # Kursassistent – Anleitung
 
-*Moodle in Niedersachsen e. V. · local_kursassistent, Build 2026092410, Release 2.2.5 · Stand: September 2026*
+*Moodle in Niedersachsen e. V. · local_kursassistent, Build 2026100112, Release 2.4.2 · Stand: September 2026*
 
 ## 1. Für Lehrkräfte
 
@@ -14,7 +14,7 @@ Darüber hinaus bündelt der Assistent Einstellungen, die sonst über viele Mood
 
 1. Öffne den gewünschten Kurs.
 2. In der Zeile mit den Reitern „Kurs, Einstellungen, Teilnehmer/innen …" findest du die Einträge „Kursassistent" und „Anleitung zum Kursassistenten" (ggf. im Menü „Mehr", je nach Bildschirmbreite).
-3. Ein Fenster öffnet sich mit allen verfügbaren Bausteinen, gruppiert in fünf Kategorien: Lerninformationen, Lernmaterial, Aktivitäten, Lernpfade und Statistik sowie Kurseinrichtung.
+3. Ein Fenster öffnet sich mit allen verfügbaren Bausteinen, gruppiert in fünf Kategorien: Lerninformationen, Lernmaterial, Aktivitäten, Kurseinrichtung sowie Lernpfade, Kompetenzen und Statistik.
 
 *Jede Kategorie ist zunächst eingeklappt, damit die Liste übersichtlich bleibt – ein Klick auf die Kategorie-Überschrift klappt sie auf.*
 
@@ -65,7 +65,7 @@ Neben dem Zielabschnitt-Dropdown findest du zwei kleine Schaltflächen:
 - **Stift-Symbol:** benennt den aktuell ausgewählten Abschnitt um. Namen eintragen, „Speichern" klicken – die Änderung ist sofort sichtbar, ganz ohne Neuladen der Seite.
 - **Plus-Symbol:** erstellt einen neuen, leeren Abschnitt am Ende des Kurses. Ein Name ist optional; ohne Angabe vergibt Moodle automatisch einen Standardnamen. Der neue Abschnitt wird direkt als Zielabschnitt ausgewählt.
 
-### 1.8 Lernpfade und Statistik
+### 1.8 Lernpfade, Kompetenzen und Statistik
 
 Diese Kategorie bündelt fünf Werkzeuge, mit denen du steuerst, wie sich dein Kurs für die Teilnehmenden verhält. Alle arbeiten auf einer gemeinsamen Tabelle aller Aktivitäten des Kurses.
 
@@ -75,6 +75,7 @@ Diese Kategorie bündelt fünf Werkzeuge, mit denen du steuerst, wie sich dein K
 - **Übersicht:** Zeigt alle Abschluss- und Voraussetzungseinstellungen des Kurses auf einen Blick. Hier kannst du außerdem:
   - Abschnitte und einzelne Aktivitäten über das Augensymbol aus- und wieder einblenden,
   - die **Reihenfolge ändern**, indem du eine Zeile am Anfasser links greifst und an die gewünschte Stelle ziehst – auch über Abschnittsgrenzen hinweg. Die neue Position wird sofort gespeichert,
+  - **Kompetenzen zuordnen**, sofern das Exabis-Kompetenzraster installiert ist. Die Spalte zeigt je Aktivität die bereits zugeordneten Kompetenzen; über das Plus-Symbol wählst du weitere aus dem Kompetenzraster des Kurses aus. Die Auswahl ist nach Themen gegliedert; ein Klick auf die Themenüberschrift klappt sie auf oder zu. Themen mit bereits zugeordneten Kompetenzen sind von Anfang an geöffnet. Angehakte Kompetenzen sind zugeordnet. Um eine Zuordnung zu entfernen, nimmst du den Haken heraus und speicherst; unter der Auswahl steht vorher, wie viele Kompetenzen hinzukommen und wegfallen. Mindestens eine Kompetenz muss zugeordnet bleiben, weil Exabis ein Lernmaterial ohne Kompetenz nicht mehr anzeigt. Zuordnen dürfen nur Personen, die im Kompetenzraster als Lehrkraft eingetragen sind. Hat ein Lernmaterial weitere Verknüpfungen, etwa zu einem Themenübergreifenden Fach, ändert der Assistent nichts und weist darauf hin; dann bearbeitest du die Zuordnung im Kompetenzraster. Die Auswahl wird als Exabis-Lernmaterial gespeichert und mit der Aktivität verknüpft – der bisherige Umweg über Dakora Plus entfällt damit für diesen Schritt,
   - eine Aktivität **duplizieren**. Über das Kopiersymbol wählst du, ob die Kopie in diesem Kurs landen soll (direkt hinter dem Original oder in einem anderen Abschnitt) oder in einem anderen Kurs. Zur Auswahl stehen dabei nur Kurse, in denen du selbst bearbeiten darfst. Nutzerdaten wie Abgaben oder Bewertungen werden nicht mitkopiert.
 - **Statistik:** Zeigt je Aktivität, wie viele Teilnehmende sie bereits abgeschlossen haben. Zu jeder Person lässt sich zusätzlich eine kurze Notiz hinterlegen, die nur Lehrkräfte des Kurses sehen.
 
@@ -163,6 +164,7 @@ Die Statistik und die Notizen zu einzelnen Teilnehmenden sind an `local/kursassi
 | local_peertubeupload | Video-Tab „Video hochladen" (ab Build 2026071501 mit channel_manager-Klasse) |
 | repository_peertubeoauth | Video-Tab „PeerTube-Video wählen" (Videogalerie) |
 | repository_nextclouddirect | Optional: Nextcloud als Speicherort im Datei-Picker bei „Materialien" und „Bild" |
+| block_exacomp | Optional: Spalte „Kompetenzen" in der Übersicht |
 
 ### 3.7 Bekannte Einschränkungen
 

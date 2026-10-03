@@ -217,4 +217,20 @@ $functions = [
         'ajax' => true,
         'capabilities' => 'local/kursassistent:use',
     ],
+    'local_kursassistent_get_competencies' => [
+        'classname' => 'local_kursassistent\external\local_kursassistent_external',
+        'methodname' => 'get_competencies',
+        'description' => 'Liefert Kompetenzbaum und bestehende Zuordnungen',
+        'type' => 'read',
+        'ajax' => true,
+        'capabilities' => 'local/kursassistent:use',
+    ],
+    'local_kursassistent_replace_competencies' => [
+        'classname' => 'local_kursassistent\external\local_kursassistent_external',
+        'methodname' => 'replace_competencies',
+        'description' => 'Setzt die vollständige Auswahl der Kompetenzen einer Aktivität',
+        'type' => 'write',
+        'ajax' => true,
+        'capabilities' => 'local/kursassistent:use',
+    ],
 ];

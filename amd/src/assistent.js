@@ -207,11 +207,11 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
         });
         $kgInhalt.append($sectplItem);
 
-        // Fünfte Gruppe: Lernpfade und Statistik.
+        // Fünfte Gruppe: Lernpfade, Kompetenzen und Statistik.
         var $avGruppe = $('<div>', {'class': 'local-kursassistent-gruppe'});
         var $avHeader = $('<div>', {'class': 'local-kursassistent-gruppenheader'});
         var $avLabelWrap = $('<span>', {'class': 'd-flex align-items-center'});
-        $avLabelWrap.append($('<span>', {text: 'Lernpfade und Statistik'}));
+        $avLabelWrap.append($('<span>', {text: 'Lernpfade, Kompetenzen und Statistik'}));
         $avLabelWrap.append(erstelleHilfeIcon('kat_lernpfade_help_title', 'kat_lernpfade_help'));
         $avHeader.append($avLabelWrap);
         $avHeader.append($('<span>', {'class': 'local-kursassistent-gruppenpfeil', text: '▸'}));
@@ -1648,6 +1648,349 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
     }
 
     /**
+     * Zwischenspeicher für Kompetenzbaum und Zuordnungen des Kurses.
+     *
+     * Wird einmal je Öffnen der Übersicht geladen, damit nicht für jede Zeile
+     * eine eigene Abfrage nötig ist.
+     */
+    var kompetenzDaten = null;
+
+    /**
+     * Lädt Kompetenzbaum und Zuordnungen und baut die Spalte auf.
+     *
+     * @param {jQuery} $container Panel mit der Übersichtstabelle
+     */
+    function ladeKompetenzen($container) {
+        Ajax.call([{
+            methodname: 'local_kursassistent_get_competencies',
+            args: {courseid: courseid}
+        }])[0].done(function(response) {
+            kompetenzDaten = response;
+
+            if (!response.available) {
+                // Ohne Kompetenzraster bleibt die Spalte leer und unauffällig.
+                $container.find('.local-kursassistent-kompspalte').text('');
+                return;
+            }
+
+            zeigeKompetenzMarken($container);
+        }).fail(function() {
+            $container.find('.local-kursassistent-kompspalte').text('');
+        });
+    }
+
+    /**
+     * Sucht einen Deskriptor im geladenen Kompetenzbaum.
+     *
+     * @param {Number} descriptorid
+     * @return {Object|null}
+     */
+    function findeDeskriptor(descriptorid) {
+        if (!kompetenzDaten || !kompetenzDaten.topics) {
+            return null;
+        }
+        var treffer = null;
+        kompetenzDaten.topics.forEach(function(thema) {
+            thema.descriptors.forEach(function(d) {
+                if (d.descriptorid === descriptorid) {
+                    treffer = d;
+                }
+            });
+        });
+        return treffer;
+    }
+
+    /**
+     * Liefert die zugeordneten Deskriptor-IDs einer Aktivität.
+     *
+     * @param {Number} cmid
+     * @return {Array}
+     */
+    function holeZuordnung(cmid) {
+        if (!kompetenzDaten || !kompetenzDaten.assignments) {
+            return [];
+        }
+        var gefunden = [];
+        kompetenzDaten.assignments.forEach(function(z) {
+            if (z.cmid === cmid) {
+                gefunden = z.descriptorids;
+            }
+        });
+        return gefunden;
+    }
+
+    /**
+     * Schreibt die zugeordneten Kompetenzen als Marken in die Spalte.
+     *
+     * @param {jQuery} $container
+     */
+    function zeigeKompetenzMarken($container) {
+        $container.find('.local-kursassistent-kompspalte').each(function() {
+            var $zelle = $(this);
+            var cmid = parseInt($zelle.data('cmid'), 10);
+            var ids = holeZuordnung(cmid);
+
+            $zelle.empty();
+
+            if (!ids.length) {
+                $zelle.append($('<span>', {'class': 'text-muted small', text: 'keine'}));
+            } else {
+                ids.slice(0, 2).forEach(function(id) {
+                    var d = findeDeskriptor(id);
+                    var beschriftung = d ? (d.numbering ? d.numbering + ' ' + d.title : d.title) : '#' + id;
+                    $zelle.append($('<span>', {
+                        'class': 'local-kursassistent-kompmarke',
+                        title: beschriftung,
+                        text: beschriftung
+                    }));
+                });
+                if (ids.length > 2) {
+                    $zelle.append($('<span>', {
+                        'class': 'text-muted small ml-1',
+                        text: '+' + (ids.length - 2)
+                    }));
+                }
+            }
+
+            $zelle.append($('<button>', {
+                type: 'button',
+                'class': 'btn btn-sm p-0 ml-1 local-kursassistent-komp-btn',
+                'data-cmid': cmid,
+                title: 'Kompetenzen zuordnen',
+                text: '+'
+            }));
+        });
+    }
+
+    /**
+     * Baut die Zeile einer einzelnen Kompetenz mit Auswahlfeld.
+     *
+     * Bereits zugeordnete Kompetenzen sind angehakt. Nimmt man den Haken heraus und
+     * speichert, wird die Zuordnung entfernt.
+     *
+     * @param {Object} d Deskriptor
+     * @param {Array} bereits Bereits zugeordnete Deskriptor-IDs
+     * @return {jQuery}
+     */
+    function baueKompetenzZeile(d, bereits) {
+        var $zeile = $('<label>', {'class': 'local-kursassistent-kompzeile'});
+        var $haken = $('<input>', {
+            type: 'checkbox',
+            'class': 'local-kursassistent-kompauswahl',
+            value: d.descriptorid
+        });
+        if (bereits.indexOf(d.descriptorid) !== -1) {
+            $haken.prop('checked', true);
+        }
+        var text = (d.numbering ? d.numbering + ' ' : '') + d.title +
+            (d.niveau ? ' (' + d.niveau + ')' : '');
+        $zeile.append($haken, $('<span>', {text: text}));
+        return $zeile;
+    }
+
+    /**
+     * Baut den einklappbaren Block eines Kompetenzthemas.
+     *
+     * Themen mit bereits zugeordneten Kompetenzen sind zunächst aufgeklappt, alle
+     * anderen eingeklappt, damit die Liste übersichtlich bleibt. Bei nur einem Thema
+     * ist es immer aufgeklappt.
+     *
+     * @param {Object} thema Thema mit seinen Deskriptoren
+     * @param {Array} bereits Bereits zugeordnete Deskriptor-IDs
+     * @param {Boolean} immerOffen Thema von Anfang an aufklappen
+     * @return {jQuery}
+     */
+    function baueKompetenzThema(thema, bereits, immerOffen) {
+        var titel = thema.subject + ' – ' +
+            (thema.numbering ? thema.numbering + ' ' : '') + thema.title;
+        var zugeordnet = thema.descriptors.filter(function(d) {
+            return bereits.indexOf(d.descriptorid) !== -1;
+        }).length;
+        var offen = immerOffen || zugeordnet > 0;
+
+        var $block = $('<div>', {'class': 'local-kursassistent-kompblock'});
+        var $kopf = $('<button>', {
+            type: 'button',
+            'class': 'local-kursassistent-kompthema',
+            'aria-expanded': offen ? 'true' : 'false'
+        });
+        var $pfeil = $('<span>', {
+            'class': 'local-kursassistent-gruppenpfeil',
+            text: offen ? '▾' : '▸'
+        });
+        var $auswahlzahl = $('<span>', {
+            'class': 'local-kursassistent-kompauswahlzahl',
+            text: zugeordnet ? zugeordnet + ' ausgewählt' : ''
+        });
+        $kopf.append($pfeil, $('<span>', {'class': 'local-kursassistent-kompthematitel', text: titel}),
+            $('<span>', {
+                'class': 'local-kursassistent-kompanzahl',
+                text: '(' + thema.descriptors.length + ')'
+            }), $auswahlzahl);
+
+        var $inhalt = $('<div>', {'class': 'local-kursassistent-kompinhalt' + (offen ? '' : ' d-none')});
+        thema.descriptors.forEach(function(d) {
+            $inhalt.append(baueKompetenzZeile(d, bereits));
+        });
+
+        $kopf.on('click', function() {
+            var aufgeklappt = $inhalt.hasClass('d-none');
+            $inhalt.toggleClass('d-none', !aufgeklappt);
+            $pfeil.text(aufgeklappt ? '▾' : '▸');
+            $kopf.attr('aria-expanded', aufgeklappt ? 'true' : 'false');
+        });
+
+        // Bei eingeklapptem Thema zeigt der Kopf, wie viele Kompetenzen gewählt sind.
+        $inhalt.on('change', '.local-kursassistent-kompauswahl', function() {
+            var anzahl = $inhalt.find('.local-kursassistent-kompauswahl:checked').length;
+            $auswahlzahl.text(anzahl ? anzahl + ' ausgewählt' : '');
+        });
+
+        return $block.append($kopf, $inhalt);
+    }
+
+    /**
+     * Liest die vollständige Auswahl aus dem Kompetenzdialog.
+     *
+     * @param {jQuery} $panel
+     * @return {Array} Deskriptor-IDs aller angehakten Kompetenzen
+     */
+    function leseKompetenzAuswahl($panel) {
+        var auswahl = [];
+        $panel.find('.local-kursassistent-kompauswahl:checked').each(function() {
+            auswahl.push(parseInt($(this).val(), 10));
+        });
+        return auswahl;
+    }
+
+    /**
+     * Vergleicht die aktuelle Auswahl mit dem bisherigen Stand.
+     *
+     * @param {Array} bereits Bisher zugeordnete Deskriptor-IDs
+     * @param {Array} auswahl Aktuell angehakte Deskriptor-IDs
+     * @return {Object} Listen der neuen und der entfernten Deskriptor-IDs
+     */
+    function vergleicheKompetenzAuswahl(bereits, auswahl) {
+        return {
+            neu: auswahl.filter(function(id) {
+                return bereits.indexOf(id) === -1;
+            }),
+            entfernt: bereits.filter(function(id) {
+                return auswahl.indexOf(id) === -1;
+            })
+        };
+    }
+
+    /**
+     * Zeigt im Dialog an, was beim Speichern hinzukommt oder wegfällt.
+     *
+     * @param {jQuery} $panel
+     * @param {Array} bereits Bisher zugeordnete Deskriptor-IDs
+     */
+    function zeigeKompetenzAenderung($panel, bereits) {
+        var unterschied = vergleicheKompetenzAuswahl(bereits, leseKompetenzAuswahl($panel));
+        var teile = [];
+        if (unterschied.neu.length) {
+            teile.push(unterschied.neu.length + ' hinzufügen');
+        }
+        if (unterschied.entfernt.length) {
+            teile.push(unterschied.entfernt.length + ' entfernen');
+        }
+        $panel.find('.local-kursassistent-kompaenderung')
+            .text(teile.length ? 'Beim Speichern: ' + teile.join(', ') : '')
+            .toggleClass('local-kursassistent-kompaenderung-warnung', unterschied.entfernt.length > 0);
+    }
+
+    /**
+     * Öffnet den Auswahlbereich für die Kompetenzen einer Aktivität.
+     *
+     * @param {jQuery} $container
+     * @param {Number} cmid
+     */
+    function oeffneKompetenzDialog($container, cmid) {
+        $container.find('.local-kursassistent-komp-panel').remove();
+
+        if (!kompetenzDaten || !kompetenzDaten.topics.length) {
+            zeigePanelMeldung($container,
+                'Für diesen Kurs sind noch keine Kompetenzen eingerichtet.', 'hinweis');
+            return;
+        }
+
+        var bereits = holeZuordnung(cmid);
+        var $panel = $('<div>', {'class': 'local-kursassistent-komp-panel'});
+        $panel.append($('<p>', {'class': 'font-weight-bold mb-1', text: 'Kompetenzen zuordnen'}));
+        $panel.append($('<p>', {
+            'class': 'small text-muted mb-2',
+            text: 'Die Auswahl wird als Exabis-Lernmaterial gespeichert und mit dieser ' +
+                'Aktivität verknüpft. Sie erscheint anschliessend auch im Kompetenzraster. ' +
+                'Angehakte Kompetenzen sind zugeordnet, nimm den Haken heraus, um eine ' +
+                'Zuordnung zu entfernen. Mindestens eine Kompetenz muss zugeordnet bleiben.'
+        }));
+
+        var $baum = $('<div>', {'class': 'local-kursassistent-kompbaum'});
+        var nurEinThema = kompetenzDaten.topics.length === 1;
+        kompetenzDaten.topics.forEach(function(thema) {
+            $baum.append(baueKompetenzThema(thema, bereits, nurEinThema));
+        });
+        $panel.append($baum);
+        $panel.append($('<div>', {'class': 'small mt-2 local-kursassistent-kompaenderung'}));
+
+        $baum.on('change', '.local-kursassistent-kompauswahl', function() {
+            zeigeKompetenzAenderung($panel, bereits);
+        });
+
+        var $fuss = $('<div>', {'class': 'd-flex justify-content-end mt-2'});
+        var $abbrechen = $('<button>', {
+            type: 'button',
+            'class': 'btn btn-sm btn-secondary mr-2 local-kursassistent-komp-abbrechen',
+            text: 'Abbrechen'
+        });
+        var $speichern = $('<button>', {
+            type: 'button',
+            'class': 'btn btn-sm btn-primary local-kursassistent-komp-speichern',
+            text: 'Zuordnung speichern'
+        });
+        $fuss.append($abbrechen, $speichern);
+        $panel.append($fuss);
+
+        $abbrechen.on('click', function() {
+            $panel.remove();
+        });
+
+        $speichern.on('click', function() {
+            var auswahl = leseKompetenzAuswahl($panel);
+            var unterschied = vergleicheKompetenzAuswahl(bereits, auswahl);
+
+            if (!auswahl.length) {
+                zeigePanelMeldung($container,
+                    'Mindestens eine Kompetenz muss zugeordnet bleiben.', 'hinweis');
+                return;
+            }
+            if (!unterschied.neu.length && !unterschied.entfernt.length) {
+                zeigePanelMeldung($container, 'Es gibt nichts zu speichern.', 'hinweis');
+                return;
+            }
+
+            $speichern.prop('disabled', true).text('Wird gespeichert …');
+
+            Ajax.call([{
+                methodname: 'local_kursassistent_replace_competencies',
+                args: {courseid: courseid, cmid: cmid, descriptorids: auswahl}
+            }])[0].done(function() {
+                $panel.remove();
+                zeigePanelMeldung($container, 'Die Zuordnung wurde gespeichert.', 'erfolg');
+                ladeKompetenzen($container);
+            }).fail(function(fehler) {
+                $speichern.prop('disabled', false).text('Zuordnung speichern');
+                zeigeServerfehler(fehler, 'Die Kompetenzen konnten nicht zugeordnet werden.');
+            });
+        });
+
+        $container.append($panel);
+        $panel[0].scrollIntoView({block: 'nearest'});
+    }
+
+    /**
      * Aktiviert das Umsortieren der Aktivitäten per Ziehen.
      *
      * Nutzt Moodles core/sortable_list, damit Verhalten und Tastaturbedienung
@@ -2003,7 +2346,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 $('<th>', {text: 'Sichtbar', 'class': 'text-center', style: 'width:70px'}),
                 $('<th>', {text: 'Kopie', 'class': 'text-center', style: 'width:60px'}),
                 $('<th>', {text: 'Abschluss'}),
-                $('<th>', {text: 'Voraussetzungen'})
+                $('<th>', {text: 'Voraussetzungen'}),
+                $('<th>', {text: 'Kompetenzen'})
             )
         );
         $tabelle.append($thead);
@@ -2044,7 +2388,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 }
                 $sectionVisCell.append($sectionToggle);
                 $sectionRow.append($('<td>'), $sectionTd, $sectionVisCell,
-                    $('<td>'), $('<td>'), $('<td>'));
+                    $('<td>'), $('<td>'), $('<td>'), $('<td>'));
                 $tbody.append($sectionRow);
                 lastSection = act.sectionnum;
             }
@@ -2123,6 +2467,13 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             }));
             $row.append($completionCell);
             $row.append($('<td>', {text: restrictionTexts.length > 0 ? restrictionTexts.join('; ') : '–'}));
+
+            // Spalte für die Kompetenzen. Befüllt wird sie nachgelagert, sobald der
+            // Kompetenzbaum geladen ist.
+            $row.append($('<td>', {
+                'class': 'local-kursassistent-kompspalte',
+                'data-cmid': act.cmid
+            }));
             $tbody.append($row);
         });
 
@@ -2177,6 +2528,14 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
 
         // Umsortieren per Ziehen aktivieren.
         aktiviereSortierung($container);
+
+        // Kompetenzen nachladen und Spalte befüllen.
+        ladeKompetenzen($container);
+
+        $container.off('click.kakompetenz').on('click.kakompetenz',
+            '.local-kursassistent-komp-btn', function() {
+                oeffneKompetenzDialog($container, parseInt($(this).data('cmid'), 10));
+            });
 
         // Duplizieren-Schaltflächen.
         $container.off('click.kaduplizieren').on('click.kaduplizieren',

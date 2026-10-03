@@ -2749,4 +2749,150 @@ class local_kursassistent_external extends external_api {
             'targetcourseurl' => new external_value(PARAM_URL, 'Link zum Zielkurs'),
         ]);
     }
+
+    /**
+     * Parameter für get_competencies.
+     *
+     * @return external_function_parameters
+     */
+    public static function get_competencies_parameters(): external_function_parameters {
+        return new external_function_parameters([
+            'courseid' => new external_value(PARAM_INT, 'Kurs-ID'),
+        ]);
+    }
+
+    /**
+     * Liefert den Kompetenzbaum des Kurses und die bestehenden Zuordnungen.
+     *
+     * @param int $courseid
+     * @return array
+     */
+    public static function get_competencies(int $courseid): array {
+        $params = self::validate_parameters(self::get_competencies_parameters(), [
+            'courseid' => $courseid,
+        ]);
+
+        $context = \context_course::instance($params['courseid']);
+        self::validate_context($context);
+        require_capability('local/kursassistent:use', $context);
+
+        if (!\local_kursassistent\exacomp_bruecke::verfuegbar()) {
+            return ['available' => false, 'topics' => [], 'assignments' => []];
+        }
+
+        $baum = \local_kursassistent\exacomp_bruecke::get_kompetenzbaum($params['courseid']);
+        $zuordnungen = \local_kursassistent\exacomp_bruecke::get_zuordnungen($params['courseid']);
+
+        $umgewandelt = [];
+        foreach ($zuordnungen as $cmid => $descriptorids) {
+            $umgewandelt[] = [
+                'cmid' => (int) $cmid,
+                'descriptorids' => array_values(array_unique($descriptorids)),
+            ];
+        }
+
+        return [
+            'available' => true,
+            'topics' => $baum,
+            'assignments' => $umgewandelt,
+        ];
+    }
+
+    /**
+     * Rückgabestruktur für get_competencies.
+     *
+     * @return external_single_structure
+     */
+    public static function get_competencies_returns(): external_single_structure {
+        return new external_single_structure([
+            'available' => new external_value(PARAM_BOOL, 'Kompetenzraster verfügbar'),
+            'topics' => new external_multiple_structure(new external_single_structure([
+                'topicid' => new external_value(PARAM_INT, 'Themen-ID'),
+                'title' => new external_value(PARAM_TEXT, 'Thema'),
+                'numbering' => new external_value(PARAM_TEXT, 'Nummerierung'),
+                'subject' => new external_value(PARAM_TEXT, 'Fach'),
+                'descriptors' => new external_multiple_structure(new external_single_structure([
+                    'descriptorid' => new external_value(PARAM_INT, 'Deskriptor-ID'),
+                    'title' => new external_value(PARAM_TEXT, 'Deskriptor'),
+                    'numbering' => new external_value(PARAM_TEXT, 'Nummerierung'),
+                    'niveau' => new external_value(PARAM_TEXT, 'Niveau'),
+                ])),
+            ])),
+            'assignments' => new external_multiple_structure(new external_single_structure([
+                'cmid' => new external_value(PARAM_INT, 'Kursmodul-ID'),
+                'descriptorids' => new external_multiple_structure(
+                    new external_value(PARAM_INT, 'Deskriptor-ID')
+                ),
+            ])),
+        ]);
+    }
+
+    /**
+     * Parameter für replace_competencies.
+     *
+     * @return external_function_parameters
+     */
+    public static function replace_competencies_parameters(): external_function_parameters {
+        return new external_function_parameters([
+            'courseid' => new external_value(PARAM_INT, 'Kurs-ID'),
+            'cmid' => new external_value(PARAM_INT, 'Kursmodul'),
+            'descriptorids' => new external_multiple_structure(
+                new external_value(PARAM_INT, 'Deskriptor-ID')
+            ),
+        ]);
+    }
+
+    /**
+     * Setzt die Kompetenzen einer Aktivität auf die übergebene, vollständige Auswahl.
+     *
+     * Bisher zugeordnete Kompetenzen, die nicht in der Auswahl stehen, werden entfernt.
+     *
+     * Der Name unterscheidet sich bewusst von früheren Fassungen, die nur Ergänzungen
+     * übertrugen. Ein veralteter Client scheitert damit sichtbar, statt bestehende
+     * Zuordnungen zu überschreiben.
+     *
+     * @param int $courseid
+     * @param int $cmid
+     * @param array $descriptorids
+     * @return array
+     */
+    public static function replace_competencies(int $courseid, int $cmid, array $descriptorids): array {
+        global $DB;
+
+        $params = self::validate_parameters(self::replace_competencies_parameters(), [
+            'courseid' => $courseid,
+            'cmid' => $cmid,
+            'descriptorids' => $descriptorids,
+        ]);
+
+        $context = \context_course::instance($params['courseid']);
+        self::validate_context($context);
+        require_capability('local/kursassistent:use', $context);
+        require_capability('moodle/course:manageactivities', $context);
+
+        // Das Kursmodul muss zu diesem Kurs gehören.
+        $DB->get_record('course_modules', [
+            'id' => $params['cmid'],
+            'course' => $params['courseid'],
+        ], '*', MUST_EXIST);
+
+        \local_kursassistent\exacomp_bruecke::setze_zuordnung(
+            $params['courseid'],
+            $params['cmid'],
+            $params['descriptorids']
+        );
+
+        return ['success' => true];
+    }
+
+    /**
+     * Rückgabestruktur für replace_competencies.
+     *
+     * @return external_single_structure
+     */
+    public static function replace_competencies_returns(): external_single_structure {
+        return new external_single_structure([
+            'success' => new external_value(PARAM_BOOL, 'Erfolgreich'),
+        ]);
+    }
 }
