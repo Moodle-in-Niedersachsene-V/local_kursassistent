@@ -1720,6 +1720,20 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
     }
 
     /**
+     * Liefert die Beschriftung einer Kompetenz für die Marke in der Übersicht.
+     *
+     * @param {Object|null} d Deskriptor, oder null wenn er im Kompetenzbaum fehlt
+     * @param {Number} id Deskriptor-ID
+     * @return {String}
+     */
+    function kompetenzBeschriftung(d, id) {
+        if (!d) {
+            return '#' + id;
+        }
+        return d.numbering ? d.numbering + ' ' + d.title : d.title;
+    }
+
+    /**
      * Schreibt die zugeordneten Kompetenzen als Marken in die Spalte.
      *
      * @param {jQuery} $container
@@ -1736,8 +1750,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 $zelle.append($('<span>', {'class': 'text-muted small', text: 'keine'}));
             } else {
                 ids.slice(0, 2).forEach(function(id) {
-                    var d = findeDeskriptor(id);
-                    var beschriftung = d ? (d.numbering ? d.numbering + ' ' + d.title : d.title) : '#' + id;
+                    var beschriftung = kompetenzBeschriftung(findeDeskriptor(id), id);
                     $zelle.append($('<span>', {
                         'class': 'local-kursassistent-kompmarke',
                         title: beschriftung,
