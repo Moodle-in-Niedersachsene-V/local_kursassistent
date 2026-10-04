@@ -17,6 +17,25 @@ define(['jquery'], function($) {
     var GUELTIG_MS = 30 * 60 * 1000;
 
     /**
+     * Zielseiten, zu denen der Assistent wechselt, mit dem Hinweis, der dort erscheint.
+     * Das Formular einer Aktivität wird gesondert behandelt, weil es vom Typ abhängt.
+     */
+    var ZIELSEITEN = {
+        datei: {
+            pfad: '/local/kursassistent/pick_file.php',
+            text: 'Du wählst eine Datei für den Kursassistenten aus. Nach dem Übernehmen geht es dort weiter.'
+        },
+        vorlage: {
+            pfad: '/local/kursassistent/vorlagen.php',
+            text: 'Du wählst eine Kursvorlage für den Kursassistenten aus. Nach dem Übernehmen geht es dort weiter.'
+        },
+        kursformat: {
+            pfad: '/course/edit.php',
+            text: 'Du änderst die Kurseinstellungen über den Kursassistenten. Nach dem Speichern geht es dort weiter.'
+        }
+    };
+
+    /**
      * Liefert den sessionStorage oder null, wenn der Browser ihn nicht erlaubt.
      *
      * @return {Storage|null}
@@ -115,22 +134,39 @@ define(['jquery'], function($) {
     /**
      * Prüft, ob die aktuelle Seite die Zielseite ist, zu der der Assistent gewechselt hat.
      *
-     * Das ist bei einer Aktivität das Formular zum Anlegen genau dieses Typs und bei einer
-     * Datei die Auswahlseite des Assistenten.
+     * Das ist bei einer Aktivität das Formular zum Anlegen genau dieses Typs, sonst die Seite
+     * aus der Tabelle der Zielseiten.
      *
      * @param {Object} daten Gemerkte Daten
      * @return {Boolean}
      */
     function istZielseite(daten) {
         var pfad = window.location.pathname;
-        if (daten.art === 'datei') {
-            return pfad.indexOf('/local/kursassistent/pick_file.php') !== -1;
+        var ziel = ZIELSEITEN[daten.art];
+        if (ziel) {
+            return pfad.indexOf(ziel.pfad) !== -1;
         }
         if (pfad.indexOf('/course/modedit.php') === -1) {
             return false;
         }
         var parameter = new window.URLSearchParams(window.location.search);
         return parameter.get('add') === daten.modname;
+    }
+
+    /**
+     * Prüft, ob die Seite die Erfolgsseite der Kursvorlage ist.
+     *
+     * Dort ist die Übernahme schon geschehen und die Seite bringt ihren eigenen Knopf zurück
+     * zum Kurs mit. Ein Hinweis würde dort nur verwirren.
+     *
+     * @param {Object} daten Gemerkte Daten
+     * @return {Boolean}
+     */
+    function istErfolgsseiteDerVorlage(daten) {
+        if (daten.art !== 'vorlage' || !istZielseite(daten)) {
+            return false;
+        }
+        return new window.URLSearchParams(window.location.search).get('confirm') === '1';
     }
 
     /**
@@ -144,8 +180,8 @@ define(['jquery'], function($) {
         if (!zielseite) {
             return 'Du kommst vom Kursassistenten.';
         }
-        if (daten.art === 'datei') {
-            return 'Du wählst eine Datei für den Kursassistenten aus. Nach dem Übernehmen geht es dort weiter.';
+        if (ZIELSEITEN[daten.art]) {
+            return ZIELSEITEN[daten.art].text;
         }
         return 'Du legst diese Aktivität über den Kursassistenten an. Nach dem Speichern geht es dort weiter.';
     }
@@ -210,7 +246,7 @@ define(['jquery'], function($) {
          */
         init: function(courseid) {
             var daten = lese(courseid);
-            if (!daten) {
+            if (!daten || istErfolgsseiteDerVorlage(daten)) {
                 return;
             }
             var $ziel = $('[role="main"]').first();

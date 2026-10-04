@@ -61,8 +61,10 @@ if ($templateid && $confirm && confirm_sesskey()) {
         get_string('vorlagen_fertig', 'local_kursassistent', format_string($vorlage->fullname)),
         \core\output\notification::NOTIFY_SUCCESS
     );
+    // Der Parameter sagt dem Assistenten, dass die Übernahme geklappt hat.
+    $erfolgsurl = new moodle_url('/course/view.php', ['id' => $courseid, 'kaergebnis' => 'vorlage']);
     echo html_writer::div(
-        html_writer::link($kursurl, get_string('zurueckzumkurs', 'local_kursassistent'), ['class' => 'btn btn-primary']),
+        html_writer::link($erfolgsurl, get_string('zurueckzumkurs', 'local_kursassistent'), ['class' => 'btn btn-primary']),
         'mt-3'
     );
     echo $OUTPUT->footer();

@@ -1,6 +1,6 @@
 # Kursassistent – Anleitung
 
-*Moodle in Niedersachsen e. V. · local_kursassistent, Build 2026100115, Release 2.5.1 · Stand: Oktober 2026*
+*Moodle in Niedersachsen e. V. · local_kursassistent, Build 2026100116, Release 2.5.2 · Stand: Oktober 2026*
 
 ## 1. Für Lehrkräfte
 
@@ -93,11 +93,13 @@ Diese Kategorie bündelt fünf Werkzeuge, mit denen du steuerst, wie sich dein K
 
 ### 1.9 Kurseinrichtung
 
-Die vierte Kategorie „Kurseinrichtung" bündelt zwei kursweite Aktionen:
+Die vierte Kategorie „Kurseinrichtung" bündelt kursweite Aktionen:
 
 - **Kursformat ändern:** führt direkt zu Moodles regulärer Kurs-Einstellungsseite, auf der sich unter anderem das Kursformat (z. B. Themenformat, Wochenformat) anpassen lässt.
 - **Kursvorlage übernehmen:** zeigt eine Übersicht aller Kurse aus dem Kursbereich, den die Administration als Vorlagenbereich festgelegt hat – mit Kursbild und Kurzbeschreibung. Nach Auswahl und Bestätigung werden die Inhalte der Vorlage in deinen Kurs übernommen. Vorhandene Inhalte bleiben dabei erhalten, die Vorlage wird ergänzt. Nutzerdaten wie Abgaben oder Bewertungen werden nicht übertragen.
 - **Abschnittsvorlagen:** eine Vorlage für einen einzelnen Kursabschnitt. Du kannst eine vorhandene Vorlage auf den gewählten Abschnitt anwenden oder aus deiner aktuellen Baustein-Auswahl eine eigene Vorlage speichern. Ebenso lässt sich der Inhalt eines bestehenden Abschnitts als Vorlage sichern. Von dir angelegte Vorlagen stehen nur dir zur Verfügung. Zusätzlich siehst du alle Vorlagen, die die Administration für die gesamte Website freigegeben hat. Das Freigeben einer Vorlage für alle setzt die Berechtigung „Bausteine verwalten" voraus und ist damit der Administration vorbehalten.
+
+Bei **Kursformat ändern** und **Kursvorlage übernehmen** kehrst du wie bei Aktivitäten und Dateien automatisch in den Kursassistenten zurück. Er öffnet sich mit der Gruppe „Kurseinrichtung". Nach der Kursvorlage bestätigt eine Meldung die Übernahme; nach den Kurseinstellungen gibt es keine Meldung, weil Moodle dort keinen Hinweis auf das Speichern mitgibt.
 
 ### 1.10 Anleitung zum Kursassistenten
 

@@ -183,7 +183,10 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
         $formatItem.on('click', function(e) {
             e.preventDefault();
             navigiereMitWarnung($overlay, M.cfg.wwwroot + '/course/edit.php?id=' + courseid,
-                'Kursformat ändern');
+                'Kursformat ändern', function(weiter) {
+                    Rueckkehr.merke({courseid: courseid, art: 'kursformat', titel: 'Kursformat ändern'});
+                    weiter();
+                });
         });
         $kgInhalt.append($formatItem);
 
@@ -200,7 +203,11 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             $vorlageItem.on('click', function(e) {
                 e.preventDefault();
                 navigiereMitWarnung($overlay, M.cfg.wwwroot +
-                    '/local/kursassistent/vorlagen.php?courseid=' + courseid, 'Kursvorlage übernehmen');
+                    '/local/kursassistent/vorlagen.php?courseid=' + courseid, 'Kursvorlage übernehmen',
+                function(weiter) {
+                    Rueckkehr.merke({courseid: courseid, art: 'vorlage', titel: 'Kursvorlage übernehmen'});
+                    weiter();
+                });
             });
             $kgInhalt.append($vorlageItem);
         }
@@ -816,6 +823,36 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
     }
 
     /**
+     * Klappt die Gruppe mit der angegebenen Bezeichnung im Assistenten auf.
+     *
+     * @param {jQuery} $overlay
+     * @param {String} bezeichnung Beschriftung der Gruppe
+     */
+    function oeffneGruppe($overlay, bezeichnung) {
+        $overlay.find('.local-kursassistent-gruppenheader').filter(function() {
+            return $(this).text().indexOf(bezeichnung) !== -1;
+        }).first().trigger('click');
+    }
+
+    /**
+     * Zeigt nach der Rückkehr von der Kurseinstellung oder der Kursvorlage die Gruppe
+     * Kurseinrichtung. Nach der Kursvorlage bestätigt eine Meldung die Übernahme.
+     *
+     * Nach den Kurseinstellungen gibt es keine Meldung, weil die Seite von Moodle keinen
+     * Hinweis auf das Speichern mitgibt.
+     *
+     * @param {jQuery} $overlay
+     * @param {Object} rueckkehr Gemerkte Daten
+     * @param {String|null} ergebnis Wert des Parameters kaergebnis aus der Adresse
+     */
+    function zeigeEinrichtungRueckkehr($overlay, rueckkehr, ergebnis) {
+        oeffneGruppe($overlay, 'Kurseinrichtung');
+        if (rueckkehr.art === 'vorlage' && ergebnis === 'vorlage') {
+            zeigeMeldung($overlay, 'Die Kursvorlage wurde übernommen.', 'erfolg');
+        }
+    }
+
+    /**
      * Zeigt nach der Rückkehr von der Dateiauswahl den Bereich, in dem es weitergeht.
      *
      * Der Zielabschnitt ist wieder der zuletzt gewählte, die Gruppe Lernmaterial ist geöffnet,
@@ -828,10 +865,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
     function zeigeDateiRueckkehr($overlay, rueckkehr, ergebnis) {
         var $abschnitt = $overlay.find('.local-kursassistent-section');
         $abschnitt.val(String(rueckkehr.sectionnum));
-
-        $overlay.find('.local-kursassistent-gruppenheader').filter(function() {
-            return $(this).text().indexOf('Lernmaterial') !== -1;
-        }).first().trigger('click');
+        oeffneGruppe($overlay, 'Lernmaterial');
 
         if (ergebnis === 'datei') {
             zeigeMeldung($overlay, 'Der Baustein „' + rueckkehr.titel + '“ wurde in „' +
@@ -843,7 +877,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
      * Wertet die Rückkehr von einer Seite außerhalb des Assistenten aus.
      *
      * Nach dem Formular einer Aktivität geht der Assistent direkt in die Übersicht und markiert
-     * die neue Aktivität, nach der Dateiauswahl zeigt er den Bereich Lernmaterial.
+     * die neue Aktivität, nach der Dateiauswahl zeigt er den Bereich Lernmaterial, und nach
+     * den Kurseinstellungen oder der Kursvorlage die Kurseinrichtung.
      *
      * @param {jQuery} $overlay
      * @param {Object} rueckkehr Gemerkte Daten
@@ -852,6 +887,10 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
     function zeigeRueckkehrErgebnis($overlay, rueckkehr, ergebnis) {
         if (rueckkehr.art === 'datei') {
             zeigeDateiRueckkehr($overlay, rueckkehr, ergebnis);
+            return;
+        }
+        if (rueckkehr.art === 'kursformat' || rueckkehr.art === 'vorlage') {
+            zeigeEinrichtungRueckkehr($overlay, rueckkehr, ergebnis);
             return;
         }
         if (!rueckkehr.vorher) {
