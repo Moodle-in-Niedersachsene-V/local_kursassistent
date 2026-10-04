@@ -93,6 +93,33 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
     }
 
     /**
+     * Baut das Feld für den Namen eines Videos mit Hilfe-Symbol.
+     *
+     * Der Name erscheint in den Listen des Assistenten, etwa bei der Abschlussverfolgung.
+     *
+     * @param {Number} typeid Baustein, zu dem das Feld gehört
+     * @return {jQuery}
+     */
+    function baueNamensfeld(typeid) {
+        var feldid = 'local-kursassistent-videoname-' + typeid;
+        var $feld = $('<div>', {'class': 'local-kursassistent-namensfeld mb-2'});
+        var $beschriftung = $('<div>', {'class': 'd-flex align-items-center mb-1'});
+        $beschriftung.append($('<label>', {
+            'class': 'small mb-0',
+            'for': feldid,
+            text: 'Name (optional)'
+        }), erstelleHilfeIcon('lernmaterialname', 'lernmaterialname_help'));
+        $feld.append($beschriftung, $('<input>', {
+            type: 'text',
+            id: feldid,
+            'class': 'form-control form-control-sm local-kursassistent-videoname',
+            maxlength: 100,
+            placeholder: 'z. B. Mitose erklärt'
+        }));
+        return $feld;
+    }
+
+    /**
      * Baut das Modal-Markup basierend auf den geladenen Bausteinen.
      *
      * @param {Object} response Antwort von local_kursassistent_get_bausteine
@@ -401,6 +428,17 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             var $item = $(this);
             $item.closest('.local-kursassistent-videogallery').find('.local-kursassistent-galerie-item').removeClass('selected');
             $item.addClass('selected');
+
+            // Der Titel des Videos dient als Vorschlag für den Namen, solange niemand selbst
+            // einen Namen eingetippt hat.
+            var $name = $item.closest('.local-kursassistent-videowrap').find('.local-kursassistent-videoname');
+            if (!$name.val() || $name.data('vorschlag')) {
+                $name.val($item.attr('title') || '').data('vorschlag', true);
+            }
+        });
+
+        $list.on('input', '.local-kursassistent-videoname', function() {
+            $(this).data('vorschlag', false);
         });
 
         $overlay.on('click', '.local-kursassistent-addsection-btn', function() {
@@ -596,7 +634,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                     $panes.append($pane);
                 });
 
-                $videowrap.append($tabbar, $panes);
+                $videowrap.append(baueNamensfeld(b.id), $tabbar, $panes);
             }
 
             $container.append($videowrap);
@@ -711,15 +749,17 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
      * @param {Number} sectionnum
      * @param {Number} typeid
      * @param {File} file
+     * @param {String} name Name für die Listen des Assistenten, leer für den Standardnamen
      * @return {jQuery.Promise}
      */
-    function ladeVideoHoch(sectionnum, typeid, file) {
+    function ladeVideoHoch(sectionnum, typeid, file, name) {
         var formdata = new FormData();
         formdata.append('sesskey', M.cfg.sesskey);
         formdata.append('courseid', courseid);
         formdata.append('sectionnum', sectionnum);
         formdata.append('typeid', typeid);
         formdata.append('videofile', file);
+        formdata.append('name', name || '');
 
         var deferred = $.Deferred();
 
@@ -1034,6 +1074,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             } else if (typ === 'video') {
                 var $wrap = $overlay.find('.local-kursassistent-videowrap[data-typeid="' + typeid + '"]');
                 var activeTab = $wrap.find('.local-kursassistent-tabbtn.active').data('tab');
+                var videoname = $wrap.find('.local-kursassistent-videoname').val() || '';
 
                 if (activeTab === 'link') {
                     var url = $wrap.find('.local-kursassistent-linkinput').val() || '';
@@ -1044,7 +1085,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                     } else {
                         inhalt = '<p class="text-muted">Kein Link angegeben.</p>';
                     }
-                    auswahl.push({typeid: typeid, inhalt: inhalt});
+                    auswahl.push({typeid: typeid, inhalt: inhalt, name: videoname});
                 } else if (activeTab === 'verlinken') {
                     var $selected = $wrap.find('.local-kursassistent-galerie-item.selected');
                     var gurl = $selected.length ? $selected.data('url') : '';
@@ -1056,14 +1097,14 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                         var safeGurl = $('<div>').text(gurl).html();
                         inhalt = '<div class="local-kursassistent-video-embed"><p><a href="' + safeGurl +
                             '">' + safeGurl + '</a></p></div>';
-                        auswahl.push({typeid: typeid, inhalt: inhalt});
+                        auswahl.push({typeid: typeid, inhalt: inhalt, name: videoname});
                     }
                     // Kein Video ausgewählt: Baustein wird einfach übersprungen.
                 } else if (activeTab === 'hochladen') {
                     var $fileinput = $wrap.find('.local-kursassistent-fileinput');
                     var file = $fileinput.length && $fileinput[0].files.length ? $fileinput[0].files[0] : null;
                     if (file) {
-                        videouploads.push({typeid: typeid, file: file});
+                        videouploads.push({typeid: typeid, file: file, name: videoname});
                     }
                     // Kein Datei ausgewählt: Baustein wird einfach übersprungen (kein Platzhalter nötig).
                 }
@@ -1091,7 +1132,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
         }
 
         videouploads.forEach(function(item) {
-            promises.push(ladeVideoHoch(sectionnum, item.typeid, item.file));
+            promises.push(ladeVideoHoch(sectionnum, item.typeid, item.file, item.name));
         });
 
         $.when.apply($, promises).done(function() {
@@ -1274,7 +1315,12 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 text: mb.label
             });
             $btn.on('click', function() {
-                $container.find('.local-kursassistent-completion-select').val(mb.value).trigger('change');
+                $container.find('.local-kursassistent-completion-select').each(function() {
+                    var $wahl = $(this);
+                    if ($wahl.find('option[value="' + mb.value + '"]').length) {
+                        $wahl.val(mb.value).trigger('change');
+                    }
+                });
             });
             $massenzeile.append($btn);
         });
@@ -1314,7 +1360,10 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             });
             $select.append($('<option>', {value: 0, text: 'Keine', selected: act.completion === 0}));
             $select.append($('<option>', {value: 1, text: 'Manuell', selected: act.completion === 1}));
-            $select.append($('<option>', {value: 2, text: 'Automatisch', selected: act.completion === 2}));
+            // Textfelder (Datei, Bild, Video) kennen keinen automatischen Abschluss.
+            if (act.autocompletion !== false) {
+                $select.append($('<option>', {value: 2, text: 'Automatisch', selected: act.completion === 2}));
+            }
             $row.append($select);
 
             // Sub-Optionen für automatischen Abschluss.
@@ -1961,6 +2010,11 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
     function zeigeKompetenzMarken($container) {
         $container.find('.local-kursassistent-kompspalte').each(function() {
             var $zelle = $(this);
+            if ($zelle.data('modname') === 'label') {
+                // Bei Textfeldern mit Lernmaterial ergibt eine Kompetenzzuordnung keinen Sinn.
+                $zelle.empty();
+                return;
+            }
             var cmid = parseInt($zelle.data('cmid'), 10);
             var ids = holeZuordnung(cmid);
 
@@ -2706,7 +2760,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             // Kompetenzbaum geladen ist.
             $row.append($('<td>', {
                 'class': 'local-kursassistent-kompspalte',
-                'data-cmid': act.cmid
+                'data-cmid': act.cmid,
+                'data-modname': act.modname
             }));
             $tbody.append($row);
         });

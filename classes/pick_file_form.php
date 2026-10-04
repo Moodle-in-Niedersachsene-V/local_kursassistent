@@ -56,6 +56,16 @@ class pick_file_form extends \moodleform {
         // ausgefüllt und blockiert dann fälschlich das Absenden. Die serverseitige
         // Prüfung in manager::create_label_with_file() fängt eine fehlende Datei ab.
 
+        $mform->addElement(
+            'text',
+            'name',
+            get_string('lernmaterialname', 'local_kursassistent'),
+            ['size' => 50, 'maxlength' => 100]
+        );
+        $mform->setType('name', PARAM_TEXT);
+        $mform->addRule('name', get_string('maximumchars', '', 100), 'maxlength', 100, 'client');
+        $mform->addHelpButton('name', 'lernmaterialname', 'local_kursassistent');
+
         $this->add_action_buttons(true, get_string('uebernehmen', 'local_kursassistent'));
     }
 }

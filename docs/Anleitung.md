@@ -1,6 +1,6 @@
 # Kursassistent – Anleitung
 
-*Moodle in Niedersachsen e. V. · local_kursassistent, Build 2026100116, Release 2.5.2 · Stand: Oktober 2026*
+*Moodle in Niedersachsen e. V. · local_kursassistent, Build 2026100117, Release 2.6.0 · Stand: Oktober 2026*
 
 ## 1. Für Lehrkräfte
 
@@ -42,7 +42,8 @@ Bei Cloud-Speichern, die als Referenz-Repository arbeiten (z. B. `repository_nex
 
 1. Klicke auf die Zeile „Materialien" bzw. „Bild".
 2. Wähle im Datei-Picker eine Datei aus einem der verfügbaren Speicherorte aus.
-3. Klicke auf „Übernehmen". Du kehrst automatisch in den Kursassistenten zurück: Er öffnet sich mit dem Bereich „Lernmaterial" und deinem zuletzt gewählten Zielabschnitt, und eine Meldung bestätigt, dass der Baustein eingefügt wurde. So kannst du gleich die nächste Datei einfügen.
+3. Trage bei Bedarf unter „Name (optional)" einen aussagekräftigen Namen ein, denn ein Dateiname wie „IMG_4711.jpg" sagt später wenig. Der Name erscheint in den Listen des Assistenten, etwa bei der Abschlussverfolgung, nicht im Kursinhalt. Ohne Eingabe verwendet der Assistent den Dateinamen.
+4. Klicke auf „Übernehmen". Du kehrst automatisch in den Kursassistenten zurück: Er öffnet sich mit dem Bereich „Lernmaterial" und deinem zuletzt gewählten Zielabschnitt, und eine Meldung bestätigt, dass der Baustein eingefügt wurde. So kannst du gleich die nächste Datei einfügen.
 
 Über „Abbrechen" auf der Auswahlseite oder über „Abbrechen und zurück" im Hinweis oben kommst du ebenfalls in den Assistenten zurück, dann ohne Meldung. Wie bei Aktivitäten gilt die Rückkehr nur in diesem Browser-Tab und 30 Minuten lang.
 
@@ -55,6 +56,8 @@ Beim Baustein „Video" (Kategorie „Lernmaterial") hast du bis zu drei Möglic
 - **Anderer Video-Link:** Du fügst einen Link zu einem Video von einer anderen Plattform ein (z. B. YouTube, Vimeo).
 
 Hake „Video" an, wähle den gewünschten Tab, triff deine Auswahl und klicke abschließend auf „Bausteine einfügen".
+
+Über den Tabs steht das Feld „Name (optional)". Bei einem PeerTube-Video schlägt der Assistent den Titel des Videos vor, den du ändern kannst. Der Name erscheint in den Listen des Assistenten, etwa bei der Abschlussverfolgung.
 
 ### 1.6 Aktivität hinzufügen (z. B. Aufgabe, Test)
 
@@ -77,13 +80,13 @@ Neben dem Zielabschnitt-Dropdown findest du zwei kleine Schaltflächen:
 
 ### 1.8 Lernpfade, Kompetenzen und Statistik
 
-Diese Kategorie bündelt fünf Werkzeuge, mit denen du steuerst, wie sich dein Kurs für die Teilnehmenden verhält. Alle arbeiten auf einer gemeinsamen Tabelle aller Aktivitäten des Kurses.
+Diese Kategorie bündelt fünf Werkzeuge, mit denen du steuerst, wie sich dein Kurs für die Teilnehmenden verhält. Alle arbeiten auf einer gemeinsamen Tabelle aller Aktivitäten des Kurses. Dazu zählt auch das Lernmaterial, das du mit dem Assistenten eingefügt hast (Datei, Bild und Video). Die Lerninformationen wie Lernziele oder Tipps erscheinen nicht in den Listen. Die Kompetenzen sind kein eigenes Werkzeug, sondern eine Spalte der Übersicht.
 
-- **Abschlussverfolgung:** Lege je Aktivität fest, wie ihr Abschluss erfasst wird – gar nicht, manuell durch Abhaken, oder automatisch anhand von Bedingungen wie Ansicht, Abgabe, Bewertung oder Bestehen. Über die Schaltflächen „Alle manuell", „Alle automatisch" und „Alle deaktivieren" änderst du mehrere Aktivitäten auf einmal.
+- **Abschlussverfolgung:** Lege je Aktivität fest, wie ihr Abschluss erfasst wird – gar nicht, manuell durch Abhaken, oder automatisch anhand von Bedingungen wie Ansicht, Abgabe, Bewertung oder Bestehen. Über die Schaltflächen „Alle manuell", „Alle automatisch" und „Alle deaktivieren" änderst du mehrere Aktivitäten auf einmal. Bei Lernmaterial gibt es nur „Keine" und „Manuell": Die Lernenden haken es selbst ab. Automatischer Abschluss geht nur bei Aktivitäten, die Ansichten, Bewertungen oder eigene Regeln kennen; „Alle automatisch" überspringt Lernmaterial.
 - **Voraussetzungen:** Bestimme, welche Bedingung erfüllt sein muss, bevor eine Aktivität zugänglich wird – entweder der Abschluss einer anderen Aktivität oder eine Mindestbewertung.
-- **Lernpfad erstellen:** Erzeugt einen linearen Pfad: Jede ausgewählte Aktivität wird erst freigeschaltet, wenn die vorherige abgeschlossen ist. Du wählst die Aktivitäten in der gewünschten Reihenfolge aus und legst fest, ob die Verkettung über den Abschluss oder über eine Mindestbewertung läuft.
+- **Lernpfad erstellen:** Erzeugt einen linearen Pfad: Jede ausgewählte Aktivität wird erst freigeschaltet, wenn die vorherige abgeschlossen ist. Du wählst die Aktivitäten in der gewünschten Reihenfolge aus und legst fest, ob die Verkettung über den Abschluss oder über eine Mindestbewertung läuft. Ist Lernmaterial Teil des Pfades, bekommt es manuellen Abschluss, auch wenn für die übrigen „Ansicht" oder „Bestehen" gewählt ist.
 - **Übersicht:** Zeigt alle Abschluss- und Voraussetzungseinstellungen des Kurses auf einen Blick. Hier kannst du außerdem:
-  - Abschnitte und einzelne Aktivitäten über das Augensymbol aus- und wieder einblenden,
+  - Abschnitte, einzelne Aktivitäten und Lernmaterial über das Augensymbol aus- und wieder einblenden,
   - die **Reihenfolge ändern**, indem du eine Zeile am Anfasser links greifst und an die gewünschte Stelle ziehst – auch über Abschnittsgrenzen hinweg. Die neue Position wird sofort gespeichert,
   - **Kompetenzen zuordnen**, sofern das Exabis-Kompetenzraster installiert ist. Die Spalte zeigt je Aktivität die bereits zugeordneten Kompetenzen; über das Plus-Symbol wählst du weitere aus dem Kompetenzraster des Kurses aus. Die Auswahl ist nach Themen gegliedert; ein Klick auf die Themenüberschrift klappt sie auf oder zu. Themen mit bereits zugeordneten Kompetenzen sind von Anfang an geöffnet. Angehakte Kompetenzen sind zugeordnet. Um eine Zuordnung zu entfernen, nimmst du den Haken heraus und speicherst; unter der Auswahl steht vorher, wie viele Kompetenzen hinzukommen und wegfallen. Mindestens eine Kompetenz muss zugeordnet bleiben, weil Exabis ein Lernmaterial ohne Kompetenz nicht mehr anzeigt. Zuordnen dürfen nur Personen, die im Kompetenzraster als Lehrkraft eingetragen sind. Hat ein Lernmaterial weitere Verknüpfungen, etwa zu einem Themenübergreifenden Fach, ändert der Assistent nichts und weist darauf hin; dann bearbeitest du die Zuordnung im Kompetenzraster. Die Auswahl wird als Exabis-Lernmaterial gespeichert und mit der Aktivität verknüpft – der bisherige Umweg über Dakora Plus entfällt damit für diesen Schritt,
   - eine Aktivität **duplizieren**. Über das Kopiersymbol wählst du, ob die Kopie in diesem Kurs landen soll (direkt hinter dem Original oder in einem anderen Abschnitt) oder in einem anderen Kurs. Zur Auswahl stehen dabei nur Kurse, in denen du selbst bearbeiten darfst. Nutzerdaten wie Abgaben oder Bewertungen werden nicht mitkopiert.
@@ -205,6 +208,8 @@ Ist das Plugin `block_exacomp` installiert, erscheint in der Übersicht die Spal
 
 - Über den Tab „PeerTube-Video wählen" bzw. Materialien/Bild eingefügte Videos/Dateien erscheinen als klickbarer Link bzw. eingebettetes Vorschaubild – eine automatische iFrame-Einbettung erfolgt nur, wenn der bestehende Fallback-Renderer von repository_peertubeoauth die URL erkennt.
 - Über repository_peertubeoauth eingebettete Videos erscheinen aktuell größer als über den Kursassistenten eingefügte – eine Anpassung ist im repository_peertubeoauth-Plugin separat vorgesehen.
+- Lernmaterial (Datei, Bild, Video) ist im Kurs ein Textfeld. Moodle kennt dafür nur manuellen Abschluss, keinen automatischen, und die Spalte „Kompetenzen" bleibt dort leer. Textfelder, die nicht mit dem Assistenten angelegt wurden, sowie die Lerninformationen erscheinen nicht in den Listen.
+- Bei Lernmaterial, das mit einer früheren Version eingefügt wurde, hängt der Assistent in den Listen ein Merkmal an den Namen an (Dateiname, Videotitel oder Adresse), damit sich mehrere Einträge unterscheiden lassen. Das Textfeld selbst wird dabei nicht umbenannt.
 - Die automatische Rückkehr in den Assistenten merkt sich der Browser pro Tab (sessionStorage) und nur für 30 Minuten. Browser, die diesen Speicher sperren, öffnen den Assistenten nach dem Formular nicht von selbst; sonst arbeitet der Assistent unverändert.
 - Das Duplizieren läuft intern über Sicherung und Wiederherstellung und kann bei umfangreichen Aktivitäten einige Sekunden dauern. Solange läuft eine Rückmeldung im Fenster.
 - Beim Duplizieren, auch in einen anderen Kurs, werden keine Nutzerdaten wie Abgaben oder Bewertungen übertragen. Es entsteht keine Sicherungsdatei; temporäre Dateien werden nach dem Vorgang entfernt.

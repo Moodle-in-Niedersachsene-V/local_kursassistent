@@ -364,6 +364,7 @@ class local_kursassistent_external extends external_api {
             'auswahl' => new external_multiple_structure(new external_single_structure([
                 'typeid' => new external_value(PARAM_INT, 'Baustein-ID'),
                 'inhalt' => new external_value(PARAM_RAW, 'Eingegebener bzw. generierter Inhalt', VALUE_DEFAULT, ''),
+                'name' => new external_value(PARAM_TEXT, 'Name für die Listen des Assistenten', VALUE_DEFAULT, ''),
             ])),
         ]);
     }
@@ -394,7 +395,8 @@ class local_kursassistent_external extends external_api {
                 $params['courseid'],
                 $params['sectionnum'],
                 $type,
-                $item['inhalt'] ?? ''
+                $item['inhalt'] ?? '',
+                $item['name'] ?? ''
             );
             $erzeugt[] = ['typeid' => (int) $type->id, 'cmid' => $cmid];
         }
@@ -419,6 +421,24 @@ class local_kursassistent_external extends external_api {
     }
 
     // Abschlussverfolgung & Voraussetzungen.
+
+    /**
+     * Prüft, ob ein Modultyp automatischen Abschluss unterstützt.
+     *
+     * Dieselbe Prüfung nutzt Moodle im Einstellungsformular: Automatisch gibt es nur, wenn das
+     * Modul Ansichten, Bewertungen oder eigene Abschlussregeln kennt. Ein Textfeld hat keine davon
+     * und lässt nur Keine und Manuell zu.
+     *
+     * @param string $modname Name des Moduls
+     * @return bool
+     */
+    protected static function unterstuetzt_automatik(string $modname): bool {
+        return (bool) (
+            plugin_supports('mod', $modname, FEATURE_COMPLETION_TRACKS_VIEWS, false)
+            || plugin_supports('mod', $modname, FEATURE_GRADE_HAS_GRADE, false)
+            || plugin_supports('mod', $modname, FEATURE_COMPLETION_HAS_RULES, false)
+        );
+    }
 
     /**
      * Parameter für get_course_activities.
@@ -469,11 +489,29 @@ class local_kursassistent_external extends external_api {
             ];
         }
 
+        // Textfelder des Assistenten mit Lernmaterial (Datei, Bild, Video) gehören in die Listen.
+        // Alle übrigen Textfelder, auch die Lerninformationen, bleiben draußen.
+        $labelinstanzen = [];
+        foreach ($modinfo->get_cms() as $labelcm) {
+            if ($labelcm->modname === 'label') {
+                $labelinstanzen[] = $labelcm->instance;
+            }
+        }
+        $labelintros = [];
+        if ($labelinstanzen) {
+            $labelintros = $DB->get_records_list('label', 'id', $labelinstanzen, '', 'id, intro');
+        }
+
         $activities = [];
         foreach ($modinfo->get_cms() as $cm) {
-            // Labels überspringen, aber von Lehrkräften verborgene Module einbeziehen.
+            // Von Lehrkräften verborgene Module gehören mit in die Liste.
+            $name = $cm->name;
             if ($cm->modname === 'label') {
-                continue;
+                $intro = isset($labelintros[$cm->instance]) ? (string) $labelintros[$cm->instance]->intro : '';
+                if (!manager::ist_lernmaterial_label($intro)) {
+                    continue;
+                }
+                $name = manager::get_lernmaterial_anzeigename($cm->name, $intro);
             }
 
             // Modultypen, die nicht auf der Kursseite erscheinen, überspringen. Dazu zählt
@@ -516,11 +554,12 @@ class local_kursassistent_external extends external_api {
 
             $activities[] = [
                 'cmid' => (int) $cm->id,
-                'name' => $cm->name,
+                'name' => $name,
                 'modname' => $cm->modname,
                 'sectionnum' => (int) $cm->sectionnum,
                 'sectionname' => get_section_name($course, $cm->sectionnum),
                 'completion' => (int) $cm->completion,
+                'autocompletion' => self::unterstuetzt_automatik($cm->modname),
                 'completionview' => !empty($cm->completionview) ? 1 : 0,
                 'completiongrade' => $completiongrade,
                 'completionpassgrade' => !empty($cm->completionpassgrade) ? 1 : 0,
@@ -638,6 +677,7 @@ class local_kursassistent_external extends external_api {
                 'sectionnum' => new external_value(PARAM_INT, 'Abschnittsnummer'),
                 'sectionname' => new external_value(PARAM_TEXT, 'Abschnittsname'),
                 'completion' => new external_value(PARAM_INT, '0=keine, 1=manuell, 2=automatisch'),
+                'autocompletion' => new external_value(PARAM_BOOL, 'Automatischer Abschluss möglich'),
                 'completionview' => new external_value(PARAM_INT, 'Abschluss bei Anzeige'),
                 'completiongrade' => new external_value(PARAM_INT, 'Bewertung erhalten'),
                 'completionpassgrade' => new external_value(PARAM_INT, 'Bestehensgrenze erreicht'),
@@ -725,6 +765,15 @@ class local_kursassistent_external extends external_api {
             $cm = $DB->get_record('course_modules', ['id' => $cmid, 'course' => $params['courseid']], '*', IGNORE_MISSING);
             if (!$cm) {
                 continue;
+            }
+
+            // Automatischer Abschluss geht nur bei Modulen mit Ansichten, Bewertung oder eigenen
+            // Regeln, ein Textfeld kennt nur Keine und Manuell. Solche Einträge werden übersprungen.
+            if ($completion == 2) {
+                $modulname = (string) $DB->get_field('modules', 'name', ['id' => $cm->module]);
+                if (!self::unterstuetzt_automatik($modulname)) {
+                    continue;
+                }
             }
 
             $cm->completion = $completion;
@@ -1272,7 +1321,13 @@ class local_kursassistent_external extends external_api {
                     'course' => $params['courseid'],
                 ], '*', IGNORE_MISSING);
                 if ($vorhercm && (int) $vorhercm->completion === 0) {
-                    switch ($params['completiontype']) {
+                    // Ein Textfeld kennt keinen automatischen Abschluss, dort bleibt nur manuell.
+                    $abschlussart = $params['completiontype'];
+                    $modulname = (string) $DB->get_field('modules', 'name', ['id' => $vorhercm->module]);
+                    if ($abschlussart !== 'manual' && !self::unterstuetzt_automatik($modulname)) {
+                        $abschlussart = 'manual';
+                    }
+                    switch ($abschlussart) {
                         case 'view':
                             $vorhercm->completion = 2;
                             $vorhercm->completionview = 1;

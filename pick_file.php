@@ -74,7 +74,13 @@ $form = new \local_kursassistent\pick_file_form(null, [
 if ($form->is_cancelled()) {
     redirect($returnurl);
 } else if ($data = $form->get_data()) {
-    \local_kursassistent\manager::create_label_with_file($courseid, $sectionnum, $type, $data->datei);
+    \local_kursassistent\manager::create_label_with_file(
+        $courseid,
+        $sectionnum,
+        $type,
+        $data->datei,
+        (string) ($data->name ?? '')
+    );
 
     // Der Parameter sagt dem Assistenten, dass das Einfügen geklappt hat. Beim Abbrechen fehlt er.
     $successurl = new moodle_url('/course/view.php', ['id' => $courseid, 'kaergebnis' => 'datei'], 'section-' . $sectionnum);

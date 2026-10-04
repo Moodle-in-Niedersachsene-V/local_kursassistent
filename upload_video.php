@@ -51,6 +51,7 @@ function kursassistent_upload_fail(string $error): void {
 $courseid = optional_param('courseid', 0, PARAM_INT);
 $sectionnum = optional_param('sectionnum', 0, PARAM_INT);
 $typeid = optional_param('typeid', 0, PARAM_INT);
+$labelname = optional_param('name', '', PARAM_TEXT);
 
 if (!$courseid || !$typeid) {
     kursassistent_upload_fail('missing_parameters');
@@ -103,6 +104,12 @@ if (!$channelid) {
 
 $tmpfile = $_FILES['videofile']['tmp_name'];
 $originalfilename = $_FILES['videofile']['name'];
+// Ohne eigenen Namen steht der Dateiname im Namen des Textfeldes, damit sich mehrere Videos
+// in den Listen des Assistenten unterscheiden lassen.
+if (trim($labelname) === '') {
+    $labelname = $type->titel . ': ' . pathinfo($originalfilename, PATHINFO_FILENAME);
+}
+
 $title = $type->titel . ' - ' . fullname($USER);
 // PeerTube verlangt Titel zwischen 3 und 120 Zeichen.
 $title = core_text::substr($title, 0, 120);
@@ -135,7 +142,7 @@ $iframehtml = html_writer::tag(
 );
 
 try {
-    $cmid = \local_kursassistent\manager::create_label($courseid, $sectionnum, $type, $iframehtml);
+    $cmid = \local_kursassistent\manager::create_label($courseid, $sectionnum, $type, $iframehtml, $labelname);
 } catch (\Exception $e) {
     kursassistent_upload_fail('label_creation_failed');
 }

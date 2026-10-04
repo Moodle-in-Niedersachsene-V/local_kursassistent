@@ -144,14 +144,21 @@ class manager {
      * @param int $sectionnum
      * @param \stdClass $type
      * @param int $draftitemid
+     * @param string $name Name des Textfeldes; leer für Titel und Dateiname
      * @return int cmid des erzeugten Labels
      */
-    public static function create_label_with_file(int $courseid, int $sectionnum, \stdClass $type, int $draftitemid): int {
+    public static function create_label_with_file(
+        int $courseid,
+        int $sectionnum,
+        \stdClass $type,
+        int $draftitemid,
+        string $name = ''
+    ): int {
         global $DB, $USER, $OUTPUT;
 
         // Schritt 1: Label mit Platzhaltertext anlegen, um cmid/Kontext zu bekommen.
         $platzhalter = \html_writer::tag('p', get_string('dateiwirdverarbeitet', 'local_kursassistent'), ['class' => 'text-muted']);
-        $cmid = self::create_label($courseid, $sectionnum, $type, $platzhalter);
+        $cmid = self::create_label($courseid, $sectionnum, $type, $platzhalter, $name);
 
         $modcontext = \context_module::instance($cmid);
         $cm = get_coursemodule_from_id('label', $cmid, 0, false, MUST_EXIST);
@@ -197,9 +204,116 @@ class manager {
 
         $DB->set_field('label', 'intro', $header . $inhalt, ['id' => $cm->instance]);
 
+        // Ohne eigenen Namen steht der Dateiname im Namen, damit sich mehrere Bilder oder
+        // Dateien in den Listen des Assistenten unterscheiden lassen.
+        if ($file && trim($name) === '') {
+            $dateiname = self::bereinige_name($type->titel . ': ' . $file->get_filename(), $type->titel);
+            $DB->set_field('label', 'name', $dateiname, ['id' => $cm->instance]);
+        }
+
         rebuild_course_cache($courseid, true);
 
         return $cmid;
+    }
+
+    /**
+     * Bereinigt einen Namen für ein Textfeld und begrenzt ihn auf 100 Zeichen.
+     *
+     * @param string $name Eingegebener Name
+     * @param string $standard Wert, wenn der Name leer ist
+     * @return string
+     */
+    public static function bereinige_name(string $name, string $standard): string {
+        $name = trim(clean_param($name, PARAM_TEXT));
+        if ($name === '') {
+            return $standard;
+        }
+
+        return \core_text::substr($name, 0, 100);
+    }
+
+    /**
+     * Prüft, ob der Inhalt eines Textfeldes ein Lernmaterial des Assistenten ist.
+     *
+     * Lernmaterial sind Datei, Bild und Video. Alle Bausteine des Assistenten beginnen mit einer
+     * Überschrift, die das Symbol des Bausteins trägt. Danach steht bei Lernmaterial ein Bild, ein
+     * Link oder ein eingebettetes Video, bei Lerninformationen nur Text. Die Erkennung beruht auf
+     * dem Inhalt und nicht auf einer Tabelle, damit sie beim Kopieren eines Kurses erhalten bleibt.
+     *
+     * @param string $intro Inhalt des Textfeldes
+     * @return bool
+     */
+    public static function ist_lernmaterial_label(string $intro): bool {
+        if (strpos($intro, 'local-kursassistent-label-icon') === false) {
+            return false;
+        }
+
+        $rest = (string) preg_replace('#<h4\b[^>]*>.*?</h4>#is', '', $intro, 1);
+
+        return (bool) preg_match('#<img\b|<a\b|<iframe\b|local-kursassistent-video-embed#i', $rest);
+    }
+
+    /**
+     * Liefert den Namen eines Lernmaterials für die Listen des Assistenten.
+     *
+     * Trägt das Textfeld nur den Titel des Bausteins, etwa „Bild“, wird ein Merkmal aus dem
+     * Inhalt angehängt (Dateiname, Videotitel oder Adresse), damit sich mehrere Einträge
+     * unterscheiden lassen. Ein eigener Name bleibt unverändert. Es wird nichts umbenannt.
+     *
+     * @param string $name Name des Textfeldes
+     * @param string $intro Inhalt des Textfeldes
+     * @return string
+     */
+    public static function get_lernmaterial_anzeigename(string $name, string $intro): string {
+        $titel = self::get_label_kopftitel($intro);
+        if ($titel === '' || trim($name) !== $titel) {
+            return $name;
+        }
+
+        $detail = self::get_lernmaterial_detail($intro);
+        if (stripos($detail, $name) === 0) {
+            $detail = ltrim(substr($detail, strlen($name)), ' -:');
+        }
+
+        return $detail === '' ? $name : $name . ': ' . $detail;
+    }
+
+    /**
+     * Liefert den Titel aus der Überschrift eines Textfeldes des Assistenten.
+     *
+     * @param string $intro Inhalt des Textfeldes
+     * @return string
+     */
+    protected static function get_label_kopftitel(string $intro): string {
+        if (!preg_match('#<h4\b[^>]*>(.*?)</h4>#is', $intro, $treffer)) {
+            return '';
+        }
+
+        return trim(html_entity_decode(strip_tags($treffer[1]), ENT_QUOTES, 'UTF-8'));
+    }
+
+    /**
+     * Liefert ein Merkmal des Lernmaterials: Videotitel, Dateiname oder Adresse.
+     *
+     * @param string $intro Inhalt des Textfeldes
+     * @return string
+     */
+    protected static function get_lernmaterial_detail(string $intro): string {
+        $rest = (string) preg_replace('#<h4\b[^>]*>.*?</h4>#is', '', $intro, 1);
+        $detail = '';
+
+        if (preg_match('#<iframe\b[^>]*\btitle="([^"]*)"#i', $rest, $treffer)) {
+            $detail = $treffer[1];
+        } else if (preg_match('#<img\b[^>]*\balt="([^"]*)"#i', $rest, $treffer)) {
+            $detail = $treffer[1];
+        } else if (preg_match('#<a\b[^>]*>(.*?)</a>#is', $rest, $treffer)) {
+            $detail = strip_tags($treffer[1]);
+            if (preg_match('#^https?://#i', $detail)) {
+                $detail = (string) parse_url($detail, PHP_URL_HOST);
+            }
+        }
+
+        return shorten_text(trim(html_entity_decode($detail, ENT_QUOTES, 'UTF-8')), 60);
     }
 
     /**
@@ -209,9 +323,16 @@ class manager {
      * @param int $sectionnum
      * @param \stdClass $type Baustein-Datensatz
      * @param string $inhalt Vom Nutzer eingegebener bzw. generierter HTML-Inhalt
+     * @param string $name Name des Textfeldes; leer für den Titel des Bausteins
      * @return int cmid des erzeugten Labels
      */
-    public static function create_label(int $courseid, int $sectionnum, \stdClass $type, string $inhalt): int {
+    public static function create_label(
+        int $courseid,
+        int $sectionnum,
+        \stdClass $type,
+        string $inhalt,
+        string $name = ''
+    ): int {
         global $CFG, $DB, $USER, $OUTPUT;
 
         require_once($CFG->dirroot . '/course/modlib.php');
@@ -235,7 +356,7 @@ class manager {
             'format' => FORMAT_HTML,
             'itemid' => 0,
         ];
-        $moduleinfo->name = $type->titel;
+        $moduleinfo->name = self::bereinige_name($name, $type->titel);
         $moduleinfo->cmidnumber = '';
         $moduleinfo->groupmode = 0;
         $moduleinfo->groupingid = 0;
