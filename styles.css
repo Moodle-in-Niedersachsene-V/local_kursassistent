@@ -911,3 +911,19 @@
     color: #856404;
     font-weight: 600;
 }
+
+.local-kursassistent-uebersicht-table .local-kursassistent-neuzeile > td {
+    background-color: #e7f1fb;
+    box-shadow: inset 0 0 0 9999px #e7f1fb;
+}
+
+.local-kursassistent-neumarke {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 7px;
+    border-radius: 8px;
+    background: #0f6cbf;
+    color: #fff;
+    font-size: 11px;
+    vertical-align: middle;
+}

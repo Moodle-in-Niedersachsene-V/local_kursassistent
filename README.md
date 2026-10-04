@@ -13,7 +13,12 @@ Inhalt aus. Die Bausteine sind von der Schul-Administration frei erweiterbar.
 - **Lernmaterial** – Dateien und Bilder über den Moodle-Datei-Picker, Videos per PeerTube-Auswahl,
   Direkt-Upload oder externem Link
 - **Aktivitäten** – Sprung in Moodles „Aktivität hinzufügen" mit vorausgewähltem Typ und Zielabschnitt
-- **Kurseinrichtung** – Kursformat ändern, Inhalte einer Kursvorlage übernehmen
+- **Kurseinrichtung** – Kursformat ändern, Inhalte einer Kursvorlage übernehmen, Abschnittsvorlagen
+  anwenden und speichern
+- **Lernpfade, Kompetenzen und Statistik** – Abschlussverfolgung und Voraussetzungen, lineare Lernpfade,
+  Übersicht mit Sichtbarkeit, Umsortieren per Ziehen und Duplizieren (auch in einen anderen Kurs),
+  Zuordnen von Kompetenzen aus dem Exabis-Kompetenzraster, Statistik mit Notizen zu Teilnehmenden
+- **Mein Fortschritt** – Teilnehmende sehen ihren eigenen Abschlussfortschritt im Kurs
 - **Abschnittsverwaltung** – Kursabschnitte direkt im Assistenten umbenennen oder neu anlegen
 - **Anleitung** – von der Administration frei editierbarer Hilfetext für Lehrkräfte
 
@@ -21,7 +26,7 @@ Inhalt aus. Die Bausteine sind von der Schul-Administration frei erweiterbar.
 
 | Anforderung | Wert |
 |---|---|
-| Moodle | ab 5.1 (`requires` 2025041400) |
+| Moodle | ab 5.1 (`requires` 2025041400); ab 5.2 wird die neue Kursmodul-Schnittstelle von Moodle genutzt |
 | PHP | 8.3 oder 8.4 |
 | Datenbank | MariaDB, MySQL oder PostgreSQL |
 
@@ -34,6 +39,7 @@ Installationsreihenfolge ist nicht erforderlich.
 | `repository_peertubeoauth` | Auswahl vorhandener PeerTube-Videos |
 | `local_peertubeupload` | Video-Upload durch die Lehrkraft |
 | `repository_nextclouddirect` | Nextcloud als Speicherort im Datei-Picker |
+| `block_exacomp` | Spalte „Kompetenzen" in der Übersicht (Zuordnen und Entfernen) |
 
 ## Installation
 

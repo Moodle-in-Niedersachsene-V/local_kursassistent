@@ -20,11 +20,18 @@
  * @copyright  2026 Moodle in Niedersachsen e. V.
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_list'],
-        function($, Ajax, Notification, Str, SortableList) {
+define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_list',
+    'local_kursassistent/rueckkehr'],
+        function($, Ajax, Notification, Str, SortableList, Rueckkehr) {
 
     var courseid = null;
     var etwasEingefuegt = false;
+
+    /**
+     * Merker für die Rückkehr vom Formular: vorhandene Aktivitäten und Name des Bausteins.
+     * Wird beim ersten Aufbau der Übersicht verbraucht.
+     */
+    var rueckkehrNeu = null;
 
     /**
      * Erzeugt ein Moodle-konformes Hilfe-Icon (blaues Fragezeichen mit Popover).
@@ -142,6 +149,13 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             bausteineInKat.forEach(function(b) {
                 baueBausteinItem(b, $gruppenInhalt, response, $overlay);
             });
+
+            if (kat.typen.indexOf('aktivitaet') !== -1) {
+                $gruppenInhalt.append($('<p>', {
+                    'class': 'small text-muted mt-2 mb-1',
+                    text: 'Moodle öffnet jetzt das Einstellungsformular. Danach geht es hier weiter.'
+                }));
+            }
         });
 
         // Vierte Gruppe "Kurseinrichtung": statische Einträge, nicht aus den Bausteinen des
@@ -595,8 +609,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
         }
 
         if (b.typ === 'aktivitaet') {
-            // Aktivitäts-Bausteine öffnen Moodles natives Formular in einem neuen Tab,
-            // damit die Lehrkraft nach dem Speichern zum Assistenten zurückkehren kann.
+            // Aktivitäts-Bausteine öffnen Moodles natives Formular im selben Tab. Vorher merkt sich
+            // der Assistent, dass er nach dem Speichern wieder aufgehen soll.
             $item.addClass('local-kursassistent-navitem');
             $checkbox.replaceWith($('<span>', {'class': 'local-kursassistent-checkbox-spacer'}));
             $item.on('click', function(e) {
@@ -605,7 +619,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 var url = M.cfg.wwwroot + '/course/modedit.php?add=' +
                     encodeURIComponent(b.modname) + '&type=&course=' + courseid +
                     '&section=' + sectionnum + '&return=0&sr=0';
-                window.open(url, '_blank');
+                navigiereMitWarnung($overlay, url, b.titel, function(weiter) {
+                    merkeRueckkehr(b, sectionnum, weiter);
+                });
             });
         }
     }
@@ -736,15 +752,142 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
     }
 
     /**
+     * Merkt sich vor dem Wechsel zum Moodle-Formular, dass der Assistent danach wieder aufgehen soll.
+     *
+     * Hält dazu die vorhandenen Aktivitäten fest, damit die neue Aktivität später erkannt werden
+     * kann. Scheitert das Laden, wird trotzdem gewechselt; der Assistent öffnet sich dann ohne
+     * Markierung.
+     *
+     * @param {Object} baustein Angeklickter Aktivitäts-Baustein
+     * @param {Number} sectionnum Gewählter Zielabschnitt
+     * @param {Function} weiter Wird danach aufgerufen und führt den Wechsel aus
+     */
+    function merkeRueckkehr(baustein, sectionnum, weiter) {
+        var daten = {
+            courseid: courseid,
+            modname: baustein.modname,
+            titel: baustein.titel,
+            sectionnum: sectionnum,
+            vorher: null
+        };
+        var fertig = function() {
+            Rueckkehr.merke(daten);
+            weiter();
+        };
+
+        Ajax.call([{
+            methodname: 'local_kursassistent_get_course_activities',
+            args: {courseid: courseid}
+        }])[0].done(function(response) {
+            daten.vorher = response.activities.map(function(a) {
+                return a.cmid;
+            });
+            fertig();
+        }).fail(fertig);
+    }
+
+    /**
+     * Öffnet den Assistenten.
+     *
+     * @param {Function|undefined} nachDemOeffnen Wird mit dem geöffneten Fenster aufgerufen
+     */
+    function oeffneAssistent(nachDemOeffnen) {
+        Ajax.call([{
+            methodname: 'local_kursassistent_get_bausteine',
+            args: {courseid: courseid}
+        }])[0].done(function(response) {
+            var $overlay = baueModal(response);
+            $('body').append($overlay);
+            if (nachDemOeffnen) {
+                nachDemOeffnen($overlay);
+            }
+        }).fail(Notification.exception);
+    }
+
+    /**
+     * Wertet die Rückkehr vom Moodle-Formular aus: Gibt es eine neue Aktivität, geht der
+     * Assistent direkt in die Übersicht und markiert sie.
+     *
+     * @param {jQuery} $overlay
+     * @param {Object} rueckkehr Gemerkte Daten
+     */
+    function zeigeRueckkehrErgebnis($overlay, rueckkehr) {
+        if (!rueckkehr.vorher) {
+            return;
+        }
+        rueckkehrNeu = {vorher: rueckkehr.vorher, titel: rueckkehr.titel};
+        oeffneSubpanel($overlay, 'uebersicht');
+    }
+
+    /**
+     * Ermittelt die Aktivität, die seit dem Wechsel zum Moodle-Formular neu im Kurs ist.
+     *
+     * Der Merker wird dabei verbraucht, damit spätere Aufbauten der Übersicht, etwa nach dem
+     * Duplizieren, nicht erneut markieren.
+     *
+     * @param {Array} aktivitaeten Aktivitäten des Kurses
+     * @return {Object|null} cmid, name und titel der neuen Aktivität, oder null
+     */
+    function verbraucheNeueAktivitaet(aktivitaeten) {
+        var merker = rueckkehrNeu;
+        rueckkehrNeu = null;
+        if (!merker) {
+            return null;
+        }
+        var neue = aktivitaeten.filter(function(a) {
+            return merker.vorher.indexOf(a.cmid) === -1;
+        });
+        if (!neue.length) {
+            return null;
+        }
+        var juengste = neue.reduce(function(a, b) {
+            return b.cmid > a.cmid ? b : a;
+        });
+        return {cmid: juengste.cmid, name: juengste.name, titel: merker.titel};
+    }
+
+    /**
+     * Markiert die neue Aktivität in der Übersicht und meldet, dass sie angelegt wurde.
+     *
+     * @param {jQuery} $container Panel mit der Übersichtstabelle
+     * @param {Object} neu cmid, name und titel der neuen Aktivität
+     */
+    function markiereNeueAktivitaet($container, neu) {
+        var $zeile = $container.find('.local-kursassistent-sortrow[data-cmid="' + neu.cmid + '"]');
+        if ($zeile.length) {
+            $zeile.addClass('local-kursassistent-neuzeile');
+            $zeile.children('td').eq(1).append($('<span>', {
+                'class': 'local-kursassistent-neumarke',
+                text: 'neu'
+            }));
+            $zeile[0].scrollIntoView({block: 'nearest'});
+        }
+        zeigePanelMeldung($container, neu.titel + ' „' + neu.name +
+            '“ wurde angelegt. Hier stellst du die Aktivität weiter ein.', 'erfolg');
+    }
+
+    /**
      * Wechselt zu einer anderen Seite und warnt vorher, falls noch Eingaben offen sind.
      *
      * @param {jQuery} $overlay
      * @param {String} url Ziel-URL
      * @param {String} bausteinname Name des angeklickten Bausteins
+     * @param {Function|undefined} vorWechsel Optionaler Schritt vor dem Wechsel; ruft die übergebene
+     *     Funktion auf, sobald der Wechsel erfolgen darf
      */
-    function navigiereMitWarnung($overlay, url, bausteinname) {
-        if (!hatOffeneEingaben($overlay)) {
+    function navigiereMitWarnung($overlay, url, bausteinname, vorWechsel) {
+        var gehe = function() {
+            if (vorWechsel) {
+                vorWechsel(function() {
+                    window.location.href = url;
+                });
+                return;
+            }
             window.location.href = url;
+        };
+
+        if (!hatOffeneEingaben($overlay)) {
+            gehe();
             return;
         }
 
@@ -774,13 +917,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
         $panel.append($erst, $ohne, $ab);
 
         $erst.on('click', function() {
-            sendeAuswahl($overlay, function() {
-                window.location.href = url;
-            });
+            sendeAuswahl($overlay, gehe);
         });
-        $ohne.on('click', function() {
-            window.location.href = url;
-        });
+        $ohne.on('click', gehe);
         $ab.on('click', function() {
             $panel.remove();
         });
@@ -2321,6 +2460,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
      * @param {Object} response
      */
     function rendereUebersichtPanel($container, response) {
+        var neueAktivitaet = verbraucheNeueAktivitaet(response.activities);
         $container.append($('<h5>', {text: 'Übersicht: Abschluss, Voraussetzungen & Sichtbarkeit'}));
 
         if (!response.completionenabled) {
@@ -2544,6 +2684,10 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
 
         // Kompetenzen nachladen und Spalte befüllen.
         ladeKompetenzen($container);
+
+        if (neueAktivitaet) {
+            markiereNeueAktivitaet($container, neueAktivitaet);
+        }
 
         $container.off('click.kakompetenz').on('click.kakompetenz',
             '.local-kursassistent-komp-btn', function() {
@@ -3680,13 +3824,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
 
             $(document).on('click', '.local-kursassistent-navlink', function(e) {
                 e.preventDefault();
-                Ajax.call([{
-                    methodname: 'local_kursassistent_get_bausteine',
-                    args: {courseid: courseid}
-                }])[0].done(function(response) {
-                    var $overlay = baueModal(response);
-                    $('body').append($overlay);
-                }).fail(Notification.exception);
+                oeffneAssistent();
             });
 
             $(document).on('click', '.local-kursassistent-close', function() {
@@ -3711,6 +3849,16 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             $(document).on('click', '.local-kursassistent-submit', function() {
                 sendeAuswahl($(this).closest('.local-kursassistent-overlay'));
             });
+
+            // Rückkehr vom Moodle-Formular: den Assistenten selbst wieder öffnen. Die Merkung
+            // wird dabei verbraucht, ein erneutes Laden der Seite öffnet ihn nicht noch einmal.
+            var rueckkehr = Rueckkehr.lese(courseid);
+            if (rueckkehr) {
+                Rueckkehr.loesche();
+                oeffneAssistent(function($overlay) {
+                    zeigeRueckkehrErgebnis($overlay, rueckkehr);
+                });
+            }
         }
     };
 });

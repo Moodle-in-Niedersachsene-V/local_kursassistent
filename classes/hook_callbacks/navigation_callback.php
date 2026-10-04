@@ -21,6 +21,9 @@ use core\hook\output\before_http_headers;
 /**
  * Lädt CSS (immer) und AMD-JS (nur für Berechtigte) auf Kursseiten.
  *
+ * Auf anderen Seiten eines Kurses, etwa dem Formular einer Aktivität, wird für Berechtigte
+ * nur das kleine Modul für die Rückkehr in den Assistenten geladen.
+ *
  * Bewusst über before_http_headers statt extend_navigation_course, da
  * Letzteres je nach Aktivität/Theme erst NACH Ausgabe des <head>-Bereichs
  * aufgerufen werden kann (z. B. bei mod_interactivevideo beobachtet) -
@@ -56,6 +59,49 @@ class navigation_callback {
     }
 
     /**
+     * Liefert den Kurs, wenn die Seite zu einem Kurs gehört, aber nicht die Kursansicht ist.
+     *
+     * @return \stdClass|null
+     */
+    protected static function get_other_course_page(): ?\stdClass {
+        global $PAGE, $COURSE;
+
+        if (!$PAGE->has_set_url()) {
+            return null;
+        }
+
+        if (strpos($PAGE->url->get_path(), '/course/view.php') !== false) {
+            return null;
+        }
+
+        if (empty($COURSE) || empty($COURSE->id) || $COURSE->id == SITEID) {
+            return null;
+        }
+
+        return $COURSE;
+    }
+
+    /**
+     * Bindet auf anderen Kursseiten das Modul für die Rückkehr in den Assistenten ein.
+     *
+     * Das Modul tut nur etwas, wenn der Assistent vorher einen Wechsel zum Formular einer
+     * Aktivität vermerkt hat. Es wird deshalb nur für Berechtigte geladen.
+     */
+    protected static function add_rueckkehr_hinweis(): void {
+        global $PAGE;
+
+        $course = self::get_other_course_page();
+        if (!$course) {
+            return;
+        }
+
+        $context = \context_course::instance($course->id);
+        if (has_capability('local/kursassistent:use', $context)) {
+            $PAGE->requires->js_call_amd('local_kursassistent/rueckkehr', 'init', [(int) $course->id]);
+        }
+    }
+
+    /**
      * Bindet CSS (immer, für alle Betrachtenden) und AMD-JS (nur für Berechtigte) ein.
      *
      * @param before_http_headers $hook
@@ -65,6 +111,7 @@ class navigation_callback {
 
         $course = self::get_relevant_course();
         if (!$course) {
+            self::add_rueckkehr_hinweis();
             return;
         }
 
