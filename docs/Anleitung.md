@@ -1,6 +1,6 @@
 # Kursassistent – Anleitung
 
-*Moodle in Niedersachsen e. V. · local_kursassistent, Build 2026100114, Release 2.5.0 · Stand: Oktober 2026*
+*Moodle in Niedersachsen e. V. · local_kursassistent, Build 2026100115, Release 2.5.1 · Stand: Oktober 2026*
 
 ## 1. Für Lehrkräfte
 
@@ -42,7 +42,9 @@ Bei Cloud-Speichern, die als Referenz-Repository arbeiten (z. B. `repository_nex
 
 1. Klicke auf die Zeile „Materialien" bzw. „Bild".
 2. Wähle im Datei-Picker eine Datei aus einem der verfügbaren Speicherorte aus.
-3. Klicke auf „Übernehmen". Du kehrst automatisch zum Kurs zurück, der Baustein ist eingefügt.
+3. Klicke auf „Übernehmen". Du kehrst automatisch in den Kursassistenten zurück: Er öffnet sich mit dem Bereich „Lernmaterial" und deinem zuletzt gewählten Zielabschnitt, und eine Meldung bestätigt, dass der Baustein eingefügt wurde. So kannst du gleich die nächste Datei einfügen.
+
+Über „Abbrechen" auf der Auswahlseite oder über „Abbrechen und zurück" im Hinweis oben kommst du ebenfalls in den Assistenten zurück, dann ohne Meldung. Wie bei Aktivitäten gilt die Rückkehr nur in diesem Browser-Tab und 30 Minuten lang.
 
 ### 1.5 Video einfügen
 

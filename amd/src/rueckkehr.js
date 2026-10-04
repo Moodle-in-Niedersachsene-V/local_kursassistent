@@ -74,7 +74,7 @@ define(['jquery'], function($) {
     /**
      * Merkt sich, dass der Assistent nach dem Formular wieder geöffnet werden soll.
      *
-     * @param {Object} daten courseid, modname, titel, sectionnum und die vorhandenen Aktivitäten
+     * @param {Object} daten courseid, art, titel, sectionnum und je nach Art weitere Angaben
      */
     function merke(daten) {
         var s = speicher();
@@ -90,17 +90,64 @@ define(['jquery'], function($) {
     }
 
     /**
-     * Prüft, ob die aktuelle Seite das Formular zum Anlegen genau dieser Aktivität ist.
+     * Liest, ob die Seite, zu der der Assistent gewechselt hat, erfolgreich abgeschlossen wurde.
+     *
+     * Die Seite hängt dazu den Parameter kaergebnis an die Adresse des Kurses. Er wird hier
+     * gelesen und wieder aus der Adresse entfernt, damit ein Neuladen nichts auslöst.
+     *
+     * @return {String|null} Wert des Parameters oder null
+     */
+    function leseErgebnis() {
+        var adresse = new window.URL(window.location.href);
+        var ergebnis = adresse.searchParams.get('kaergebnis');
+        if (ergebnis === null) {
+            return null;
+        }
+        adresse.searchParams.delete('kaergebnis');
+        try {
+            window.history.replaceState(window.history.state, '', adresse.toString());
+        } catch (e) {
+            return ergebnis;
+        }
+        return ergebnis;
+    }
+
+    /**
+     * Prüft, ob die aktuelle Seite die Zielseite ist, zu der der Assistent gewechselt hat.
+     *
+     * Das ist bei einer Aktivität das Formular zum Anlegen genau dieses Typs und bei einer
+     * Datei die Auswahlseite des Assistenten.
      *
      * @param {Object} daten Gemerkte Daten
      * @return {Boolean}
      */
-    function istFormularDerMerkung(daten) {
-        if (window.location.pathname.indexOf('/course/modedit.php') === -1) {
+    function istZielseite(daten) {
+        var pfad = window.location.pathname;
+        if (daten.art === 'datei') {
+            return pfad.indexOf('/local/kursassistent/pick_file.php') !== -1;
+        }
+        if (pfad.indexOf('/course/modedit.php') === -1) {
             return false;
         }
         var parameter = new window.URLSearchParams(window.location.search);
         return parameter.get('add') === daten.modname;
+    }
+
+    /**
+     * Liefert den Text des Hinweises.
+     *
+     * @param {Object} daten Gemerkte Daten
+     * @param {Boolean} zielseite Ob die Seite die Zielseite des Assistenten ist
+     * @return {String}
+     */
+    function baueHinweistext(daten, zielseite) {
+        if (!zielseite) {
+            return 'Du kommst vom Kursassistenten.';
+        }
+        if (daten.art === 'datei') {
+            return 'Du wählst eine Datei für den Kursassistenten aus. Nach dem Übernehmen geht es dort weiter.';
+        }
+        return 'Du legst diese Aktivität über den Kursassistenten an. Nach dem Speichern geht es dort weiter.';
     }
 
     /**
@@ -111,7 +158,7 @@ define(['jquery'], function($) {
      * @return {jQuery}
      */
     function baueHinweis(daten, courseid) {
-        var formular = istFormularDerMerkung(daten);
+        var formular = istZielseite(daten);
         var kursUrl = M.cfg.wwwroot + '/course/view.php?id=' + courseid;
         var $hinweis = $('<div>', {
             'class': 'alert alert-info d-flex align-items-center local-kursassistent-rueckkehr',
@@ -120,9 +167,7 @@ define(['jquery'], function($) {
 
         $hinweis.append($('<span>', {
             'class': 'flex-grow-1',
-            text: formular ?
-                'Du legst diese Aktivität über den Kursassistenten an. Nach dem Speichern geht es dort weiter.' :
-                'Du kommst vom Kursassistenten.'
+            text: baueHinweistext(daten, formular)
         }));
 
         if (formular) {
@@ -156,6 +201,7 @@ define(['jquery'], function($) {
         lese: lese,
         merke: merke,
         loesche: loesche,
+        leseErgebnis: leseErgebnis,
 
         /**
          * Zeigt auf Seiten außerhalb der Kursansicht den Hinweis, solange die Merkung gilt.

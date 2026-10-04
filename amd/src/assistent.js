@@ -603,8 +603,18 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             $item.on('click', function(e) {
                 e.preventDefault();
                 var sectionnum = parseInt($overlay.find('.local-kursassistent-section').val(), 10) || 0;
-                navigiereMitWarnung($overlay, M.cfg.wwwroot + '/local/kursassistent/pick_file.php?courseid=' +
-                    courseid + '&sectionnum=' + sectionnum + '&typeid=' + b.id, b.titel);
+                var url = M.cfg.wwwroot + '/local/kursassistent/pick_file.php?courseid=' +
+                    courseid + '&sectionnum=' + sectionnum + '&typeid=' + b.id;
+                navigiereMitWarnung($overlay, url, b.titel, function(weiter) {
+                    Rueckkehr.merke({
+                        courseid: courseid,
+                        art: 'datei',
+                        titel: b.titel,
+                        typeid: b.id,
+                        sectionnum: sectionnum
+                    });
+                    weiter();
+                });
             });
         }
 
@@ -765,6 +775,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
     function merkeRueckkehr(baustein, sectionnum, weiter) {
         var daten = {
             courseid: courseid,
+            art: 'aktivitaet',
             modname: baustein.modname,
             titel: baustein.titel,
             sectionnum: sectionnum,
@@ -805,13 +816,44 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
     }
 
     /**
-     * Wertet die Rückkehr vom Moodle-Formular aus: Gibt es eine neue Aktivität, geht der
-     * Assistent direkt in die Übersicht und markiert sie.
+     * Zeigt nach der Rückkehr von der Dateiauswahl den Bereich, in dem es weitergeht.
+     *
+     * Der Zielabschnitt ist wieder der zuletzt gewählte, die Gruppe Lernmaterial ist geöffnet,
+     * und bei erfolgreichem Einfügen bestätigt eine Meldung den Baustein.
      *
      * @param {jQuery} $overlay
      * @param {Object} rueckkehr Gemerkte Daten
+     * @param {String|null} ergebnis Wert des Parameters kaergebnis aus der Adresse
      */
-    function zeigeRueckkehrErgebnis($overlay, rueckkehr) {
+    function zeigeDateiRueckkehr($overlay, rueckkehr, ergebnis) {
+        var $abschnitt = $overlay.find('.local-kursassistent-section');
+        $abschnitt.val(String(rueckkehr.sectionnum));
+
+        $overlay.find('.local-kursassistent-gruppenheader').filter(function() {
+            return $(this).text().indexOf('Lernmaterial') !== -1;
+        }).first().trigger('click');
+
+        if (ergebnis === 'datei') {
+            zeigeMeldung($overlay, 'Der Baustein „' + rueckkehr.titel + '“ wurde in „' +
+                $abschnitt.find('option:selected').text() + '“ eingefügt.', 'erfolg');
+        }
+    }
+
+    /**
+     * Wertet die Rückkehr von einer Seite außerhalb des Assistenten aus.
+     *
+     * Nach dem Formular einer Aktivität geht der Assistent direkt in die Übersicht und markiert
+     * die neue Aktivität, nach der Dateiauswahl zeigt er den Bereich Lernmaterial.
+     *
+     * @param {jQuery} $overlay
+     * @param {Object} rueckkehr Gemerkte Daten
+     * @param {String|null} ergebnis Wert des Parameters kaergebnis aus der Adresse
+     */
+    function zeigeRueckkehrErgebnis($overlay, rueckkehr, ergebnis) {
+        if (rueckkehr.art === 'datei') {
+            zeigeDateiRueckkehr($overlay, rueckkehr, ergebnis);
+            return;
+        }
         if (!rueckkehr.vorher) {
             return;
         }
@@ -3852,11 +3894,12 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
 
             // Rückkehr vom Moodle-Formular: den Assistenten selbst wieder öffnen. Die Merkung
             // wird dabei verbraucht, ein erneutes Laden der Seite öffnet ihn nicht noch einmal.
+            var ergebnis = Rueckkehr.leseErgebnis();
             var rueckkehr = Rueckkehr.lese(courseid);
             if (rueckkehr) {
                 Rueckkehr.loesche();
                 oeffneAssistent(function($overlay) {
-                    zeigeRueckkehrErgebnis($overlay, rueckkehr);
+                    zeigeRueckkehrErgebnis($overlay, rueckkehr, ergebnis);
                 });
             }
         }
