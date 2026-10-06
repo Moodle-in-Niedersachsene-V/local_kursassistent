@@ -146,7 +146,8 @@ foreach ($vorlagen as $vorlage) {
             html_to_text(format_text($vorlage->summary, $vorlage->summaryformat, ['context' => $context]), 0, false),
             200
         );
-        echo html_writer::tag('p', $kurzfassung, ['class' => 'local-kursassistent-vorlage-text']);
+        // Die Umwandlung in Klartext macht aus maskierten Zeichen wieder echte, deshalb maskieren.
+        echo html_writer::tag('p', s($kurzfassung), ['class' => 'local-kursassistent-vorlage-text']);
     }
 
     echo html_writer::link(

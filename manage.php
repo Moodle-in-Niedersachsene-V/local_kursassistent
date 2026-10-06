@@ -98,32 +98,49 @@ echo html_writer::start_tag('tbody');
 
 foreach ($types as $type) {
     echo html_writer::start_tag('tr');
-    $iconhtml = $OUTPUT->image_icon(\local_kursassistent\manager::normalize_icon($type->icon), $type->titel, 'local_kursassistent');
-    echo html_writer::tag('td', $iconhtml);
+
+    // Symbol, vom Renderer von Moodle erzeugt.
+    echo html_writer::start_tag('td');
+    echo $OUTPUT->image_icon(
+        \local_kursassistent\manager::normalize_icon($type->icon),
+        $type->titel,
+        'local_kursassistent'
+    );
+    echo html_writer::end_tag('td');
+
     echo html_writer::tag('td', s($type->titel));
-    $typlabel = get_string('typ_' . $type->typ, 'local_kursassistent');
+
+    // Typ: Text aus der Sprachdatei, der Name des Moduls maskiert.
+    echo html_writer::start_tag('td');
+    echo get_string('typ_' . $type->typ, 'local_kursassistent');
     if ($type->typ === 'aktivitaet' && !empty($type->modname)) {
-        $typlabel .= ' (' . s($type->modname) . ')';
+        echo ' (' . s($type->modname) . ')';
     }
-    echo html_writer::tag('td', $typlabel);
-    $statuslabel = $type->aktiv
-        ? html_writer::tag('span', get_string('aktiv', 'local_kursassistent'), ['class' => 'badge badge-success'])
-        : html_writer::tag('span', get_string('deaktiviert', 'local_kursassistent'), ['class' => 'badge badge-secondary']);
-    echo html_writer::tag('td', $statuslabel);
+    echo html_writer::end_tag('td');
+
+    // Status: Texte aus der Sprachdatei.
+    echo html_writer::start_tag('td');
+    if ($type->aktiv) {
+        echo html_writer::tag('span', get_string('aktiv', 'local_kursassistent'), ['class' => 'badge badge-success']);
+    } else {
+        echo html_writer::tag('span', get_string('deaktiviert', 'local_kursassistent'), ['class' => 'badge badge-secondary']);
+    }
+    echo html_writer::end_tag('td');
 
     $editurl = new moodle_url('/local/kursassistent/edit.php', ['id' => $type->id]);
     $deleteurl = new moodle_url('/local/kursassistent/manage.php', [
         'action' => 'delete', 'id' => $type->id,
     ]);
-    $aktionen = html_writer::link(
+    echo html_writer::start_tag('td');
+    echo html_writer::link(
         $editurl,
         get_string('bearbeiten', 'local_kursassistent'),
         ['class' => 'btn btn-sm btn-outline-secondary mr-1']
     );
-    $aktionen .= html_writer::link($deleteurl, get_string('loeschen', 'local_kursassistent'), [
+    echo html_writer::link($deleteurl, get_string('loeschen', 'local_kursassistent'), [
         'class' => 'btn btn-sm btn-outline-danger',
     ]);
-    echo html_writer::tag('td', $aktionen);
+    echo html_writer::end_tag('td');
     echo html_writer::end_tag('tr');
 }
 
