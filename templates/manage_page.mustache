@@ -1,0 +1,79 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_kursassistent/manage_page
+
+    Overview of the block types for administrators.
+
+    Context variables required for this template:
+    * newurl - Link to the form for a new block type
+    * types - List of block types: iconurl, title, typelabel, modname, active, editurl, deleteurl
+
+    Example context (json):
+    {
+        "newurl": "https://example.org/local/kursassistent/edit.php",
+        "types": [
+            {
+                "iconurl": "https://example.org/theme/image.php/boost/core/1/f/document",
+                "title": "Worksheet",
+                "typelabel": "Activity",
+                "modname": "assign",
+                "active": true,
+                "editurl": "https://example.org/local/kursassistent/edit.php?id=1",
+                "deleteurl": "https://example.org/local/kursassistent/manage.php?action=delete&id=1"
+            }
+        ]
+    }
+}}
+<div class="local-kursassistent-manage">
+    <p class="text-muted">{{#str}} bausteineverwalten_desc, local_kursassistent {{/str}}</p>
+    <div class="d-flex justify-content-end mb-3">
+        <a class="btn btn-primary" href="{{newurl}}">{{#str}} neuerbaustein, local_kursassistent {{/str}}</a>
+    </div>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th></th>
+                <th>{{#str}} titel, local_kursassistent {{/str}}</th>
+                <th>{{#str}} typ, local_kursassistent {{/str}}</th>
+                <th>{{#str}} status, local_kursassistent {{/str}}</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#types}}
+            <tr>
+                <td><img class="icon" src="{{iconurl}}" alt="{{title}}" title="{{title}}"></td>
+                <td>{{title}}</td>
+                <td>{{typelabel}}{{#modname}} ({{modname}}){{/modname}}</td>
+                <td>
+                    {{#active}}
+                    <span class="badge badge-success">{{#str}} aktiv, local_kursassistent {{/str}}</span>
+                    {{/active}}
+                    {{^active}}
+                    <span class="badge badge-secondary">{{#str}} deaktiviert, local_kursassistent {{/str}}</span>
+                    {{/active}}
+                </td>
+                <td>
+                    <a class="btn btn-sm btn-outline-secondary mr-1" href="{{editurl}}">{{#str}} bearbeiten, local_kursassistent {{/str}}</a>
+                    <a class="btn btn-sm btn-outline-danger" href="{{deleteurl}}">{{#str}} loeschen, local_kursassistent {{/str}}</a>
+                </td>
+            </tr>
+            {{/types}}
+        </tbody>
+    </table>
+</div>

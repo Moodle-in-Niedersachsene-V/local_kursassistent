@@ -39,24 +39,9 @@ $PAGE->set_pagelayout('standard');
 $PAGE->set_title(get_string('anleitungtitel', 'local_kursassistent'));
 $PAGE->set_heading(get_string('anleitungtitel', 'local_kursassistent'));
 
-$inhalt = get_config('local_kursassistent', 'anleitung_inhalt');
+$renderer = $PAGE->get_renderer('local_kursassistent');
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('anleitungtitel', 'local_kursassistent'));
-
-if (empty(trim(strip_tags((string) $inhalt)))) {
-    echo html_writer::tag('p', get_string('anleitung_leer', 'local_kursassistent'), ['class' => 'text-muted']);
-} else {
-    echo html_writer::div(format_text($inhalt, FORMAT_HTML, ['context' => $context]));
-}
-
-echo html_writer::div(
-    html_writer::link(
-        new moodle_url('/course/view.php', ['id' => $courseid]),
-        get_string('zurueckzumkurs', 'local_kursassistent'),
-        ['class' => 'btn btn-secondary']
-    ),
-    'mt-3'
-);
-
+echo $renderer->render(new \local_kursassistent\output\guide_page($context, $courseid));
 echo $OUTPUT->footer();

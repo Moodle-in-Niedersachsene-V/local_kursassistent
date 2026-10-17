@@ -43,7 +43,7 @@ $PAGE->set_pagelayout('incourse');
 $PAGE->set_title(get_string('kursvorlageuebernehmen', 'local_kursassistent'));
 $PAGE->set_heading(get_string('kursvorlageuebernehmen', 'local_kursassistent'));
 
-$kursurl = new moodle_url('/course/view.php', ['id' => $courseid]);
+$renderer = $PAGE->get_renderer('local_kursassistent');
 $seitenurl = new moodle_url('/local/kursassistent/vorlagen.php', ['courseid' => $courseid]);
 
 // Ausfuehrung nach Bestaetigung.
@@ -51,22 +51,15 @@ if ($templateid && $confirm && confirm_sesskey()) {
     $vorlage = vorlagen_manager::get_geprueft($templateid);
 
     echo $OUTPUT->header();
-    echo $OUTPUT->heading(get_string('vorlagen_uebernahmelaeuft', 'local_kursassistent'));
-    echo html_writer::tag('p', get_string('vorlagen_bittewarten', 'local_kursassistent'));
+    echo $renderer->render(new \local_kursassistent\output\transfer_running());
     flush();
 
     vorlagen_manager::uebernehmen($templateid, $courseid);
 
-    echo $OUTPUT->notification(
-        get_string('vorlagen_fertig', 'local_kursassistent', format_string($vorlage->fullname)),
-        \core\output\notification::NOTIFY_SUCCESS
-    );
-    // Der Parameter sagt dem Assistenten, dass die Übernahme geklappt hat.
-    $erfolgsurl = new moodle_url('/course/view.php', ['id' => $courseid, 'kaergebnis' => 'vorlage']);
-    echo html_writer::div(
-        html_writer::link($erfolgsurl, get_string('zurueckzumkurs', 'local_kursassistent'), ['class' => 'btn btn-primary']),
-        'mt-3'
-    );
+    echo $renderer->render(new \local_kursassistent\output\transfer_done(
+        format_string($vorlage->fullname, true, ['context' => $context, 'escape' => false]),
+        $courseid
+    ));
     echo $OUTPUT->footer();
     die;
 }
@@ -95,74 +88,5 @@ if ($templateid) {
 
 // Uebersicht der verfuegbaren Vorlagen.
 echo $OUTPUT->header();
-
-if (!vorlagen_manager::is_aktiv()) {
-    echo $OUTPUT->notification(
-        get_string('vorlagen_nichtkonfiguriert', 'local_kursassistent'),
-        \core\output\notification::NOTIFY_INFO
-    );
-    echo html_writer::link($kursurl, get_string('zurueckzumkurs', 'local_kursassistent'), ['class' => 'btn btn-secondary']);
-    echo $OUTPUT->footer();
-    die;
-}
-
-$vorlagen = vorlagen_manager::get_vorlagen();
-
-if (empty($vorlagen)) {
-    echo $OUTPUT->notification(
-        get_string('vorlagen_leer', 'local_kursassistent'),
-        \core\output\notification::NOTIFY_INFO
-    );
-    echo html_writer::link($kursurl, get_string('zurueckzumkurs', 'local_kursassistent'), ['class' => 'btn btn-secondary']);
-    echo $OUTPUT->footer();
-    die;
-}
-
-echo html_writer::tag('p', get_string('vorlagen_hinweis', 'local_kursassistent'));
-
-echo html_writer::start_div('local-kursassistent-vorlagen');
-foreach ($vorlagen as $vorlage) {
-    $auswahlurl = new moodle_url('/local/kursassistent/vorlagen.php', [
-        'courseid' => $courseid,
-        'templateid' => $vorlage->id,
-    ]);
-
-    echo html_writer::start_div('local-kursassistent-vorlage');
-
-    if (!empty($vorlage->bildurl)) {
-        echo html_writer::empty_tag('img', [
-            'src' => $vorlage->bildurl,
-            'alt' => '',
-            'class' => 'local-kursassistent-vorlage-bild',
-        ]);
-    } else {
-        echo html_writer::div('', 'local-kursassistent-vorlage-bild local-kursassistent-vorlage-leer');
-    }
-
-    echo html_writer::tag('h5', format_string($vorlage->fullname), ['class' => 'local-kursassistent-vorlage-titel']);
-
-    if (!empty($vorlage->summary)) {
-        $kurzfassung = shorten_text(
-            html_to_text(format_text($vorlage->summary, $vorlage->summaryformat, ['context' => $context]), 0, false),
-            200
-        );
-        // Die Umwandlung in Klartext macht aus maskierten Zeichen wieder echte, deshalb maskieren.
-        echo html_writer::tag('p', s($kurzfassung), ['class' => 'local-kursassistent-vorlage-text']);
-    }
-
-    echo html_writer::link(
-        $auswahlurl,
-        get_string('vorlagen_auswaehlen', 'local_kursassistent'),
-        ['class' => 'btn btn-primary btn-sm']
-    );
-
-    echo html_writer::end_div();
-}
-echo html_writer::end_div();
-
-echo html_writer::div(
-    html_writer::link($kursurl, get_string('zurueckzumkurs', 'local_kursassistent'), ['class' => 'btn btn-secondary']),
-    'mt-3'
-);
-
+echo $renderer->render(new \local_kursassistent\output\templates_page($course, $context));
 echo $OUTPUT->footer();

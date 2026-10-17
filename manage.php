@@ -69,83 +69,8 @@ if ($action === 'delete' && $id) {
     die;
 }
 
+$renderer = $PAGE->get_renderer('local_kursassistent');
+
 echo $OUTPUT->header();
-
-echo html_writer::start_div('local-kursassistent-manage');
-echo html_writer::tag('p', get_string('bausteineverwalten_desc', 'local_kursassistent'), ['class' => 'text-muted']);
-
-echo html_writer::start_div('d-flex justify-content-end mb-3');
-echo html_writer::link(
-    new moodle_url('/local/kursassistent/edit.php'),
-    get_string('neuerbaustein', 'local_kursassistent'),
-    ['class' => 'btn btn-primary']
-);
-echo html_writer::end_div();
-
-$types = \local_kursassistent\manager::get_types(false);
-
-echo html_writer::start_tag('table', ['class' => 'table table-hover']);
-echo html_writer::start_tag('thead');
-echo html_writer::start_tag('tr');
-echo html_writer::tag('th', '');
-echo html_writer::tag('th', get_string('titel', 'local_kursassistent'));
-echo html_writer::tag('th', get_string('typ', 'local_kursassistent'));
-echo html_writer::tag('th', get_string('status', 'local_kursassistent'));
-echo html_writer::tag('th', '');
-echo html_writer::end_tag('tr');
-echo html_writer::end_tag('thead');
-echo html_writer::start_tag('tbody');
-
-foreach ($types as $type) {
-    echo html_writer::start_tag('tr');
-
-    // Symbol, vom Renderer von Moodle erzeugt.
-    echo html_writer::start_tag('td');
-    echo $OUTPUT->image_icon(
-        \local_kursassistent\manager::normalize_icon($type->icon),
-        $type->titel,
-        'local_kursassistent'
-    );
-    echo html_writer::end_tag('td');
-
-    echo html_writer::tag('td', s($type->titel));
-
-    // Typ: Text aus der Sprachdatei, der Name des Moduls maskiert.
-    echo html_writer::start_tag('td');
-    echo get_string('typ_' . $type->typ, 'local_kursassistent');
-    if ($type->typ === 'aktivitaet' && !empty($type->modname)) {
-        echo ' (' . s($type->modname) . ')';
-    }
-    echo html_writer::end_tag('td');
-
-    // Status: Texte aus der Sprachdatei.
-    echo html_writer::start_tag('td');
-    if ($type->aktiv) {
-        echo html_writer::tag('span', get_string('aktiv', 'local_kursassistent'), ['class' => 'badge badge-success']);
-    } else {
-        echo html_writer::tag('span', get_string('deaktiviert', 'local_kursassistent'), ['class' => 'badge badge-secondary']);
-    }
-    echo html_writer::end_tag('td');
-
-    $editurl = new moodle_url('/local/kursassistent/edit.php', ['id' => $type->id]);
-    $deleteurl = new moodle_url('/local/kursassistent/manage.php', [
-        'action' => 'delete', 'id' => $type->id,
-    ]);
-    echo html_writer::start_tag('td');
-    echo html_writer::link(
-        $editurl,
-        get_string('bearbeiten', 'local_kursassistent'),
-        ['class' => 'btn btn-sm btn-outline-secondary mr-1']
-    );
-    echo html_writer::link($deleteurl, get_string('loeschen', 'local_kursassistent'), [
-        'class' => 'btn btn-sm btn-outline-danger',
-    ]);
-    echo html_writer::end_tag('td');
-    echo html_writer::end_tag('tr');
-}
-
-echo html_writer::end_tag('tbody');
-echo html_writer::end_tag('table');
-echo html_writer::end_div();
-
+echo $renderer->render(new \local_kursassistent\output\manage_page());
 echo $OUTPUT->footer();

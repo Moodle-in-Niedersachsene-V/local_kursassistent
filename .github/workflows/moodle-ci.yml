@@ -5,8 +5,8 @@
 # Plugin: local_kursassistent
 # Ablage: .github/workflows/moodle-ci.yml
 #
-# Angepasst: kein templates/, kein tests/ vorhanden, daher ohne
-# mustache-, phpunit- und behat-Schritt. amd/ ist vorhanden, grunt bleibt.
+# Angepasst: kein tests/ vorhanden, daher ohne phpunit- und behat-Schritt.
+# templates/ und amd/ sind vorhanden, mustache und grunt bleiben.
 ##############################################################################
 
 name: Moodle Plugin CI
@@ -110,6 +110,10 @@ jobs:
       - name: Plugin-Struktur validieren
         if: ${{ !cancelled() }}
         run: moodle-plugin-ci validate
+
+      - name: Mustache-Templates pruefen
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci mustache
 
       - name: Upgrade-Savepoints pruefen
         if: ${{ !cancelled() }}
