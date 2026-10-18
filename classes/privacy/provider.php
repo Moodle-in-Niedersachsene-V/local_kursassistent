@@ -51,6 +51,9 @@ class provider implements
         $collection->add_database_table('local_kursassistent_comment', [
             'studentid' => 'privacy:metadata:local_kursassistent_comment:studentid',
             'teacherid' => 'privacy:metadata:local_kursassistent_comment:teacherid',
+            'cmid' => 'privacy:metadata:local_kursassistent_comment:cmid',
+            'authorrole' => 'privacy:metadata:local_kursassistent_comment:authorrole',
+            'visibility' => 'privacy:metadata:local_kursassistent_comment:visibility',
             'commenttext' => 'privacy:metadata:local_kursassistent_comment:commenttext',
             'timecreated' => 'privacy:metadata:local_kursassistent_comment:timecreated',
         ], 'privacy:metadata:local_kursassistent_comment');
@@ -201,6 +204,9 @@ class provider implements
                     return [
                         'studentid' => $c->studentid,
                         'teacherid' => $c->teacherid,
+                        'cmid' => $c->cmid,
+                        'authorrole' => $c->authorrole,
+                        'visibility' => $c->visibility,
                         'commenttext' => $c->commenttext,
                         'timecreated' => \core_privacy\local\request\transform::datetime($c->timecreated),
                         'timemodified' => \core_privacy\local\request\transform::datetime($c->timemodified),

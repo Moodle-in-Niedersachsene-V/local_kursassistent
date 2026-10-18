@@ -27,7 +27,7 @@
     * barclass - CSS class for the colour of the bar
     * completedcount - Number of completed activities
     * totalcount - Number of activities with completion tracking
-    * sections - Sections with their activities: sectionname, activities (modname, name, completed)
+    * sections - Sections with their activities: sectionname, activities (modname, name, completed, teachernote)
     * teachercomment - Optional note of the teacher, plain text
 
     Example context (json):
@@ -43,7 +43,7 @@
             {
                 "sectionname": "Topic 1",
                 "activities": [
-                    {"modname": "assign", "name": "Task 1", "completed": true},
+                    {"modname": "assign", "name": "Task 1", "completed": true, "teachernote": "Clean solution."},
                     {"modname": "forum", "name": "Forum", "completed": false}
                 ]
             }
@@ -55,7 +55,7 @@
     <div class="local-kursassistent-modal">
         <div class="d-flex align-items-center justify-content-between mb-3">
             <p class="font-weight-bold mb-0">{{#str}} meinfortschritt, local_kursassistent {{/str}}</p>
-            <button type="button" class="close local-kursassistent-progress-close" aria-label="{{#str}} close, core {{/str}}">&times;</button>
+            <button type="button" class="close local-kursassistent-progress-close" aria-label="{{#str}} closebuttontitle, core {{/str}}">&times;</button>
         </div>
         {{#notenabled}}
         <div class="alert alert-info">{{#str}} progress_notenabled, local_kursassistent {{/str}}</div>
@@ -85,6 +85,12 @@
                 <span{{^completed}} class="text-muted"{{/completed}}>{{name}}</span>
             </span>
         </div>
+        {{#teachernote}}
+        <div class="local-kursassistent-teacher-comment local-kursassistent-activity-note ml-4 mb-2 px-3 py-2">
+            <div class="small font-weight-bold">{{#str}} progress_teachernote, local_kursassistent {{/str}}</div>
+            <div class="small">{{teachernote}}</div>
+        </div>
+        {{/teachernote}}
         {{/activities}}
         {{/sections}}
         {{#teachercomment}}
@@ -94,7 +100,7 @@
         </div>
         {{/teachercomment}}
         <div class="d-flex justify-content-end mt-3">
-            <button type="button" class="btn btn-secondary local-kursassistent-progress-close">{{#str}} close, core {{/str}}</button>
+            <button type="button" class="btn btn-secondary local-kursassistent-progress-close">{{#str}} closebuttontitle, core {{/str}}</button>
         </div>
         {{/showcontent}}
     </div>

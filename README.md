@@ -17,7 +17,7 @@ Inhalt aus. Die Bausteine sind von der Schul-Administration frei erweiterbar.
   anwenden und speichern
 - **Lernpfade, Kompetenzen und Statistik** – Abschlussverfolgung und Voraussetzungen, lineare Lernpfade,
   Übersicht mit Sichtbarkeit, Umsortieren per Ziehen und Duplizieren (auch in einen anderen Kurs),
-  Zuordnen von Kompetenzen aus dem Exabis-Kompetenzraster, Statistik mit Notizen zu Teilnehmenden
+  Zuordnen von Kompetenzen aus dem Exabis-Kompetenzraster, Statistik mit Anmerkungen zu Teilnehmenden, allgemein oder je Aktivität
 - **Mein Fortschritt** – Teilnehmende sehen ihren eigenen Abschlussfortschritt im Kurs
 - **Abschnittsverwaltung** – Kursabschnitte direkt im Assistenten umbenennen oder neu anlegen
 - **Anleitung** – von der Administration frei editierbarer Hilfetext für Lehrkräfte

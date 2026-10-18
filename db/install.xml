@@ -59,12 +59,15 @@
         <INDEX NAME="userid_idx" UNIQUE="false" FIELDS="userid"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="local_kursassistent_comment" COMMENT="Lehrkraft-Kommentare zum Lernfortschritt einzelner Teilnehmer">
+    <TABLE NAME="local_kursassistent_comment" COMMENT="Anmerkungen zum Lernfortschritt einzelner Teilnehmer, allgemein oder je Aktivitaet">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true"/>
         <FIELD NAME="studentid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="User-ID des Teilnehmers"/>
         <FIELD NAME="teacherid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="User-ID der kommentierenden Lehrkraft"/>
+        <FIELD NAME="cmid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Kursmodul-ID; 0 = allgemeine Anmerkung zum Teilnehmer"/>
+        <FIELD NAME="authorrole" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="teacher" COMMENT="teacher oder student"/>
+        <FIELD NAME="visibility" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="student" COMMENT="student = fuer den Teilnehmer sichtbar, teacher = nur fuer Lehrkraefte, private = nur fuer die Autorin oder den Autor"/>
         <FIELD NAME="commenttext" TYPE="text" NOTNULL="true"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
@@ -73,7 +76,8 @@
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="courseid_studentid_idx" UNIQUE="true" FIELDS="courseid, studentid" COMMENT="Ein Kommentar pro Teilnehmer und Kurs"/>
+        <INDEX NAME="course_student_cm_role_idx" UNIQUE="true" FIELDS="courseid, studentid, cmid, authorrole" COMMENT="Ein Kommentar je Teilnehmer, Aktivitaet und Rolle"/>
+        <INDEX NAME="cmid_idx" UNIQUE="false" FIELDS="cmid"/>
       </INDEXES>
     </TABLE>
   </TABLES>

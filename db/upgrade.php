@@ -164,5 +164,44 @@ function xmldb_local_kursassistent_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026092204, 'local', 'kursassistent');
     }
 
+    if ($oldversion < 2026100122) {
+        $dbman = $DB->get_manager();
+        $table = new xmldb_table('local_kursassistent_comment');
+
+        // Neue Felder: Aktivitaet, Rolle der Autorin oder des Autors, Sichtbarkeit.
+        $field = new xmldb_field('cmid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'teacherid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        $field = new xmldb_field('authorrole', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'teacher', 'cmid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        $field = new xmldb_field('visibility', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'student', 'authorrole');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Alter Index (ein Kommentar je Teilnehmer und Kurs) wird durch den erweiterten ersetzt.
+        $oldindex = new xmldb_index('courseid_studentid_idx', XMLDB_INDEX_UNIQUE, ['courseid', 'studentid']);
+        if ($dbman->index_exists($table, $oldindex)) {
+            $dbman->drop_index($table, $oldindex);
+        }
+        $newindex = new xmldb_index(
+            'course_student_cm_role_idx',
+            XMLDB_INDEX_UNIQUE,
+            ['courseid', 'studentid', 'cmid', 'authorrole']
+        );
+        if (!$dbman->index_exists($table, $newindex)) {
+            $dbman->add_index($table, $newindex);
+        }
+        $cmindex = new xmldb_index('cmid_idx', XMLDB_INDEX_NOTUNIQUE, ['cmid']);
+        if (!$dbman->index_exists($table, $cmindex)) {
+            $dbman->add_index($table, $cmindex);
+        }
+
+        upgrade_plugin_savepoint(true, 2026100122, 'local', 'kursassistent');
+    }
+
     return true;
 }

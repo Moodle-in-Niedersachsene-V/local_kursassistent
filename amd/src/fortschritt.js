@@ -36,7 +36,12 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/templates'], function(
                 last = {sectionnum: a.sectionnum, sectionname: a.sectionname, activities: []};
                 sections.push(last);
             }
-            last.activities.push({modname: a.modname, name: a.name, completed: a.completed});
+            last.activities.push({
+                modname: a.modname,
+                name: a.name,
+                completed: a.completed,
+                teachernote: a.teachernote || ''
+            });
         });
         return sections;
     }

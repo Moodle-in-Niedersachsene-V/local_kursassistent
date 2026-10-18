@@ -2248,6 +2248,18 @@ class local_kursassistent_external extends external_api {
         $activities = [];
         $completedcount = 0;
 
+        // Anmerkungen der Lehrkraft, die fuer die Lernenden sichtbar sind (je Aktivitaet und allgemein).
+        $notes = [];
+        $rows = $DB->get_records('local_kursassistent_comment', [
+            'courseid' => $params['courseid'],
+            'studentid' => $USER->id,
+            'authorrole' => 'teacher',
+            'visibility' => 'student',
+        ]);
+        foreach ($rows as $row) {
+            $notes[(int) $row->cmid] = $row->commenttext;
+        }
+
         foreach ($modinfo->get_cms() as $cm) {
             if (!$cm->uservisible || $cm->deletioninprogress) {
                 continue;
@@ -2281,21 +2293,16 @@ class local_kursassistent_external extends external_api {
                 'sectionname' => $sectionname,
                 'completed' => $iscomplete,
                 'completionstate' => (int) $data->completionstate,
+                'teachernote' => $notes[(int) $cm->id] ?? '',
             ];
         }
-
-        // Kommentar der Lehrkraft laden, falls vorhanden.
-        $comment = $DB->get_record('local_kursassistent_comment', [
-            'courseid' => $courseid,
-            'studentid' => $USER->id,
-        ]);
 
         return [
             'completionenabled' => true,
             'activities' => $activities,
             'completedcount' => $completedcount,
             'totalcount' => count($activities),
-            'teachercomment' => $comment ? $comment->commenttext : '',
+            'teachercomment' => $notes[0] ?? '',
         ];
     }
 
@@ -2315,6 +2322,7 @@ class local_kursassistent_external extends external_api {
                 'sectionname' => new external_value(PARAM_TEXT, 'Abschnittsname'),
                 'completed' => new external_value(PARAM_BOOL, 'Abgeschlossen'),
                 'completionstate' => new external_value(PARAM_INT, 'Abschlussstatus-Code'),
+                'teachernote' => new external_value(PARAM_RAW, 'Anmerkung der Lehrkraft zur Aktivität', VALUE_DEFAULT, ''),
             ])),
             'completedcount' => new external_value(PARAM_INT, 'Abgeschlossene Aktivitäten'),
             'totalcount' => new external_value(PARAM_INT, 'Gesamtzahl Aktivitäten'),
@@ -2334,6 +2342,7 @@ class local_kursassistent_external extends external_api {
             'courseid' => new external_value(PARAM_INT, 'Kurs-ID'),
             'studentid' => new external_value(PARAM_INT, 'User-ID des Teilnehmers'),
             'comment' => new external_value(PARAM_RAW, 'Kommentartext (leer = löschen)'),
+            'cmid' => new external_value(PARAM_INT, 'Kursmodul-ID, 0 = allgemeine Anmerkung', VALUE_DEFAULT, 0),
         ]);
     }
 
@@ -2343,18 +2352,21 @@ class local_kursassistent_external extends external_api {
      * @param int $courseid
      * @param int $studentid
      * @param string $comment
+     * @param int $cmid Kursmodul-ID, 0 = allgemeine Anmerkung zum Teilnehmer
      * @return array
      */
-    public static function save_student_comment(int $courseid, int $studentid, string $comment): array {
+    public static function save_student_comment(int $courseid, int $studentid, string $comment, int $cmid = 0): array {
         global $DB, $USER;
 
         $params = self::validate_parameters(self::save_student_comment_parameters(), [
             'courseid' => $courseid,
             'studentid' => $studentid,
             'comment' => $comment,
+            'cmid' => $cmid,
         ]);
         $courseid = $params['courseid'];
         $studentid = $params['studentid'];
+        $cmid = $params['cmid'];
         $comment = trim($params['comment']);
 
         $context = \context_course::instance($courseid);
@@ -2367,10 +2379,17 @@ class local_kursassistent_external extends external_api {
             throw new \moodle_exception('kommentar_keinteilnehmer', 'local_kursassistent');
         }
 
+        // Die Aktivitaet muss zu diesem Kurs gehoeren, sonst liessen sich Eintraege zu fremden Modulen anlegen.
+        if ($cmid > 0 && !$DB->record_exists('course_modules', ['id' => $cmid, 'course' => $courseid])) {
+            throw new \moodle_exception('kommentar_keineaktivitaet', 'local_kursassistent');
+        }
+
         $now = time();
         $existing = $DB->get_record('local_kursassistent_comment', [
             'courseid' => $courseid,
             'studentid' => $studentid,
+            'cmid' => $cmid,
+            'authorrole' => 'teacher',
         ]);
 
         if (empty($comment)) {
@@ -2391,6 +2410,9 @@ class local_kursassistent_external extends external_api {
             $record->courseid = $courseid;
             $record->studentid = $studentid;
             $record->teacherid = $USER->id;
+            $record->cmid = $cmid;
+            $record->authorrole = 'teacher';
+            $record->visibility = 'student';
             $record->commenttext = $comment;
             $record->timecreated = $now;
             $record->timemodified = $now;
@@ -2442,11 +2464,15 @@ class local_kursassistent_external extends external_api {
         self::validate_context($context);
         require_capability('local/kursassistent:use', $context);
 
-        $records = $DB->get_records('local_kursassistent_comment', ['courseid' => $courseid]);
+        $records = $DB->get_records('local_kursassistent_comment', [
+            'courseid' => $courseid,
+            'authorrole' => 'teacher',
+        ]);
         $comments = [];
         foreach ($records as $rec) {
             $comments[] = [
                 'studentid' => (int) $rec->studentid,
+                'cmid' => (int) $rec->cmid,
                 'comment' => $rec->commenttext,
                 'teacherid' => (int) $rec->teacherid,
                 'timemodified' => (int) $rec->timemodified,
@@ -2465,6 +2491,7 @@ class local_kursassistent_external extends external_api {
         return new external_single_structure([
             'comments' => new external_multiple_structure(new external_single_structure([
                 'studentid' => new external_value(PARAM_INT, 'User-ID des Teilnehmers'),
+                'cmid' => new external_value(PARAM_INT, 'Kursmodul-ID, 0 = allgemein'),
                 'comment' => new external_value(PARAM_RAW, 'Kommentartext'),
                 'teacherid' => new external_value(PARAM_INT, 'User-ID der Lehrkraft'),
                 'timemodified' => new external_value(PARAM_INT, 'Letzte Änderung'),

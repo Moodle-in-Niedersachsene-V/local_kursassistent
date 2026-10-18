@@ -118,7 +118,7 @@ Falls beim Hochladen der Hinweis zur Kanal-Einrichtung erscheint: Klicke auf den
 
 Teilnehmende finden im Kurs den Eintrag „Mein Fortschritt". Er zeigt eine Übersicht aller Aktivitäten des Kurses und was davon bereits abgeschlossen ist – gegliedert nach Kursabschnitten.
 
-Die Ansicht setzt voraus, dass die Abschlussverfolgung im Kurs aktiviert ist und die Lehrkraft für die Aktivitäten festgelegt hat, wie deren Abschluss erfasst wird. Es werden ausschliesslich die eigenen Daten angezeigt; der Fortschritt anderer Personen ist darüber nicht einsehbar.
+Die Ansicht setzt voraus, dass die Abschlussverfolgung im Kurs aktiviert ist und die Lehrkraft für die Aktivitäten festgelegt hat, wie deren Abschluss erfasst wird. Es werden ausschliesslich die eigenen Daten angezeigt; der Fortschritt anderer Personen ist darüber nicht einsehbar. Hat die Lehrkraft eine Anmerkung zu einer Aktivität oder allgemein hinterlegt, steht sie als „Hinweis deiner Lehrkraft“ unter der Aktivität bzw. am Ende der Liste.
 
 ## 3. Für Administrator:innen
 
@@ -169,7 +169,7 @@ Das Plugin bringt drei Berechtigungen mit:
 | `local/kursassistent:manage` | Manager/in | Bausteine websiteweit verwalten |
 | `local/kursassistent:viewownprogress` | Teilnehmer/in und höher | Eigenen Fortschritt einsehen |
 
-Die Statistik und die Notizen zu einzelnen Teilnehmenden sind an `local/kursassistent:use` gebunden. Diese Berechtigung haben standardmässig auch Trainer/innen ohne Bearbeitungsrecht. Wenn an eurer Schule nur bearbeitende Trainer/innen Notizen sehen sollen, muss die Berechtigung für die Rolle „Trainer/in ohne Bearbeitungsrecht" entzogen werden.
+Die Statistik und das Schreiben der Anmerkungen zu einzelnen Teilnehmenden sind an `local/kursassistent:use` gebunden. Diese Berechtigung haben standardmässig auch Trainer/innen ohne Bearbeitungsrecht. Wenn an eurer Schule nur bearbeitende Trainer/innen Anmerkungen schreiben sollen, muss die Berechtigung für die Rolle „Trainer/in ohne Bearbeitungsrecht" entzogen werden.
 
 Einige Funktionen setzen zusätzlich Berechtigungen von Moodle voraus. Fehlen sie, wird die Aktion mit einer Fehlermeldung abgelehnt:
 

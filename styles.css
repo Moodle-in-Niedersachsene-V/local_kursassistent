@@ -732,6 +732,18 @@
     resize: vertical;
 }
 
+/* Zelle mit Anmerkung in der Statistik-Tabelle: Schaltfläche ohne eigenen Rahmen. */
+.local-kursassistent-note-btn {
+    min-width: 28px;
+    min-height: 28px;
+    text-decoration: none;
+}
+
+.local-kursassistent-note-editor textarea {
+    font-size: 0.85rem;
+    resize: vertical;
+}
+
 /* Lehrkraft-Kommentar in der Schüler-Fortschrittsansicht. */
 .local-kursassistent-teacher-comment {
     background: #e8f4fd;

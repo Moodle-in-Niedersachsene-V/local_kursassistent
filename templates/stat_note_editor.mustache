@@ -1,0 +1,46 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_kursassistent/stat_note_editor
+
+    Table row with the editor for a note of the teacher on one activity or in general.
+
+    Context variables required for this template:
+    * colspan - Number of columns of the table
+    * title - Heading of the editor, names the student and the activity
+    * text - Current text of the note
+
+    Example context (json):
+    {
+        "colspan": 9,
+        "title": "Note on Task 2 · Ben Example",
+        "text": "Please check part c."
+    }
+}}
+<tr class="local-kursassistent-note-editor">
+    <td colspan="{{colspan}}" class="bg-light">
+        <div class="p-2">
+            <label class="font-weight-bold small mb-1" for="local-kursassistent-note-input">{{title}}</label>
+            <textarea id="local-kursassistent-note-input" class="form-control form-control-sm local-kursassistent-note-input" rows="3"
+                placeholder="{{#str}} kommentar_platzhalter, local_kursassistent {{/str}}">{{text}}</textarea>
+            <div class="d-flex justify-content-end mt-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary mr-1 local-kursassistent-note-cancel">{{#str}} kommentar_abbrechen, local_kursassistent {{/str}}</button>
+                <button type="button" class="btn btn-sm btn-primary local-kursassistent-note-save">{{#str}} kommentar_speichern, local_kursassistent {{/str}}</button>
+            </div>
+        </div>
+    </td>
+</tr>

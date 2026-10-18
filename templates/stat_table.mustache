@@ -1,0 +1,94 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_kursassistent/stat_table
+
+    Detail table of the course statistics: students x activities with a note per cell.
+
+    Context variables required for this template:
+    * activities - List of activities (name, modname)
+    * users - List of students with cells, total and the general note
+    * footer - Completion sums per activity and overall
+
+    Example context (json):
+    {
+        "activities": [{"name": "Task 1", "modname": "assign"}],
+        "users": [
+            {
+                "userid": 7,
+                "fullname": "Anna Example",
+                "total": "1/1 (100%)",
+                "cells": [
+                    {"userid": 7, "cmid": 12, "done": true, "hasnote": true, "note": "Well done", "label": "Edit note on Task 1 for Anna Example"}
+                ],
+                "general": {"userid": 7, "cmid": 0, "hasnote": true, "note": "Reliable", "label": "Edit general note for Anna Example"}
+            }
+        ],
+        "footer": {"cells": [{"text": "1/1 (100%)"}], "overall": "1/1 (100%)"}
+    }
+}}
+<div class="local-kursassistent-stat-table-wrap">
+    <table class="table table-sm table-bordered local-kursassistent-stat-table">
+        <thead>
+            <tr>
+                <th class="local-kursassistent-stat-sticky">{{#str}} statistik_teilnehmer, local_kursassistent {{/str}}</th>
+                {{#activities}}
+                <th class="local-kursassistent-stat-th-activity" title="{{name}} ({{modname}})"><span>{{name}}</span></th>
+                {{/activities}}
+                <th class="text-center">{{#str}} statistik_gesamt, local_kursassistent {{/str}}</th>
+                <th class="text-center local-kursassistent-stat-comment-th">{{#str}} statistik_allgemeine_anmerkung, local_kursassistent {{/str}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#users}}
+            <tr>
+                <td class="local-kursassistent-stat-sticky small">{{fullname}}</td>
+                {{#cells}}
+                <td class="text-center">
+                    <button type="button" class="btn btn-link p-0 local-kursassistent-note-btn"
+                        data-userid="{{userid}}" data-cmid="{{cmid}}" title="{{note}}" aria-label="{{label}}">
+                        {{#done}}<span class="local-kursassistent-stat-done">✓</span>{{/done}}
+                        {{^done}}<span class="local-kursassistent-stat-open">–</span>{{/done}}
+                        <i class="icon fa fa-comment text-primary ml-1 local-kursassistent-note-icon{{^hasnote}} d-none{{/hasnote}}" aria-hidden="true"></i>
+                    </button>
+                </td>
+                {{/cells}}
+                <td class="text-center small">{{total}}</td>
+                <td class="local-kursassistent-stat-comment-cell">
+                    {{#general}}
+                    <button type="button" class="btn btn-link p-0 text-left d-flex align-items-center local-kursassistent-note-btn"
+                        data-userid="{{userid}}" data-cmid="{{cmid}}" title="{{note}}" aria-label="{{label}}">
+                        <span class="small flex-grow-1 local-kursassistent-note-text{{^hasnote}} text-muted{{/hasnote}}">{{#hasnote}}{{note}}{{/hasnote}}{{^hasnote}}{{#str}} kommentar_platzhalter, local_kursassistent {{/str}}{{/hasnote}}</span>
+                        <i class="icon fa fa-pencil ml-1" aria-hidden="true"></i>
+                    </button>
+                    {{/general}}
+                </td>
+            </tr>
+            {{/users}}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td class="local-kursassistent-stat-sticky small font-weight-bold">{{#str}} statistik_abgeschlossen, local_kursassistent {{/str}}</td>
+                {{#footer.cells}}
+                <td class="text-center small">{{text}}</td>
+                {{/footer.cells}}
+                <td class="text-center small font-weight-bold">{{footer.overall}}</td>
+                <td></td>
+            </tr>
+        </tfoot>
+    </table>
+</div>

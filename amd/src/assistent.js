@@ -21,8 +21,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_list',
-    'local_kursassistent/rueckkehr'],
-        function($, Ajax, Notification, Str, SortableList, Rueckkehr) {
+    'local_kursassistent/rueckkehr', 'core/templates'],
+        function($, Ajax, Notification, Str, SortableList, Rueckkehr, Templates) {
 
     var courseid = null;
     var etwasEingefuegt = false;
@@ -3711,7 +3711,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             });
             var $detailBereich = $('<div>', {'class': 'd-none'});
 
-            // Kommentare beim ersten Öffnen der Tabelle laden.
+            // Anmerkungen beim ersten Öffnen der Tabelle laden.
             var commentsLoaded = false;
             var commentsMap = {};
 
@@ -3727,12 +3727,12 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                             args: {courseid: courseid}
                         }])[0].done(function(cResponse) {
                             cResponse.comments.forEach(function(c) {
-                                commentsMap[c.studentid] = c.comment;
+                                commentsMap[noteKey(c.studentid, c.cmid)] = c.comment;
                             });
-                            $detailBereich.empty().append(erzeugeDetailTabelle(response, commentsMap));
+                            zeigeDetailTabelle($detailBereich, response, commentsMap);
                         }).fail(function() {
-                            // Auch ohne Kommentare die Tabelle anzeigen.
-                            $detailBereich.empty().append(erzeugeDetailTabelle(response, commentsMap));
+                            // Auch ohne Anmerkungen die Tabelle anzeigen.
+                            zeigeDetailTabelle($detailBereich, response, commentsMap);
                         });
                     }
                 } else {
@@ -3775,36 +3775,37 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
     }
 
     /**
-     * Erzeugt die Teilnehmer × Aktivitäten Detail-Tabelle mit Kommentarspalte.
+     * Schlüssel einer Anmerkung in der Map: Teilnehmer und Aktivität (0 = allgemein).
+     *
+     * @param {Number} userid
+     * @param {Number} cmid
+     * @return {String}
+     */
+    function noteKey(userid, cmid) {
+        return userid + ':' + cmid;
+    }
+
+    /**
+     * Setzt Aktivitäts- und Personenname in eine Beschriftungsvorlage ein.
+     *
+     * @param {String} template Vorlage mit den Platzhaltern @@A@@ und @@P@@
+     * @param {String} activity Name der Aktivität
+     * @param {String} person Name der Person
+     * @return {String}
+     */
+    function fuelleBeschriftung(template, activity, person) {
+        return template.split('@@A@@').join(activity).split('@@P@@').join(person);
+    }
+
+    /**
+     * Baut den Kontext für das Template stat_table aus der Statistik-Antwort.
      *
      * @param {Object} response Antwort von get_course_statistics
-     * @param {Object} commentsMap studentid → Kommentartext
-     * @return {jQuery}
+     * @param {Object} commentsMap Schlüssel (Teilnehmer:Aktivität) → Anmerkung
+     * @param {Object} labels Beschriftungsvorlagen mit den Platzhaltern @@A@@ und @@P@@
+     * @return {Object}
      */
-    function erzeugeDetailTabelle(response, commentsMap) {
-        var $wrapper = $('<div>', {'class': 'local-kursassistent-stat-table-wrap'});
-        var $table = $('<table>', {'class': 'table table-sm table-bordered local-kursassistent-stat-table'});
-
-        // Kopfzeile.
-        var $thead = $('<thead>');
-        var $headRow = $('<tr>');
-        $headRow.append($('<th>', {text: 'Teilnehmer', 'class': 'local-kursassistent-stat-sticky'}));
-        response.activities.forEach(function(a) {
-            var $th = $('<th>', {
-                'class': 'local-kursassistent-stat-th-activity',
-                title: a.name + ' (' + a.modname + ')'
-            });
-            $th.append($('<span>', {text: a.name}));
-            $headRow.append($th);
-        });
-        // Zusammenfassungsspalte.
-        $headRow.append($('<th>', {text: 'Gesamt', 'class': 'text-center'}));
-        // Kommentarspalte.
-        $headRow.append($('<th>', {text: 'Kommentar', 'class': 'text-center local-kursassistent-stat-comment-th'}));
-        $thead.append($headRow);
-        $table.append($thead);
-
-        // Lookup: userid → activity cmid → completed.
+    function baueTabellenKontext(response, commentsMap, labels) {
         var completionMap = {};
         response.activities.forEach(function(a) {
             a.usercompletions.forEach(function(uc) {
@@ -3815,138 +3816,158 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             });
         });
 
-        // Körper.
-        var $tbody = $('<tbody>');
-        response.users.forEach(function(user) {
-            var $row = $('<tr>');
-            $row.append($('<td>', {text: user.fullname, 'class': 'local-kursassistent-stat-sticky small'}));
-            var userCompleted = 0;
-            response.activities.forEach(function(a) {
-                var done = completionMap[user.userid] && completionMap[user.userid][a.cmid];
+        var count = response.activities.length;
+        var users = response.users.map(function(user) {
+            var completed = 0;
+            var cells = response.activities.map(function(a) {
+                var done = !!(completionMap[user.userid] && completionMap[user.userid][a.cmid]);
+                var note = commentsMap[noteKey(user.userid, a.cmid)] || '';
                 if (done) {
-                    userCompleted++;
+                    completed++;
                 }
-                $row.append($('<td>', {
-                    'class': 'text-center',
-                    html: done ? '<span class="local-kursassistent-stat-done">✓</span>'
-                               : '<span class="local-kursassistent-stat-open">–</span>'
-                }));
+                return {
+                    userid: user.userid,
+                    cmid: a.cmid,
+                    done: done,
+                    hasnote: note !== '',
+                    note: note,
+                    label: fuelleBeschriftung(labels.cell, a.name, user.fullname)
+                };
             });
-            var userPercent = response.activities.length > 0
-                ? Math.round((userCompleted / response.activities.length) * 100)
-                : 0;
-            $row.append($('<td>', {
-                'class': 'text-center small',
-                text: userCompleted + '/' + response.activities.length + ' (' + userPercent + '%)'
-            }));
+            var general = commentsMap[noteKey(user.userid, 0)] || '';
+            return {
+                userid: user.userid,
+                fullname: user.fullname,
+                cells: cells,
+                total: completed + '/' + count + ' (' + (count > 0 ? Math.round((completed / count) * 100) : 0) + '%)',
+                general: {
+                    userid: user.userid,
+                    cmid: 0,
+                    hasnote: general !== '',
+                    note: general,
+                    label: fuelleBeschriftung(labels.general, '', user.fullname)
+                }
+            };
+        });
 
-            // Kommentar-Zelle.
-            var $commentCell = $('<td>', {'class': 'local-kursassistent-stat-comment-cell'});
-            var existingComment = commentsMap[user.userid] || '';
-            var $commentDisplay = $('<div>', {'class': 'local-kursassistent-comment-display d-flex align-items-center'});
-            var $commentText = $('<span>', {
-                'class': 'small flex-grow-1' + (existingComment ? '' : ' text-muted'),
-                text: existingComment || 'Kommentar …'
-            });
-            var $editBtn = $('<button>', {
-                type: 'button',
-                'class': 'btn btn-sm btn-link p-0 ml-1 local-kursassistent-comment-edit',
-                title: 'Kommentar bearbeiten',
-                html: '✎'
-            });
-            $commentDisplay.append($commentText, $editBtn);
+        var overallDone = 0;
+        var footerCells = response.activities.map(function(a) {
+            overallDone += a.completedusers;
+            var pct = a.totalusers > 0 ? Math.round((a.completedusers / a.totalusers) * 100) : 0;
+            return {text: a.completedusers + '/' + a.totalusers + ' (' + pct + '%)'};
+        });
+        var overallTotal = count * response.users.length;
+        var overallPct = overallTotal > 0 ? Math.round((overallDone / overallTotal) * 100) : 0;
 
-            var $commentEdit = $('<div>', {'class': 'local-kursassistent-comment-editarea d-none'});
-            var $textarea = $('<textarea>', {
-                'class': 'form-control form-control-sm',
-                rows: 2,
-                text: existingComment
-            });
-            var $btnRow = $('<div>', {'class': 'd-flex justify-content-end mt-1'});
-            var $cancelBtn = $('<button>', {
-                type: 'button',
-                'class': 'btn btn-sm btn-outline-secondary mr-1',
-                text: 'Abbrechen'
-            });
-            var $saveBtn = $('<button>', {
-                type: 'button',
-                'class': 'btn btn-sm btn-primary',
-                text: 'Speichern'
-            });
-            $btnRow.append($cancelBtn, $saveBtn);
-            $commentEdit.append($textarea, $btnRow);
+        return {
+            activities: response.activities.map(function(a) {
+                return {name: a.name, modname: a.modname};
+            }),
+            users: users,
+            footer: {cells: footerCells, overall: overallDone + '/' + overallTotal + ' (' + overallPct + '%)'}
+        };
+    }
 
-            $commentCell.append($commentDisplay, $commentEdit);
-
-            // Bearbeiten öffnen.
-            $editBtn.on('click', function() {
-                $commentDisplay.addClass('d-none');
-                $commentEdit.removeClass('d-none');
-                $textarea.focus();
+    /**
+     * Zeigt die Teilnehmer × Aktivitäten Detail-Tabelle mit Anmerkungen je Aktivität.
+     *
+     * @param {jQuery} $container Ziel für die Tabelle
+     * @param {Object} response Antwort von get_course_statistics
+     * @param {Object} commentsMap Schlüssel (Teilnehmer:Aktivität) → Anmerkung
+     * @return {Promise}
+     */
+    function zeigeDetailTabelle($container, response, commentsMap) {
+        // Beschriftungen einmal mit Platzhaltern holen und je Zelle nur ersetzen.
+        return Str.get_strings([
+            {key: 'kommentar_zelle_aktivitaet', component: 'local_kursassistent',
+                param: {aktivitaet: '@@A@@', person: '@@P@@'}},
+            {key: 'kommentar_zelle_allgemein', component: 'local_kursassistent', param: {person: '@@P@@'}},
+            {key: 'kommentar_titel_aktivitaet', component: 'local_kursassistent',
+                param: {aktivitaet: '@@A@@', person: '@@P@@'}},
+            {key: 'kommentar_titel_allgemein', component: 'local_kursassistent', param: {person: '@@P@@'}},
+            {key: 'kommentar_fehler', component: 'local_kursassistent'}
+        ]).then(function(strings) {
+            var labels = {cell: strings[0], general: strings[1]};
+            var titles = {cell: strings[2], general: strings[3], error: strings[4]};
+            var context = baueTabellenKontext(response, commentsMap, labels);
+            return Templates.renderForPromise('local_kursassistent/stat_table', context).then(function(result) {
+                Templates.replaceNodeContents($container, result.html, result.js);
+                bindeAnmerkungen($container, response, commentsMap, titles);
+                return null;
             });
+        }).catch(Notification.exception);
+    }
 
-            // Abbrechen.
-            $cancelBtn.on('click', function() {
-                $textarea.val(commentsMap[user.userid] || '');
-                $commentEdit.addClass('d-none');
-                $commentDisplay.removeClass('d-none');
-            });
+    /**
+     * Verdrahtet die Zellen der Detail-Tabelle mit dem Editor für Anmerkungen.
+     *
+     * @param {jQuery} $container Container mit der Tabelle
+     * @param {Object} response Antwort von get_course_statistics
+     * @param {Object} commentsMap Schlüssel (Teilnehmer:Aktivität) → Anmerkung
+     * @param {Object} titles Titelvorlagen und Fehlertext
+     */
+    function bindeAnmerkungen($container, response, commentsMap, titles) {
+        var names = {};
+        response.users.forEach(function(u) {
+            names[u.userid] = u.fullname;
+        });
+        var activityNames = {};
+        response.activities.forEach(function(a) {
+            activityNames[a.cmid] = a.name;
+        });
+        var colspan = response.activities.length + 3;
 
-            // Speichern.
-            $saveBtn.on('click', function() {
-                var newComment = $textarea.val().trim();
-                $saveBtn.prop('disabled', true).text('…');
-                Ajax.call([{
-                    methodname: 'local_kursassistent_save_student_comment',
-                    args: {courseid: courseid, studentid: user.userid, comment: newComment}
-                }])[0].done(function() {
-                    commentsMap[user.userid] = newComment;
-                    $commentText.text(newComment || 'Kommentar …')
-                        .toggleClass('text-muted', !newComment);
-                    $commentEdit.addClass('d-none');
-                    $commentDisplay.removeClass('d-none');
-                    $saveBtn.prop('disabled', false).text('Speichern');
-                }).fail(function() {
-                    $saveBtn.prop('disabled', false).text('Speichern');
-                    Notification.addNotification({
-                        message: 'Kommentar konnte nicht gespeichert werden.',
-                        type: 'error'
+        var schliesseEditor = function() {
+            $container.find('.local-kursassistent-note-editor').remove();
+        };
+
+        $container.on('click', '.local-kursassistent-note-btn', function() {
+            var $btn = $(this);
+            var userid = parseInt($btn.attr('data-userid'), 10);
+            var cmid = parseInt($btn.attr('data-cmid'), 10);
+            var key = noteKey(userid, cmid);
+            var title = fuelleBeschriftung(cmid > 0 ? titles.cell : titles.general, activityNames[cmid] || '', names[userid]);
+
+            schliesseEditor();
+            Templates.renderForPromise('local_kursassistent/stat_note_editor', {
+                colspan: colspan,
+                title: title,
+                text: commentsMap[key] || ''
+            }).then(function(result) {
+                var $editor = $(result.html);
+                $btn.closest('tr').after($editor);
+                Templates.runTemplateJS(result.js);
+                var $input = $editor.find('.local-kursassistent-note-input');
+                $input.trigger('focus');
+
+                $editor.find('.local-kursassistent-note-cancel').on('click', schliesseEditor);
+                $editor.find('.local-kursassistent-note-save').on('click', function() {
+                    var $save = $(this);
+                    var newNote = $input.val().trim();
+                    $save.prop('disabled', true);
+                    Ajax.call([{
+                        methodname: 'local_kursassistent_save_student_comment',
+                        args: {courseid: courseid, studentid: userid, comment: newNote, cmid: cmid}
+                    }])[0].done(function() {
+                        commentsMap[key] = newNote;
+                        $btn.attr('title', newNote);
+                        $btn.find('.local-kursassistent-note-icon').toggleClass('d-none', newNote === '');
+                        var $text = $btn.find('.local-kursassistent-note-text');
+                        if ($text.length) {
+                            Str.get_string('kommentar_platzhalter', 'local_kursassistent').then(function(placeholder) {
+                                $text.text(newNote || placeholder).toggleClass('text-muted', newNote === '');
+                                return null;
+                            }).catch(Notification.exception);
+                        }
+                        schliesseEditor();
+                    }).fail(function() {
+                        $save.prop('disabled', false);
+                        Notification.addNotification({message: titles.error, type: 'error'});
                     });
                 });
-            });
-
-            $row.append($commentCell);
-            $tbody.append($row);
+                return null;
+            }).catch(Notification.exception);
         });
-        $table.append($tbody);
-
-        // Fußzeile: Summe pro Aktivität.
-        var $tfoot = $('<tfoot>');
-        var $footRow = $('<tr>');
-        $footRow.append($('<td>', {text: 'Abgeschlossen', 'class': 'local-kursassistent-stat-sticky small font-weight-bold'}));
-        response.activities.forEach(function(a) {
-            var pct = a.totalusers > 0 ? Math.round((a.completedusers / a.totalusers) * 100) : 0;
-            $footRow.append($('<td>', {
-                'class': 'text-center small',
-                text: a.completedusers + '/' + a.totalusers + ' (' + pct + '%)'
-            }));
-        });
-        var overallDone = 0;
-        var overallTotal = response.activities.length * response.users.length;
-        response.activities.forEach(function(a) {
-            overallDone += a.completedusers;
-        });
-        var overallPct = overallTotal > 0 ? Math.round((overallDone / overallTotal) * 100) : 0;
-        $footRow.append($('<td>', {
-            'class': 'text-center small font-weight-bold',
-            text: overallDone + '/' + overallTotal + ' (' + overallPct + '%)'
-        }));
-        $footRow.append($('<td>')); // Leere Zelle unter Kommentarspalte.
-        $tfoot.append($footRow);
-        $table.append($tfoot);
-
-        $wrapper.append($table);
-        return $wrapper;
     }
 
     return {
