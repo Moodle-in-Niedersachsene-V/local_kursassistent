@@ -2071,7 +2071,7 @@ class local_kursassistent_external extends external_api {
      * @return array
      */
     public static function get_course_statistics(int $courseid): array {
-        global $DB;
+        global $CFG, $DB;
 
         $params = self::validate_parameters(self::get_course_statistics_parameters(), [
             'courseid' => $courseid,
@@ -2091,6 +2091,8 @@ class local_kursassistent_external extends external_api {
                 'users' => [],
             ];
         }
+
+        require_once($CFG->libdir . '/gradelib.php');
 
         $modinfo = get_fast_modinfo($course);
 
@@ -2118,6 +2120,17 @@ class local_kursassistent_external extends external_api {
                 continue;
             }
 
+            // Bewertungen der Aktivitaet, soweit sie eine Bewertung hat und der Nutzer sie sehen darf.
+            $grades = [];
+            $gradeinfo = grade_get_grades($course->id, 'mod', $cm->modname, $cm->instance, array_keys($users));
+            if (!empty($gradeinfo->items[0]->grades)) {
+                foreach ($gradeinfo->items[0]->grades as $gradeuserid => $gradeobj) {
+                    if ($gradeobj->grade !== null && empty($gradeobj->hidden)) {
+                        $grades[(int) $gradeuserid] = trim(strip_tags((string) $gradeobj->str_grade));
+                    }
+                }
+            }
+
             // Abschluss-Daten pro Teilnehmer ermitteln.
             $completedcount = 0;
             $usercompletions = [];
@@ -2134,6 +2147,7 @@ class local_kursassistent_external extends external_api {
                     'userid' => (int) $user->id,
                     'completed' => $iscomplete,
                     'completionstate' => (int) $data->completionstate,
+                    'grade' => $grades[(int) $user->id] ?? '',
                 ];
             }
 
@@ -2192,6 +2206,7 @@ class local_kursassistent_external extends external_api {
                     'userid' => new external_value(PARAM_INT, 'Nutzer-ID'),
                     'completed' => new external_value(PARAM_BOOL, 'Abgeschlossen ja/nein'),
                     'completionstate' => new external_value(PARAM_INT, 'Abschlussstatus-Code'),
+                    'grade' => new external_value(PARAM_TEXT, 'Bewertung als Text, leer ohne Bewertung', VALUE_DEFAULT, ''),
                 ])),
             ])),
             'users' => new external_multiple_structure(new external_single_structure([

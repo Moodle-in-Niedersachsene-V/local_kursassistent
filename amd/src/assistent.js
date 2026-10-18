@@ -3741,7 +3741,10 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 }
             });
 
-            $subpanel.append($detailToggle, $detailBereich);
+            // Der Hilfe-Knopf erklärt, dass die Zellen anklickbar sind.
+            var $toggleRow = $('<div>', {'class': 'd-flex align-items-center mb-2'});
+            $toggleRow.append($detailToggle, erstelleHilfeIcon('statistik_detail_help_title', 'statistik_detail_help'));
+            $subpanel.append($toggleRow, $detailBereich);
 
         }).fail(function() {
             $loader.remove();
@@ -3812,7 +3815,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 if (!completionMap[uc.userid]) {
                     completionMap[uc.userid] = {};
                 }
-                completionMap[uc.userid][a.cmid] = uc.completed;
+                completionMap[uc.userid][a.cmid] = {completed: uc.completed, grade: uc.grade || ''};
             });
         });
 
@@ -3820,7 +3823,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
         var users = response.users.map(function(user) {
             var completed = 0;
             var cells = response.activities.map(function(a) {
-                var done = !!(completionMap[user.userid] && completionMap[user.userid][a.cmid]);
+                var entry = (completionMap[user.userid] && completionMap[user.userid][a.cmid]) || {};
+                var done = !!entry.completed;
                 var note = commentsMap[noteKey(user.userid, a.cmid)] || '';
                 if (done) {
                     completed++;
@@ -3829,6 +3833,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                     userid: user.userid,
                     cmid: a.cmid,
                     done: done,
+                    grade: entry.grade || '',
                     hasnote: note !== '',
                     note: note,
                     label: fuelleBeschriftung(labels.cell, a.name, user.fullname)

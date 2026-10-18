@@ -33,7 +33,7 @@
                 "fullname": "Anna Example",
                 "total": "1/1 (100%)",
                 "cells": [
-                    {"userid": 7, "cmid": 12, "done": true, "hasnote": true, "note": "Well done", "label": "Edit note on Task 1 for Anna Example"}
+                    {"userid": 7, "cmid": 12, "done": true, "grade": "85,00", "hasnote": true, "note": "Well done", "label": "Edit note on Task 1 for Anna Example"}
                 ],
                 "general": {"userid": 7, "cmid": 0, "hasnote": true, "note": "Reliable", "label": "Edit general note for Anna Example"}
             }
@@ -63,6 +63,7 @@
                         data-userid="{{userid}}" data-cmid="{{cmid}}" title="{{note}}" aria-label="{{label}}">
                         {{#done}}<span class="local-kursassistent-stat-done">✓</span>{{/done}}
                         {{^done}}<span class="local-kursassistent-stat-open">–</span>{{/done}}
+                        {{#grade}}<span class="small font-weight-bold text-dark ml-1 local-kursassistent-stat-grade">{{grade}}</span>{{/grade}}
                         <i class="icon fa fa-comment text-primary ml-1 local-kursassistent-note-icon{{^hasnote}} d-none{{/hasnote}}" aria-hidden="true"></i>
                     </button>
                 </td>
