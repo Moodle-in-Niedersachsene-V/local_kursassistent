@@ -185,6 +185,7 @@ $string['progress_counts'] = '{$a->done} von {$a->total} Aktivitäten';
 $string['progress_noactivities'] = 'In diesem Kurs gibt es keine Aktivitäten mit Abschlussverfolgung.';
 $string['progress_notenabled'] = 'Die Abschlussverfolgung ist in diesem Kurs nicht aktiviert.';
 $string['progress_teachernote'] = 'Hinweis deiner Lehrkraft:';
+$string['sectpl_fehler'] = 'Nicht alle Elemente konnten eingefügt werden: {$a}';
 $string['sichtbar'] = 'Sichtbar';
 $string['sichtbarkeit'] = 'Sichtbarkeit';
 $string['sichtbarkeit_abschnitt'] = 'Abschnitt ein-/ausblenden';

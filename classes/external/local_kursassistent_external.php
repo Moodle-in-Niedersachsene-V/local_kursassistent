@@ -1788,6 +1788,7 @@ class local_kursassistent_external extends external_api {
         }
 
         $erzeugt = 0;
+        $fehler = [];
         foreach ($definition as $entry) {
             $art = $entry['art'] ?? 'baustein';
 
@@ -1809,7 +1810,8 @@ class local_kursassistent_external extends external_api {
                     );
                     $erzeugt++;
                 } catch (\Exception $e) {
-                    // Modul nicht verfügbar oder Fehler — überspringen.
+                    // Modul nicht verfügbar oder Fehler: überspringen, aber melden.
+                    $fehler[] = self::format_template_error($name, $e);
                     continue;
                 }
             } else {
@@ -1839,11 +1841,36 @@ class local_kursassistent_external extends external_api {
 
         rebuild_course_cache($params['courseid'], true);
 
+        $message = '';
+        if (!empty($fehler)) {
+            $message = get_string('sectpl_fehler', 'local_kursassistent', implode(' | ', $fehler));
+        }
+
         return [
             'success' => true,
-            'message' => '',
+            'message' => $message,
             'erzeugt' => $erzeugt,
         ];
+    }
+
+    /**
+     * Beschreibt einen Fehler beim Anwenden einer Vorlage.
+     * Technische Details sieht nur, wer die Website verwaltet.
+     *
+     * @param string $name Name des Elements
+     * @param \Throwable $e aufgetretener Fehler
+     * @return string
+     */
+    private static function format_template_error(string $name, \Throwable $e): string {
+        $text = $name;
+        if (is_siteadmin()) {
+            $text .= ' (' . get_class($e) . ': ' . $e->getMessage();
+            if (!empty($e->debuginfo)) {
+                $text .= ' - ' . shorten_text((string) $e->debuginfo, 300);
+            }
+            $text .= ')';
+        }
+        return $text;
     }
 
     /**

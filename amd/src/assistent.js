@@ -3457,6 +3457,12 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                     'class': 'local-kursassistent-meldung local-kursassistent-meldung-erfolg mt-2',
                     text: 'Vorlage angewendet: ' + res.erzeugt + ' Baustein(e) eingefügt.'
                 }));
+                if (res.message) {
+                    $container.append($('<div>', {
+                        'class': 'alert alert-warning mt-2 local-kursassistent-meldung',
+                        text: res.message
+                    }));
+                }
             }).fail(function() {
                 $okBtn.prop('disabled', false).text('Anwenden');
                 Notification.alert('Fehler', 'Die Vorlage konnte nicht angewendet werden.', 'OK');

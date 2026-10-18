@@ -465,9 +465,82 @@ class manager {
                 break;
         }
 
+        // Felder, die das Bearbeitungsformular sonst liefert und die create_module() ohne Formular braucht.
+        // Fehlen sie, schreibt Moodle NULL in Spalten, die nicht NULL sein duerfen (etwa quiz.password).
+        foreach (self::activity_form_defaults($modname) as $field => $value) {
+            if (!isset($moduleinfo->$field)) {
+                $moduleinfo->$field = $value;
+            }
+        }
+
         $created = create_module($moduleinfo);
 
         return (int) $created->coursemodule;
+    }
+
+    /**
+     * Standardwerte der Formularfelder einer Aktivität für das Anlegen ohne Formular.
+     *
+     * Die Werte entsprechen den Vorgaben der Moodle-Testgeneratoren für Test und Aufgabe.
+     *
+     * @param string $modname Modulname
+     * @return array Feldname => Wert
+     */
+    private static function activity_form_defaults(string $modname): array {
+        switch ($modname) {
+            case 'quiz':
+                $defaults = [
+                    'timeopen' => 0,
+                    'timeclose' => 0,
+                    'attempts' => 0,
+                    'attemptonlast' => 0,
+                    'grademethod' => 1,
+                    'decimalpoints' => 2,
+                    'questiondecimalpoints' => -1,
+                    'showuserpicture' => 0,
+                    'shufflequestions' => 0,
+                    'shuffleanswers' => 1,
+                    'sumgrades' => 0,
+                    'timelimit' => 0,
+                    'overduehandling' => 'autosubmit',
+                    'graceperiod' => 86400,
+                    'quizpassword' => '',
+                    'password' => '',
+                    'subnet' => '',
+                    'browsersecurity' => '-',
+                    'delay1' => 0,
+                    'delay2' => 0,
+                    'showblocks' => 0,
+                ];
+                // Anzeigeoptionen der Rueckmeldung je Zeitpunkt (waehrend, direkt danach, spaeter, nach Schliessen).
+                foreach (['during', 'immediately', 'open', 'closed'] as $when) {
+                    foreach (['attempt', 'correctness', 'marks', 'specificfeedback', 'generalfeedback', 'rightanswer'] as $what) {
+                        $defaults[$what . $when] = 1;
+                    }
+                    $defaults['overallfeedback' . $when] = ($when === 'during') ? 0 : 1;
+                }
+                return $defaults;
+            case 'assign':
+                return [
+                    'alwaysshowdescription' => 1,
+                    'duedate' => 0,
+                    'cutoffdate' => 0,
+                    'gradingduedate' => 0,
+                    'allowsubmissionsfromdate' => 0,
+                    'requireallteammemberssubmit' => 0,
+                    'teamsubmissiongroupingid' => 0,
+                    'hidegrader' => 0,
+                    'revealidentities' => 0,
+                    'attemptreopenmethod' => 'none',
+                    'maxattempts' => -1,
+                    'markingallocation' => 0,
+                    'preventsubmissionnotingroup' => 0,
+                    'submissionattachments' => 0,
+                    'timelimit' => 0,
+                ];
+            default:
+                return [];
+        }
     }
 
     /**

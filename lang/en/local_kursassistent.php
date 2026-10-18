@@ -185,6 +185,7 @@ $string['progress_counts'] = '{$a->done} of {$a->total} activities';
 $string['progress_noactivities'] = 'This course has no activities with completion tracking.';
 $string['progress_notenabled'] = 'Completion tracking is not enabled in this course.';
 $string['progress_teachernote'] = 'Note from your teacher:';
+$string['sectpl_fehler'] = 'Not all elements could be inserted: {$a}';
 $string['sichtbar'] = 'Visible';
 $string['sichtbarkeit'] = 'Visibility';
 $string['sichtbarkeit_abschnitt'] = 'Show/hide section';
