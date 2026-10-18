@@ -1,0 +1,101 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_kursassistent/progress_modal
+
+    Window "My progress" for students: own completion progress of the course.
+
+    Context variables required for this template:
+    * notenabled - True if completion tracking is switched off in the course
+    * empty - True if the course has no activities with completion tracking
+    * showcontent - True if the progress is shown
+    * percent - Completed share in percent, 0 to 100
+    * barclass - CSS class for the colour of the bar
+    * completedcount - Number of completed activities
+    * totalcount - Number of activities with completion tracking
+    * sections - Sections with their activities: sectionname, activities (modname, name, completed)
+    * teachercomment - Optional note of the teacher, plain text
+
+    Example context (json):
+    {
+        "notenabled": false,
+        "empty": false,
+        "showcontent": true,
+        "percent": 50,
+        "barclass": "local-kursassistent-bar-mid",
+        "completedcount": 1,
+        "totalcount": 2,
+        "sections": [
+            {
+                "sectionname": "Topic 1",
+                "activities": [
+                    {"modname": "assign", "name": "Task 1", "completed": true},
+                    {"modname": "forum", "name": "Forum", "completed": false}
+                ]
+            }
+        ],
+        "teachercomment": "Well done so far."
+    }
+}}
+<div class="local-kursassistent-overlay">
+    <div class="local-kursassistent-modal">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <p class="font-weight-bold mb-0">{{#str}} meinfortschritt, local_kursassistent {{/str}}</p>
+            <button type="button" class="close local-kursassistent-progress-close" aria-label="{{#str}} close, core {{/str}}">&times;</button>
+        </div>
+        {{#notenabled}}
+        <div class="alert alert-info">{{#str}} progress_notenabled, local_kursassistent {{/str}}</div>
+        {{/notenabled}}
+        {{#empty}}
+        <div class="alert alert-info">{{#str}} progress_noactivities, local_kursassistent {{/str}}</div>
+        {{/empty}}
+        {{#showcontent}}
+        <div class="local-kursassistent-stat-summary mb-3 p-3">
+            <div class="local-kursassistent-stat-headline">
+                <span class="local-kursassistent-stat-percent">{{percent}}%</span>
+                <span> {{#str}} progress_completed, local_kursassistent {{/str}}</span>
+            </div>
+            <div class="small text-muted mt-1">{{#str}} progress_counts, local_kursassistent, {"done": {{completedcount}}, "total": {{totalcount}}} {{/str}}</div>
+            <div class="local-kursassistent-bar-track">
+                <div class="local-kursassistent-bar-fill {{barclass}}" style="width:{{percent}}%"></div>
+            </div>
+        </div>
+        {{#sections}}
+        <div class="local-kursassistent-stat-section-header mt-3 mb-1">{{sectionname}}</div>
+        {{#activities}}
+        <div class="local-kursassistent-fortschritt-row d-flex align-items-center mb-1">
+            {{#completed}}<span class="local-kursassistent-stat-done mr-2">✓</span>{{/completed}}
+            {{^completed}}<span class="local-kursassistent-stat-open mr-2">○</span>{{/completed}}
+            <span class="small flex-grow-1">
+                <span class="badge badge-secondary mr-1">{{modname}}</span>
+                <span{{^completed}} class="text-muted"{{/completed}}>{{name}}</span>
+            </span>
+        </div>
+        {{/activities}}
+        {{/sections}}
+        {{#teachercomment}}
+        <div class="local-kursassistent-teacher-comment mt-3 p-3">
+            <div class="small font-weight-bold mb-1">{{#str}} progress_teachernote, local_kursassistent {{/str}}</div>
+            <div class="small">{{teachercomment}}</div>
+        </div>
+        {{/teachercomment}}
+        <div class="d-flex justify-content-end mt-3">
+            <button type="button" class="btn btn-secondary local-kursassistent-progress-close">{{#str}} close, core {{/str}}</button>
+        </div>
+        {{/showcontent}}
+    </div>
+</div>
