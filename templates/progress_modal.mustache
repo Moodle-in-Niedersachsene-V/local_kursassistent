@@ -27,7 +27,7 @@
     * barclass - CSS class for the colour of the bar
     * completedcount - Number of completed activities
     * totalcount - Number of activities with completion tracking
-    * sections - Sections with their activities: sectionname, activities (modname, name, completed, teachernote)
+    * sections - Sections with their activities: sectionname, activities (modname, name, completed, grade, teachernote)
     * teachercomment - Optional note of the teacher, plain text
 
     Example context (json):
@@ -43,7 +43,7 @@
             {
                 "sectionname": "Topic 1",
                 "activities": [
-                    {"modname": "assign", "name": "Task 1", "completed": true, "teachernote": "Clean solution."},
+                    {"modname": "assign", "name": "Task 1", "completed": true, "grade": "85,00", "teachernote": "Clean solution."},
                     {"modname": "forum", "name": "Forum", "completed": false}
                 ]
             }
@@ -84,6 +84,9 @@
                 <span class="badge badge-secondary mr-1">{{modname}}</span>
                 <span{{^completed}} class="text-muted"{{/completed}}>{{name}}</span>
             </span>
+            {{#grade}}
+            <span class="small font-weight-bold ml-2 text-nowrap">{{#str}} progress_result, local_kursassistent {{/str}}: {{grade}}</span>
+            {{/grade}}
         </div>
         {{#teachernote}}
         <div class="local-kursassistent-teacher-comment local-kursassistent-activity-note ml-4 mb-2 px-3 py-2">

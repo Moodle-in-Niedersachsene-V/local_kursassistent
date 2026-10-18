@@ -118,7 +118,7 @@ Falls beim Hochladen der Hinweis zur Kanal-Einrichtung erscheint: Klicke auf den
 
 Teilnehmende finden im Kurs den Eintrag „Mein Fortschritt". Er zeigt eine Übersicht aller Aktivitäten des Kurses und was davon bereits abgeschlossen ist – gegliedert nach Kursabschnitten.
 
-Die Ansicht setzt voraus, dass die Abschlussverfolgung im Kurs aktiviert ist und die Lehrkraft für die Aktivitäten festgelegt hat, wie deren Abschluss erfasst wird. Es werden ausschliesslich die eigenen Daten angezeigt; der Fortschritt anderer Personen ist darüber nicht einsehbar. Hat die Lehrkraft eine Anmerkung zu einer Aktivität oder allgemein hinterlegt, steht sie als „Hinweis deiner Lehrkraft“ unter der Aktivität bzw. am Ende der Liste.
+Die Ansicht setzt voraus, dass die Abschlussverfolgung im Kurs aktiviert ist und die Lehrkraft für die Aktivitäten festgelegt hat, wie deren Abschluss erfasst wird. Es werden ausschliesslich die eigenen Daten angezeigt; der Fortschritt anderer Personen ist darüber nicht einsehbar. Bei bewerteten Aktivitäten (etwa Aufgabe oder Test) steht neben dem Status das eigene Ergebnis. Es erscheint nur, wenn der Kurs Bewertungen für Teilnehmende anzeigt und die Bewertung nicht ausgeblendet ist. Hat die Lehrkraft eine Anmerkung zu einer Aktivität oder allgemein hinterlegt, steht sie als „Hinweis deiner Lehrkraft“ unter der Aktivität bzw. am Ende der Liste.
 
 ## 3. Für Administrator:innen
 

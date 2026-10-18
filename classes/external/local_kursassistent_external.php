@@ -2263,7 +2263,7 @@ class local_kursassistent_external extends external_api {
      * @return array
      */
     public static function get_own_progress(int $courseid): array {
-        global $DB, $USER;
+        global $CFG, $DB, $USER;
 
         $params = self::validate_parameters(self::get_own_progress_parameters(), [
             'courseid' => $courseid,
@@ -2284,6 +2284,11 @@ class local_kursassistent_external extends external_api {
                 'totalcount' => 0,
             ];
         }
+
+        require_once($CFG->libdir . '/gradelib.php');
+
+        // Ergebnisse nur zeigen, wenn der Kurs Bewertungen fuer Teilnehmende anzeigt und der Nutzer sie sehen darf.
+        $showgrades = !empty($course->showgrades) && has_capability('moodle/grade:view', $context);
 
         $modinfo = get_fast_modinfo($course);
         $sections = $modinfo->get_section_info_all();
@@ -2321,6 +2326,16 @@ class local_kursassistent_external extends external_api {
                 $completedcount++;
             }
 
+            // Eigene Bewertung der Aktivitaet, soweit vorhanden und fuer den Nutzer sichtbar.
+            $grade = '';
+            if ($showgrades) {
+                $gradeinfo = grade_get_grades($course->id, 'mod', $cm->modname, $cm->instance, $USER->id);
+                $gradeobj = $gradeinfo->items[0]->grades[$USER->id] ?? null;
+                if ($gradeobj && $gradeobj->grade !== null && empty($gradeobj->hidden)) {
+                    $grade = trim(strip_tags((string) $gradeobj->str_grade));
+                }
+            }
+
             $sectionname = '';
             if (isset($sections[$cm->sectionnum])) {
                 $secinfo = $sections[$cm->sectionnum];
@@ -2335,6 +2350,7 @@ class local_kursassistent_external extends external_api {
                 'sectionname' => $sectionname,
                 'completed' => $iscomplete,
                 'completionstate' => (int) $data->completionstate,
+                'grade' => $grade,
                 'teachernote' => $notes[(int) $cm->id] ?? '',
             ];
         }
@@ -2364,6 +2380,7 @@ class local_kursassistent_external extends external_api {
                 'sectionname' => new external_value(PARAM_TEXT, 'Abschnittsname'),
                 'completed' => new external_value(PARAM_BOOL, 'Abgeschlossen'),
                 'completionstate' => new external_value(PARAM_INT, 'Abschlussstatus-Code'),
+                'grade' => new external_value(PARAM_TEXT, 'Eigene Bewertung als Text, leer ohne Bewertung', VALUE_DEFAULT, ''),
                 'teachernote' => new external_value(PARAM_RAW, 'Anmerkung der Lehrkraft zur Aktivität', VALUE_DEFAULT, ''),
             ])),
             'completedcount' => new external_value(PARAM_INT, 'Abgeschlossene Aktivitäten'),

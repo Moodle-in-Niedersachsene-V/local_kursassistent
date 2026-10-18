@@ -40,6 +40,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/templates'], function(
                 modname: a.modname,
                 name: a.name,
                 completed: a.completed,
+                grade: a.grade || '',
                 teachernote: a.teachernote || ''
             });
         });

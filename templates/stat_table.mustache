@@ -59,7 +59,7 @@
                 <td class="local-kursassistent-stat-sticky small">{{fullname}}</td>
                 {{#cells}}
                 <td class="text-center">
-                    <button type="button" class="btn btn-link p-0 local-kursassistent-note-btn"
+                    <button type="button" class="btn btn-link local-kursassistent-note-btn"
                         data-userid="{{userid}}" data-cmid="{{cmid}}" title="{{note}}" aria-label="{{label}}">
                         {{#done}}<span class="local-kursassistent-stat-done">✓</span>{{/done}}
                         {{^done}}<span class="local-kursassistent-stat-open">–</span>{{/done}}
@@ -71,7 +71,7 @@
                 <td class="text-center small">{{total}}</td>
                 <td class="local-kursassistent-stat-comment-cell">
                     {{#general}}
-                    <button type="button" class="btn btn-link p-0 text-left d-flex align-items-center local-kursassistent-note-btn"
+                    <button type="button" class="btn btn-link text-left d-flex align-items-center local-kursassistent-note-btn"
                         data-userid="{{userid}}" data-cmid="{{cmid}}" title="{{note}}" aria-label="{{label}}">
                         <span class="small flex-grow-1 local-kursassistent-note-text{{^hasnote}} text-muted{{/hasnote}}">{{#hasnote}}{{note}}{{/hasnote}}{{^hasnote}}{{#str}} kommentar_platzhalter, local_kursassistent {{/str}}{{/hasnote}}</span>
                         <i class="icon fa fa-pencil ml-1" aria-hidden="true"></i>
