@@ -3878,6 +3878,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
      */
     function zeigeDetailTabelle($container, response, commentsMap) {
         // Beschriftungen einmal mit Platzhaltern holen und je Zelle nur ersetzen.
+        var titles = {};
         return Str.get_strings([
             {key: 'kommentar_zelle_aktivitaet', component: 'local_kursassistent',
                 param: {aktivitaet: '@@A@@', person: '@@P@@'}},
@@ -3885,16 +3886,17 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             {key: 'kommentar_titel_aktivitaet', component: 'local_kursassistent',
                 param: {aktivitaet: '@@A@@', person: '@@P@@'}},
             {key: 'kommentar_titel_allgemein', component: 'local_kursassistent', param: {person: '@@P@@'}},
-            {key: 'kommentar_fehler', component: 'local_kursassistent'}
+            {key: 'kommentar_fehler', component: 'local_kursassistent'},
+            {key: 'kommentar_platzhalter', component: 'local_kursassistent'}
         ]).then(function(strings) {
             var labels = {cell: strings[0], general: strings[1]};
-            var titles = {cell: strings[2], general: strings[3], error: strings[4]};
+            titles = {cell: strings[2], general: strings[3], error: strings[4], placeholder: strings[5]};
             var context = baueTabellenKontext(response, commentsMap, labels);
-            return Templates.renderForPromise('local_kursassistent/stat_table', context).then(function(result) {
-                Templates.replaceNodeContents($container, result.html, result.js);
-                bindeAnmerkungen($container, response, commentsMap, titles);
-                return null;
-            });
+            return Templates.renderForPromise('local_kursassistent/stat_table', context);
+        }).then(function(result) {
+            Templates.replaceNodeContents($container, result.html, result.js);
+            bindeAnmerkungen($container, response, commentsMap, titles);
+            return null;
         }).catch(Notification.exception);
     }
 
@@ -3930,11 +3932,12 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
 
             schliesseEditor();
             Templates.renderForPromise('local_kursassistent/stat_note_editor', {
-                colspan: colspan,
                 title: title,
                 text: commentsMap[key] || ''
             }).then(function(result) {
-                var $editor = $(result.html);
+                // Der Editor ist ein eigenständiger Block und wird hier in eine Tabellenzeile gesetzt.
+                var $editor = $('<tr>', {'class': 'local-kursassistent-note-editor'})
+                    .append($('<td>', {colspan: colspan, 'class': 'bg-light'}).append(result.html));
                 $btn.closest('tr').after($editor);
                 Templates.runTemplateJS(result.js);
                 var $input = $editor.find('.local-kursassistent-note-input');
@@ -3952,13 +3955,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                         commentsMap[key] = newNote;
                         $btn.attr('title', newNote);
                         $btn.find('.local-kursassistent-note-icon').toggleClass('d-none', newNote === '');
-                        var $text = $btn.find('.local-kursassistent-note-text');
-                        if ($text.length) {
-                            Str.get_string('kommentar_platzhalter', 'local_kursassistent').then(function(placeholder) {
-                                $text.text(newNote || placeholder).toggleClass('text-muted', newNote === '');
-                                return null;
-                            }).catch(Notification.exception);
-                        }
+                        $btn.find('.local-kursassistent-note-text')
+                            .text(newNote || titles.placeholder)
+                            .toggleClass('text-muted', newNote === '');
                         schliesseEditor();
                     }).fail(function() {
                         $save.prop('disabled', false);
