@@ -105,6 +105,14 @@ $functions = [
         'ajax' => true,
         'capabilities' => 'local/kursassistent:use',
     ],
+    'local_kursassistent_set_grade_visibility' => [
+        'classname' => 'local_kursassistent\external\local_kursassistent_external',
+        'methodname' => 'set_grade_visibility',
+        'description' => 'Verbirgt oder zeigt die Bewertung einer Aktivität im Bewertungsbuch',
+        'type' => 'write',
+        'ajax' => true,
+        'capabilities' => 'local/kursassistent:use',
+    ],
     'local_kursassistent_get_section_templates' => [
         'classname' => 'local_kursassistent\external\local_kursassistent_external',
         'methodname' => 'get_section_templates',

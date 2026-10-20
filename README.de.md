@@ -21,6 +21,7 @@ Inhalt aus. Die Bausteine sind von der Schul-Administration frei erweiterbar.
   Übersicht mit Sichtbarkeit, Umsortieren per Ziehen und Duplizieren (auch in einen anderen Kurs),
   Zuordnen von Kompetenzen aus dem Exabis-Kompetenzraster, Statistik mit Statusanzeige, Filtern und Anmerkungen zu Teilnehmenden, allgemein oder je Aktivität
 - **Mein Fortschritt** – Teilnehmende sehen ihren eigenen Abschlussfortschritt im Kurs mit Stand je Aktivität (erledigt, in Arbeit, offen, überfällig), ihrem nächsten Schritt und einklappbaren Abschnitten
+- **Dashboard** – Kurs aus einer Liste wählen, Kennzahlen (Lernende, Fortschritt, überfällige Aktivitäten, nächster Termin) und wer Aufmerksamkeit braucht sehen, Bereiche des Assistenten öffnen
 - **Abschnittsverwaltung** – Kursabschnitte direkt im Assistenten umbenennen oder neu anlegen
 - **Anleitung** – von der Administration frei editierbarer Hilfetext für Lehrkräfte
 

@@ -24,6 +24,7 @@ can extend the building blocks freely.
   and notes on participants, general or per activity
 - **My progress**: participants see their own completion progress in the course with the status
   of each activity, their next step and collapsible sections
+- **Dashboard**: choose the course from a list, see key figures (students, progress, overdue activities, next date) and who needs attention, and open the areas of the assistant
 - **Section management**: rename or create course sections directly in the assistant
 - **Guide**: help text for teachers that administrators can edit freely
 

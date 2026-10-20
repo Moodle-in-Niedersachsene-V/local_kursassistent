@@ -502,6 +502,16 @@ class local_kursassistent_external extends external_api {
             $labelintros = $DB->get_records_list('label', 'id', $labelinstanzen, '', 'id, intro');
         }
 
+        // Bewertungselemente der Aktivitäten, um das Verbergen der Bewertung anzubieten.
+        require_once($CFG->libdir . '/gradelib.php');
+        $gradeitems = [];
+        $items = \grade_item::fetch_all(['courseid' => $course->id, 'itemtype' => 'mod', 'itemnumber' => 0]);
+        if ($items) {
+            foreach ($items as $gradeitem) {
+                $gradeitems[$gradeitem->itemmodule . ':' . $gradeitem->iteminstance] = $gradeitem;
+            }
+        }
+
         $activities = [];
         foreach ($modinfo->get_cms() as $cm) {
             // Von Lehrkräften verborgene Module gehören mit in die Liste.
@@ -568,6 +578,9 @@ class local_kursassistent_external extends external_api {
                 'availabilityjson' => $cm->availability ?? '',
                 'visible' => (int) $cm->visible,
                 'sectionvisible' => $sectionvismap[(int) $cm->sectionnum] ?? 1,
+                'hasgrade' => isset($gradeitems[$cm->modname . ':' . $cm->instance]),
+                'gradehidden' => isset($gradeitems[$cm->modname . ':' . $cm->instance])
+                    && $gradeitems[$cm->modname . ':' . $cm->instance]->is_hidden() ? 1 : 0,
             ];
         }
 
@@ -692,6 +705,8 @@ class local_kursassistent_external extends external_api {
                 'availabilityjson' => new external_value(PARAM_RAW, 'Availability-JSON'),
                 'visible' => new external_value(PARAM_INT, 'Aktivität sichtbar (0/1)'),
                 'sectionvisible' => new external_value(PARAM_INT, 'Abschnitt sichtbar (0/1)'),
+                'hasgrade' => new external_value(PARAM_BOOL, 'Aktivität hat ein Bewertungselement', VALUE_DEFAULT, false),
+                'gradehidden' => new external_value(PARAM_INT, 'Bewertung im Bewertungsbuch verborgen (0/1)', VALUE_DEFAULT, 0),
             ])),
             'sections' => new external_multiple_structure(new external_single_structure([
                 'sectionnum' => new external_value(PARAM_INT, 'Abschnittsnummer'),
@@ -1505,6 +1520,79 @@ class local_kursassistent_external extends external_api {
         ]);
     }
 
+    // Sichtbarkeit der Bewertung.
+
+    /**
+     * Parameter für set_grade_visibility.
+     *
+     * @return external_function_parameters
+     */
+    public static function set_grade_visibility_parameters(): external_function_parameters {
+        return new external_function_parameters([
+            'courseid' => new external_value(PARAM_INT, 'Kurs-ID'),
+            'cmid' => new external_value(PARAM_INT, 'Kursmodul-ID'),
+            'hidden' => new external_value(PARAM_INT, 'Bewertung verbergen (0 oder 1)'),
+        ]);
+    }
+
+    /**
+     * Verbirgt oder zeigt die Bewertung einer Aktivität im Bewertungsbuch.
+     *
+     * Der Assistent führt keine eigene Einstellung. Er setzt das Verbergen-Merkmal des
+     * Bewertungselements, damit Bewertungsbuch, Statistik und Mein Fortschritt übereinstimmen.
+     *
+     * @param int $courseid
+     * @param int $cmid
+     * @param int $hidden
+     * @return array
+     */
+    public static function set_grade_visibility(int $courseid, int $cmid, int $hidden): array {
+        global $CFG, $DB;
+
+        $params = self::validate_parameters(self::set_grade_visibility_parameters(), [
+            'courseid' => $courseid,
+            'cmid' => $cmid,
+            'hidden' => $hidden,
+        ]);
+
+        $context = \context_course::instance($params['courseid']);
+        self::validate_context($context);
+        require_capability('local/kursassistent:use', $context);
+        require_capability('moodle/grade:hide', $context);
+
+        require_once($CFG->libdir . '/gradelib.php');
+
+        $cm = $DB->get_record('course_modules', ['id' => $params['cmid'], 'course' => $params['courseid']], '*', MUST_EXIST);
+        $modname = $DB->get_field('modules', 'name', ['id' => $cm->module], MUST_EXIST);
+        $item = \grade_item::fetch([
+            'courseid' => $params['courseid'],
+            'itemtype' => 'mod',
+            'itemmodule' => $modname,
+            'iteminstance' => $cm->instance,
+            'itemnumber' => 0,
+        ]);
+        if (!$item) {
+            throw new \moodle_exception('invalidparameter');
+        }
+
+        $newvalue = $params['hidden'] ? 1 : 0;
+        $item->set_hidden($newvalue, true);
+
+        return ['success' => true, 'hidden' => $newvalue];
+    }
+
+    /**
+     * Rückgabestruktur für set_grade_visibility.
+     *
+     * @return external_single_structure
+     */
+    public static function set_grade_visibility_returns(): external_single_structure {
+        return new external_single_structure([
+            'success' => new external_value(PARAM_BOOL, 'Erfolgreich'),
+            'hidden' => new external_value(PARAM_INT, 'Neuer Wert: 1 = verborgen'),
+        ]);
+    }
+
     // Abschnittsvorlagen.
 
     /**
@@ -2078,30 +2166,6 @@ class local_kursassistent_external extends external_api {
     // Kursstatistik - Teilnehmer-Abschluss.
 
     /**
-     * Ermittelt den Anzeigestatus einer Aktivitaet fuer eine Person.
-     *
-     * Ueberfaellig hat Vorrang, wenn der Abschluss bis zu einem Termin erwartet war.
-     * In Arbeit heisst: es gibt bereits Fortschritt (Aufruf oder nicht bestandener Abschluss), aber noch kein Abschluss.
-     *
-     * @param \stdClass $data Ergebnis von completion_info::get_data
-     * @param int $expected Erwarteter Abschluss (Zeitstempel), 0 ohne Termin
-     * @return string done, overdue, progress oder open
-     */
-    private static function activity_status(\stdClass $data, int $expected): string {
-        $state = (int) $data->completionstate;
-        if (in_array($state, [COMPLETION_COMPLETE, COMPLETION_COMPLETE_PASS])) {
-            return 'done';
-        }
-        if ($expected > 0 && $expected < time()) {
-            return 'overdue';
-        }
-        if ($state === COMPLETION_COMPLETE_FAIL || !empty($data->timemodified)) {
-            return 'progress';
-        }
-        return 'open';
-    }
-
-    /**
      * Parameter für get_course_statistics.
      *
      * @return external_function_parameters
@@ -2122,7 +2186,7 @@ class local_kursassistent_external extends external_api {
      * @return array
      */
     public static function get_course_statistics(int $courseid): array {
-        global $CFG, $DB;
+        global $DB;
 
         $params = self::validate_parameters(self::get_course_statistics_parameters(), [
             'courseid' => $courseid,
@@ -2133,110 +2197,8 @@ class local_kursassistent_external extends external_api {
         require_capability('local/kursassistent:use', $context);
 
         $course = $DB->get_record('course', ['id' => $params['courseid']], '*', MUST_EXIST);
-        $completioninfo = new \completion_info($course);
 
-        if (!$completioninfo->is_enabled()) {
-            return [
-                'completionenabled' => false,
-                'activities' => [],
-                'users' => [],
-            ];
-        }
-
-        require_once($CFG->libdir . '/gradelib.php');
-
-        $modinfo = get_fast_modinfo($course);
-
-        // Eingeschriebene Teilnehmer mit Studentenrolle holen.
-        $users = get_enrolled_users(
-            $context,
-            'mod/assign:submit',
-            0,
-            'u.id, u.firstname, u.lastname',
-            'u.lastname ASC, u.firstname ASC'
-        );
-
-        // Alle Aktivitäten sammeln, die Abschlussverfolgung haben.
-        $activities = [];
-        $sections = $modinfo->get_section_info_all();
-
-        foreach ($modinfo->get_cms() as $cm) {
-            if (!$cm->uservisible || $cm->deletioninprogress) {
-                continue;
-            }
-
-            $completiondata = $completioninfo->get_data($cm, false);
-            $tracking = $completioninfo->is_enabled($cm);
-            if ($tracking == COMPLETION_TRACKING_NONE) {
-                continue;
-            }
-
-            // Bewertungen der Aktivitaet, soweit sie eine Bewertung hat und der Nutzer sie sehen darf.
-            $grades = [];
-            $gradeinfo = grade_get_grades($course->id, 'mod', $cm->modname, $cm->instance, array_keys($users));
-            if (!empty($gradeinfo->items[0]->grades)) {
-                foreach ($gradeinfo->items[0]->grades as $gradeuserid => $gradeobj) {
-                    if ($gradeobj->grade !== null && empty($gradeobj->hidden)) {
-                        $grades[(int) $gradeuserid] = trim(strip_tags((string) $gradeobj->str_grade));
-                    }
-                }
-            }
-
-            // Abschluss-Daten pro Teilnehmer ermitteln.
-            $completedcount = 0;
-            $usercompletions = [];
-            foreach ($users as $user) {
-                $data = $completioninfo->get_data($cm, false, $user->id);
-                $iscomplete = in_array((int) $data->completionstate, [
-                    COMPLETION_COMPLETE,
-                    COMPLETION_COMPLETE_PASS,
-                ]);
-                if ($iscomplete) {
-                    $completedcount++;
-                }
-                $usercompletions[] = [
-                    'userid' => (int) $user->id,
-                    'completed' => $iscomplete,
-                    'completionstate' => (int) $data->completionstate,
-                    'status' => self::activity_status($data, (int) $cm->completionexpected),
-                    'grade' => $grades[(int) $user->id] ?? '',
-                ];
-            }
-
-            // Abschnittsnamen ermitteln.
-            $sectionname = '';
-            if (isset($sections[$cm->sectionnum])) {
-                $secinfo = $sections[$cm->sectionnum];
-                $sectionname = !empty($secinfo->name) ? $secinfo->name : get_string('section') . ' ' . $cm->sectionnum;
-            }
-
-            $activities[] = [
-                'cmid' => (int) $cm->id,
-                'name' => $cm->name,
-                'modname' => $cm->modname,
-                'sectionnum' => (int) $cm->sectionnum,
-                'sectionname' => $sectionname,
-                'totalusers' => count($users),
-                'completedusers' => $completedcount,
-                'due' => (int) $cm->completionexpected,
-                'usercompletions' => $usercompletions,
-            ];
-        }
-
-        // Teilnehmer-Liste für die Tabelle.
-        $userlist = [];
-        foreach ($users as $user) {
-            $userlist[] = [
-                'userid' => (int) $user->id,
-                'fullname' => fullname($user),
-            ];
-        }
-
-        return [
-            'completionenabled' => true,
-            'activities' => $activities,
-            'users' => $userlist,
-        ];
+        return \local_kursassistent\statistics::collect($course, $context);
     }
 
     /**
@@ -2378,7 +2340,7 @@ class local_kursassistent_external extends external_api {
                 'sectionname' => $sectionname,
                 'completed' => $iscomplete,
                 'completionstate' => (int) $data->completionstate,
-                'status' => self::activity_status($data, (int) $cm->completionexpected),
+                'status' => \local_kursassistent\statistics::activity_status($data, (int) $cm->completionexpected),
                 'due' => (int) $cm->completionexpected,
                 'duetext' => $cm->completionexpected
                     ? userdate($cm->completionexpected, get_string('strftimedatefullshort', 'langconfig'))

@@ -37,6 +37,16 @@ class renderer extends plugin_renderer_base {
     }
 
     /**
+     * Renders the dashboard of the course assistant.
+     *
+     * @param dashboard_page $page The page data.
+     * @return string HTML
+     */
+    public function render_dashboard_page(dashboard_page $page): string {
+        return $this->render_from_template('local_kursassistent/dashboard_page', $page->export_for_template($this));
+    }
+
+    /**
      * Renders the selection of course templates.
      *
      * @param templates_page $page The page data.

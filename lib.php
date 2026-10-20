@@ -50,6 +50,16 @@ function local_kursassistent_extend_navigation_course($navigation, $course, $con
         $node->add_class('local-kursassistent-navlink');
         $navigation->add_node($node);
 
+        $dashboardnode = navigation_node::create(
+            get_string('dashboardlink', 'local_kursassistent'),
+            new moodle_url('/local/kursassistent/dashboard.php', ['courseid' => $course->id]),
+            navigation_node::TYPE_CUSTOM,
+            null,
+            'local_kursassistent_dashboard',
+            new pix_icon('i/dashboard', '')
+        );
+        $navigation->add_node($dashboardnode);
+
         $anleitungnode = navigation_node::create(
             get_string('anleitungtitel', 'local_kursassistent'),
             new moodle_url('/local/kursassistent/anleitung.php', ['courseid' => $course->id]),

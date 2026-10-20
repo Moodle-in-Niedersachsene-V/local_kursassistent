@@ -733,6 +733,10 @@
     background: #f3f7fc;
 }
 
+.local-kursassistent-overdue-text {
+    color: #8f1f25;
+}
+
 .local-kursassistent-overdue-box {
     border: 1px solid #e9a3a7;
     border-radius: 0.5rem;

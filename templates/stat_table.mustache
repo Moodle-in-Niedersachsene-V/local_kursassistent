@@ -47,7 +47,7 @@
                 "general": {"userid": 7, "cmid": 0, "hasnote": true, "note": "Reliable", "label": "Edit general note for Anna Example"}
             }
         ],
-        "footer": {"cells": [{"text": "1/1 (100%)", "sectionnum": 1}], "overall": "1/1 (100%)"}
+        "footer": {"cells": [{"text": "1/1 (100%)", "sectionnum": 1, "done": 1, "all": 1}], "overall": "1/1 (100%)"}
     }
 }}
 <div class="local-kursassistent-stat-toolbar d-flex flex-wrap align-items-center mb-2">
@@ -89,7 +89,7 @@
             <tr class="local-kursassistent-stat-row" data-hasopen="{{hasopen}}" data-hasoverdue="{{hasoverdue}}">
                 <td class="local-kursassistent-stat-sticky small">{{fullname}}</td>
                 {{#cells}}
-                <td class="text-center" data-section="{{sectionnum}}">
+                <td class="text-center" data-section="{{sectionnum}}" data-status="{{status}}">
                     <button type="button" class="btn btn-link local-kursassistent-note-btn"
                         data-userid="{{userid}}" data-cmid="{{cmid}}" title="{{note}}" aria-label="{{statuslabel}}. {{label}}">
                         <span class="local-kursassistent-pill local-kursassistent-pill-{{status}}">{{statuslabel}}</span>
@@ -98,7 +98,7 @@
                     </button>
                 </td>
                 {{/cells}}
-                <td class="text-center small">{{total}}</td>
+                <td class="text-center small local-kursassistent-stat-total">{{total}}</td>
                 <td class="local-kursassistent-stat-comment-cell">
                     {{#general}}
                     <button type="button" class="btn btn-link text-left d-flex align-items-center local-kursassistent-note-btn"
@@ -115,9 +115,9 @@
             <tr>
                 <td class="local-kursassistent-stat-sticky small font-weight-bold">{{#str}} statistik_abgeschlossen, local_kursassistent {{/str}}</td>
                 {{#footer.cells}}
-                <td class="text-center small" data-section="{{sectionnum}}">{{text}}</td>
+                <td class="text-center small" data-section="{{sectionnum}}" data-done="{{done}}" data-all="{{all}}">{{text}}</td>
                 {{/footer.cells}}
-                <td class="text-center small font-weight-bold">{{footer.overall}}</td>
+                <td class="text-center small font-weight-bold local-kursassistent-stat-overall">{{footer.overall}}</td>
                 <td></td>
             </tr>
         </tfoot>

@@ -1,0 +1,147 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+{{!
+    @template local_kursassistent/dashboard_page
+
+    Dashboard of the course assistant: course list, key figures, attention list and the areas.
+
+    Context variables required for this template:
+    * hascourses - True if the person may use the assistant in at least one course
+    * hascourse - True if a course is selected
+    * selector - HTML of the course selection
+    * courseid, coursename, tab - Selected course and area
+    * helpdashboard, helpattention - HTML of the help icons
+    * tabs - Areas: label, url, active
+    * isstand, isbausteine, iseinrichtung, isuebersicht - Selected area
+    * tabtext - Description of the selected area
+    * completionenabled - True if completion tracking is on in the course
+    * studentcount, avgpercent, overduecount, overduepersons, hasnextdue, nextdue - Key figures
+    * hasattention, attention - Persons with overdue activities: name, text
+
+    Example context (json):
+    {
+        "hascourses": true,
+        "hascourse": true,
+        "selector": "<select></select>",
+        "courseid": 5,
+        "coursename": "Maths 9a",
+        "tab": "stand",
+        "helpdashboard": "",
+        "helpattention": "",
+        "tabs": [{"label": "Status", "url": "https://example.org/local/kursassistent/dashboard.php", "active": true}],
+        "isstand": true,
+        "isbausteine": false,
+        "iseinrichtung": false,
+        "isuebersicht": false,
+        "tabtext": "Text",
+        "completionenabled": true,
+        "studentcount": 24,
+        "avgpercent": 62,
+        "overduecount": 5,
+        "overduepersons": "3 persons",
+        "hasnextdue": true,
+        "nextdue": "Test 1 · 29.10.26",
+        "hasattention": true,
+        "attention": [{"name": "Anna Example", "text": "2 overdue"}]
+    }
+}}
+<div class="local-kursassistent-dashboard">
+    {{^hascourses}}
+    <div class="alert alert-info">{{#str}} dashboard_keinkurs, local_kursassistent {{/str}}</div>
+    {{/hascourses}}
+    {{#hascourse}}
+    <div class="d-flex flex-wrap align-items-center mb-3">
+        <h2 class="h3 mb-0 mr-2">{{coursename}}</h2>
+        {{{helpdashboard}}}
+        <div class="ml-auto">{{{selector}}}</div>
+    </div>
+
+    <ul class="nav nav-tabs mb-3" aria-label="{{#str}} dashboard_bereiche, local_kursassistent {{/str}}">
+        {{#tabs}}
+        <li class="nav-item">
+            <a class="nav-link{{#active}} active{{/active}}" href="{{url}}"{{#active}} aria-current="page"{{/active}}>{{label}}</a>
+        </li>
+        {{/tabs}}
+    </ul>
+
+    {{^completionenabled}}
+    <div class="alert alert-warning">{{#str}} dashboard_nocompletion, local_kursassistent {{/str}}</div>
+    {{/completionenabled}}
+    {{#completionenabled}}
+    <div class="row mb-3">
+        <div class="col-6 col-lg-3 mb-2">
+            <div class="card h-100"><div class="card-body py-2">
+                <div class="small text-muted">{{#str}} kpi_teilnehmende, local_kursassistent {{/str}}</div>
+                <div class="h3 mb-0">{{studentcount}}</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-lg-3 mb-2">
+            <div class="card h-100"><div class="card-body py-2">
+                <div class="small text-muted">{{#str}} kpi_fortschritt, local_kursassistent {{/str}}</div>
+                <div class="h3 mb-0">{{avgpercent}} %</div>
+                <div class="local-kursassistent-bar-track"><div class="local-kursassistent-bar-fill local-kursassistent-bar-mid" style="width:{{avgpercent}}%"></div></div>
+            </div></div>
+        </div>
+        <div class="col-6 col-lg-3 mb-2">
+            <div class="card h-100 local-kursassistent-overdue-box"><div class="card-body py-2">
+                <div class="small font-weight-bold local-kursassistent-overdue-text">{{#str}} status_overdue, local_kursassistent {{/str}}</div>
+                <div class="h3 mb-0 local-kursassistent-overdue-text">{{overduecount}}</div>
+                <div class="small text-muted">{{overduepersons}}</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-lg-3 mb-2">
+            <div class="card h-100"><div class="card-body py-2">
+                <div class="small text-muted">{{#str}} kpi_termin, local_kursassistent {{/str}}</div>
+                {{#hasnextdue}}<div class="font-weight-bold">{{nextdue}}</div>{{/hasnextdue}}
+                {{^hasnextdue}}<div class="text-muted">{{#str}} kpi_keintermin, local_kursassistent {{/str}}</div>{{/hasnextdue}}
+            </div></div>
+        </div>
+    </div>
+    {{/completionenabled}}
+
+    <div class="row">
+        <div class="col-lg-9 mb-3">
+            {{#isstand}}
+            <div class="local-kursassistent-dashboard-stat" data-region="local-kursassistent-stat"></div>
+            {{/isstand}}
+            {{^isstand}}
+            <div class="card"><div class="card-body">
+                <p>{{tabtext}}</p>
+                <button type="button" class="btn btn-primary local-kursassistent-dashboard-open" data-panel="{{tab}}">{{#str}} dashboard_oeffnen, local_kursassistent {{/str}}</button>
+            </div></div>
+            {{/isstand}}
+        </div>
+        <div class="col-lg-3 mb-3">
+            <div class="card"><div class="card-body">
+                <h3 class="h5 d-flex align-items-center">{{#str}} attention_title, local_kursassistent {{/str}} {{{helpattention}}}</h3>
+                {{#hasattention}}
+                <ul class="list-unstyled mb-0">
+                    {{#attention}}
+                    <li class="d-flex justify-content-between border-bottom py-1">
+                        <span class="font-weight-bold">{{name}}</span>
+                        <span class="small local-kursassistent-overdue-text">{{text}}</span>
+                    </li>
+                    {{/attention}}
+                </ul>
+                {{/hasattention}}
+                {{^hasattention}}
+                <p class="small text-muted mb-0">{{#str}} attention_none, local_kursassistent {{/str}}</p>
+                {{/hasattention}}
+            </div></div>
+        </div>
+    </div>
+    {{/hascourse}}
+</div>

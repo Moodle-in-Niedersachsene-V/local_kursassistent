@@ -2633,6 +2633,10 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 $('<th>', {text: 'Aktivität'}),
                 $('<th>', {text: 'Sichtbar', 'class': 'text-center', style: 'width:70px'}),
                 $('<th>', {text: 'Kopie', 'class': 'text-center', style: 'width:60px'}),
+                $('<th>', {'class': 'text-center', style: 'width:90px'}).append(
+                    $('<span>', {text: 'Bewertung'}),
+                    erstelleHilfeIcon('uebersicht_bewertung_help_title', 'uebersicht_bewertung_help')
+                ),
                 $('<th>', {text: 'Abschluss'}),
                 $('<th>', {text: 'Voraussetzungen'}),
                 $('<th>', {text: 'Kompetenzen'})
@@ -2676,7 +2680,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 }
                 $sectionVisCell.append($sectionToggle);
                 $sectionRow.append($('<td>'), $sectionTd, $sectionVisCell,
-                    $('<td>'), $('<td>'), $('<td>'), $('<td>'));
+                    $('<td>'), $('<td>'), $('<td>'), $('<td>'), $('<td>'));
                 $tbody.append($sectionRow);
                 lastSection = act.sectionnum;
             }
@@ -2746,6 +2750,31 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             $duplCell.append($duplBtn);
             $row.append($duplCell);
 
+            // Bewertung im Bewertungsbuch verbergen oder zeigen.
+            var $gradeCell = $('<td>', {'class': 'text-center'});
+            if (act.hasgrade) {
+                var gradeHidden = act.gradehidden ? 1 : 0;
+                var $gradeToggle = $('<button>', {
+                    type: 'button',
+                    'class': 'btn btn-sm p-0 local-kursassistent-grade-toggle',
+                    'data-cmid': act.cmid,
+                    'data-hidden': gradeHidden,
+                    title: gradeHidden ? 'Bewertung einblenden' : 'Bewertung ausblenden'
+                });
+                $gradeToggle.append($('<img>', {
+                    src: M.cfg.wwwroot + '/local/kursassistent/pix/' + (gradeHidden ? 'eye-off.svg' : 'eye.svg'),
+                    alt: gradeHidden ? 'Bewertung verborgen' : 'Bewertung sichtbar',
+                    'class': 'local-kursassistent-vis-icon'
+                }));
+                if (gradeHidden) {
+                    $gradeToggle.addClass('local-kursassistent-vis-hidden');
+                }
+                $gradeCell.append($gradeToggle);
+            } else {
+                $gradeCell.append($('<span>', {'class': 'text-muted', text: '–'}));
+            }
+            $row.append($gradeCell);
+
             var $completionCell = $('<td>');
             var badgeClasses = {'0': 'badge-secondary', '1': 'badge-primary', '2': 'badge-success'};
             var badgeClass = badgeClasses[String(act.completion)] || 'badge-success';
@@ -2804,6 +2833,29 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             }).fail(function() {
                 $btn.css('opacity', 1);
                 Notification.alert('Fehler', 'Die Sichtbarkeit konnte nicht geändert werden.', 'OK');
+            });
+        });
+
+        // Bewertung verbergen oder zeigen: setzt das Merkmal des Bewertungselements.
+        $container.on('click', '.local-kursassistent-grade-toggle', function() {
+            var $btn = $(this);
+            var neu = parseInt($btn.attr('data-hidden'), 10) ? 0 : 1;
+            $btn.css('opacity', 0.4);
+            Ajax.call([{
+                methodname: 'local_kursassistent_set_grade_visibility',
+                args: {courseid: courseid, cmid: parseInt($btn.attr('data-cmid'), 10), hidden: neu}
+            }])[0].done(function(antwort) {
+                var verborgen = antwort.hidden ? 1 : 0;
+                $btn.attr('data-hidden', verborgen)
+                    .attr('title', verborgen ? 'Bewertung einblenden' : 'Bewertung ausblenden')
+                    .toggleClass('local-kursassistent-vis-hidden', !!verborgen)
+                    .css('opacity', 1);
+                $btn.find('img')
+                    .attr('src', M.cfg.wwwroot + '/local/kursassistent/pix/' + (verborgen ? 'eye-off.svg' : 'eye.svg'))
+                    .attr('alt', verborgen ? 'Bewertung verborgen' : 'Bewertung sichtbar');
+            }).fail(function() {
+                $btn.css('opacity', 1);
+                Notification.alert('Fehler', 'Die Sichtbarkeit der Bewertung konnte nicht geändert werden.', 'OK');
             });
         });
 
@@ -3612,13 +3664,16 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
      * Rendert das Statistik-Panel mit Fortschrittsbalken und Detail-Tabelle.
      *
      * @param {jQuery} $subpanel
+     * @param {Boolean} [ohneKopf] Überschrift und Beschreibung weglassen (Dashboard hat eigene)
      */
-    function rendereStatistikPanel($subpanel) {
-        $subpanel.append($('<h5>', {text: 'Statistik – Teilnehmer-Abschluss'}));
-        $subpanel.append($('<p>', {
-            'class': 'small text-muted mb-3',
-            text: 'Zeigt den Abschlussfortschritt der Teilnehmer für alle Aktivitäten mit Abschlussverfolgung.'
-        }));
+    function rendereStatistikPanel($subpanel, ohneKopf) {
+        if (!ohneKopf) {
+            $subpanel.append($('<h5>', {text: 'Statistik – Teilnehmer-Abschluss'}));
+            $subpanel.append($('<p>', {
+                'class': 'small text-muted mb-3',
+                text: 'Zeigt den Abschlussfortschritt der Teilnehmer für alle Aktivitäten mit Abschlussverfolgung.'
+            }));
+        }
 
         var $loader = $('<div>', {'class': 'text-center py-3'});
         $loader.append($('<span>', {'class': 'text-muted', text: 'Lade Statistik …'}));
@@ -3888,7 +3943,12 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
         var footerCells = response.activities.map(function(a) {
             overallDone += a.completedusers;
             var pct = a.totalusers > 0 ? Math.round((a.completedusers / a.totalusers) * 100) : 0;
-            return {text: a.completedusers + '/' + a.totalusers + ' (' + pct + '%)', sectionnum: a.sectionnum};
+            return {
+                text: a.completedusers + '/' + a.totalusers + ' (' + pct + '%)',
+                sectionnum: a.sectionnum,
+                done: a.completedusers,
+                all: a.totalusers
+            };
         });
         var overallTotal = count * response.users.length;
         var overallPct = overallTotal > 0 ? Math.round((overallDone / overallTotal) * 100) : 0;
@@ -3961,6 +4021,37 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
     }
 
     /**
+     * Formatiert eine Zählung als Text wie "2/3 (67%)".
+     *
+     * @param {Number} done Erledigt
+     * @param {Number} all Gesamt
+     * @return {String}
+     */
+    function formatiereSumme(done, all) {
+        return done + '/' + all + ' (' + (all > 0 ? Math.round((done / all) * 100) : 0) + '%)';
+    }
+
+    /**
+     * Berechnet die Spalte Gesamt und die Fußzeile für die sichtbaren Aktivitäten neu.
+     *
+     * @param {jQuery} $container Container mit der Tabelle
+     */
+    function aktualisiereSummen($container) {
+        $container.find('.local-kursassistent-stat-row').each(function() {
+            var $cells = $(this).find('td[data-status]').not('.d-none');
+            var done = $cells.filter('[data-status="done"]').length;
+            $(this).find('.local-kursassistent-stat-total').text(formatiereSumme(done, $cells.length));
+        });
+        var summeDone = 0;
+        var summeAll = 0;
+        $container.find('tfoot td[data-done]').not('.d-none').each(function() {
+            summeDone += parseInt($(this).attr('data-done'), 10);
+            summeAll += parseInt($(this).attr('data-all'), 10);
+        });
+        $container.find('.local-kursassistent-stat-overall').text(formatiereSumme(summeDone, summeAll));
+    }
+
+    /**
      * Verdrahtet Filter und Abschnittsauswahl der Detail-Tabelle.
      *
      * @param {jQuery} $container Container mit der Tabelle
@@ -3985,6 +4076,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 var $el = $(this);
                 $el.toggleClass('d-none', section !== '' && $el.attr('data-section') !== String(section));
             });
+            aktualisiereSummen($container);
             // Ein offener Anmerkungs-Editor passt nach einem Filterwechsel nicht mehr zur Ansicht.
             $container.find('.local-kursassistent-note-editor').remove();
         };
@@ -4075,6 +4167,54 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
         });
     }
 
+    /**
+     * Bindet die allgemeinen Handler des Assistenten an das Dokument.
+     */
+    function bindeAllgemein() {
+        $(document).on('click', '.local-kursassistent-navlink', function(e) {
+            e.preventDefault();
+            oeffneAssistent();
+        });
+
+        $(document).on('click', '.local-kursassistent-close', function() {
+            $(this).closest('.local-kursassistent-overlay').remove();
+            if (etwasEingefuegt) {
+                window.location.reload();
+            }
+        });
+
+        $(document).on('click', '.local-kursassistent-fertig', function() {
+            var $overlay = $(this).closest('.local-kursassistent-overlay');
+            if (hatOffeneEingaben($overlay)) {
+                navigiereMitWarnung($overlay, window.location.href, 'Fertig');
+                return;
+            }
+            $overlay.remove();
+            if (etwasEingefuegt) {
+                window.location.reload();
+            }
+        });
+
+        $(document).on('click', '.local-kursassistent-submit', function() {
+            sendeAuswahl($(this).closest('.local-kursassistent-overlay'));
+        });
+    }
+
+    /**
+     * Öffnet nach der Rückkehr vom Moodle-Formular den Assistenten selbst wieder. Die Merkung
+     * wird dabei verbraucht, ein erneutes Laden der Seite öffnet ihn nicht noch einmal.
+     */
+    function pruefeRueckkehr() {
+        var ergebnis = Rueckkehr.leseErgebnis();
+        var rueckkehr = Rueckkehr.lese(courseid);
+        if (rueckkehr) {
+            Rueckkehr.loesche();
+            oeffneAssistent(function($overlay) {
+                zeigeRueckkehrErgebnis($overlay, rueckkehr, ergebnis);
+            });
+        }
+    }
+
     return {
         /**
          * Initialisiert den Kursassistenten für den aktuellen Kurs.
@@ -4083,45 +4223,38 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
          */
         init: function(cid) {
             courseid = cid;
+            bindeAllgemein();
+            pruefeRueckkehr();
+        },
 
-            $(document).on('click', '.local-kursassistent-navlink', function(e) {
-                e.preventDefault();
-                oeffneAssistent();
-            });
+        /**
+         * Initialisiert den Kursassistenten auf der Dashboard-Seite für den gewählten Kurs.
+         *
+         * @param {Number} cid Kurs-ID
+         * @param {String} tab Gewählter Bereich (stand, bausteine, einrichtung, uebersicht)
+         */
+        initDashboard: function(cid, tab) {
+            courseid = cid;
+            bindeAllgemein();
+            pruefeRueckkehr();
 
-            $(document).on('click', '.local-kursassistent-close', function() {
-                $(this).closest('.local-kursassistent-overlay').remove();
-                if (etwasEingefuegt) {
-                    window.location.reload();
+            if (tab === 'stand') {
+                var $stat = $('[data-region="local-kursassistent-stat"]');
+                if ($stat.length) {
+                    rendereStatistikPanel($stat, true);
                 }
-            });
-
-            $(document).on('click', '.local-kursassistent-fertig', function() {
-                var $overlay = $(this).closest('.local-kursassistent-overlay');
-                if (hatOffeneEingaben($overlay)) {
-                    navigiereMitWarnung($overlay, window.location.href, 'Fertig');
-                    return;
-                }
-                $overlay.remove();
-                if (etwasEingefuegt) {
-                    window.location.reload();
-                }
-            });
-
-            $(document).on('click', '.local-kursassistent-submit', function() {
-                sendeAuswahl($(this).closest('.local-kursassistent-overlay'));
-            });
-
-            // Rückkehr vom Moodle-Formular: den Assistenten selbst wieder öffnen. Die Merkung
-            // wird dabei verbraucht, ein erneutes Laden der Seite öffnet ihn nicht noch einmal.
-            var ergebnis = Rueckkehr.leseErgebnis();
-            var rueckkehr = Rueckkehr.lese(courseid);
-            if (rueckkehr) {
-                Rueckkehr.loesche();
-                oeffneAssistent(function($overlay) {
-                    zeigeRueckkehrErgebnis($overlay, rueckkehr, ergebnis);
-                });
             }
+
+            $(document).on('click', '.local-kursassistent-dashboard-open', function() {
+                var bereich = $(this).attr('data-panel');
+                oeffneAssistent(function($overlay) {
+                    if (bereich === 'einrichtung') {
+                        oeffneGruppe($overlay, 'Kurseinrichtung');
+                    } else if (bereich === 'uebersicht') {
+                        oeffneSubpanel($overlay, 'uebersicht');
+                    }
+                });
+            });
         }
     };
 });
