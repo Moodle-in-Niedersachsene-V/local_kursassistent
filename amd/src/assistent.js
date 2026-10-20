@@ -137,8 +137,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
         var $closeBtn = $('<button>', {
             'type': 'button',
             'class': 'close local-kursassistent-close',
-            'aria-label': 'Close'
-        }).html('&times;');
+            'aria-label': 'Schließen',
+            title: 'Schließen'
+        }).append($('<i>', {'class': 'icon fa fa-times fa-fw m-0', 'aria-hidden': 'true'}));
         $header.append($closeBtn);
         $modal.append($header);
 
@@ -160,7 +161,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 return;
             }
 
-            var $gruppe = $('<div>', {'class': 'local-kursassistent-gruppe'});
+            var $gruppe = $('<div>', {'class': 'local-kursassistent-gruppe', 'data-gruppe': 'bausteine'});
             var $gruppenHeader = $('<div>', {'class': 'local-kursassistent-gruppenheader'});
             var $labelWrap = $('<span>', {'class': 'd-flex align-items-center'});
             $labelWrap.append($('<span>', {text: kat.label}));
@@ -187,7 +188,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
 
         // Vierte Gruppe "Kurseinrichtung": statische Einträge, nicht aus den Bausteinen des
         // Servers gespeist, da es sich um kursweite Aktionen statt Inhalts-Bausteine handelt.
-        var $kgGruppe = $('<div>', {'class': 'local-kursassistent-gruppe'});
+        var $kgGruppe = $('<div>', {'class': 'local-kursassistent-gruppe', 'data-gruppe': 'einrichtung'});
         var $kgHeader = $('<div>', {'class': 'local-kursassistent-gruppenheader'});
         var $kgLabelWrap = $('<span>', {'class': 'd-flex align-items-center'});
         $kgLabelWrap.append($('<span>', {text: 'Kurseinrichtung'}));
@@ -256,7 +257,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
         $kgInhalt.append($sectplItem);
 
         // Fünfte Gruppe: Lernpfade, Kompetenzen und Statistik.
-        var $avGruppe = $('<div>', {'class': 'local-kursassistent-gruppe'});
+        var $avGruppe = $('<div>', {'class': 'local-kursassistent-gruppe', 'data-gruppe': 'lernpfade'});
         var $avHeader = $('<div>', {'class': 'local-kursassistent-gruppenheader'});
         var $avLabelWrap = $('<span>', {'class': 'd-flex align-items-center'});
         $avLabelWrap.append($('<span>', {text: 'Lernpfade, Kompetenzen und Statistik'}));
@@ -293,7 +294,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
         });
 
         // Zielabschnitt zuerst anzeigen, damit die Lehrkraft als erstes den Abschnitt wählt.
-        var $sectionwrap = $('<div>', {'class': 'mb-3'});
+        var $sectionwrap = $('<div>', {'class': 'mb-3 local-kursassistent-sectionwrap'});
         var $sectionLabel = $('<label>', {'class': 'small text-muted d-flex align-items-center mb-1'});
         $sectionLabel.append($('<span>', {text: 'Zielabschnitt'}));
         $sectionLabel.append(erstelleHilfeIcon('zielabschnitt', 'zielabschnitt_help'));
@@ -379,7 +380,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
         var $meldung = $('<div>', {'class': 'local-kursassistent-meldung d-none'});
         $modal.append($meldung);
 
-        var $footer = $('<div>', {'class': 'd-flex justify-content-end'});
+        var $footer = $('<div>', {'class': 'd-flex justify-content-end local-kursassistent-footer'});
         var $cancel = $('<button>', {
             'type': 'button',
             'class': 'btn btn-secondary mr-2 local-kursassistent-fertig',
@@ -859,6 +860,28 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             if (nachDemOeffnen) {
                 nachDemOeffnen($overlay);
             }
+        }).fail(Notification.exception);
+    }
+
+    /**
+     * Zeigt Bausteine oder Kurseinrichtung direkt auf der Dashboard-Seite statt in einem Fenster.
+     *
+     * @param {jQuery} $region Bereich der Seite
+     * @param {String} tab bausteine oder einrichtung
+     */
+    function zeigeInline($region, tab) {
+        Ajax.call([{
+            methodname: 'local_kursassistent_get_bausteine',
+            args: {courseid: courseid}
+        }])[0].done(function(response) {
+            var $overlay = baueModal(response);
+            $overlay.addClass('local-kursassistent-inline local-kursassistent-inline-' + tab);
+            $overlay.find('.local-kursassistent-gruppe').filter(function() {
+                return $(this).attr('data-gruppe') !== tab;
+            }).remove();
+            $overlay.find('.local-kursassistent-gruppeninhalt').removeClass('d-none');
+            $overlay.find('.local-kursassistent-gruppenpfeil').text('▾');
+            $region.empty().append($overlay);
         }).fail(Notification.exception);
     }
 
@@ -2730,9 +2753,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             $griffCell.append($('<span>', {
                 'class': 'local-kursassistent-griff',
                 title: 'Zum Verschieben ziehen',
-                'aria-hidden': 'true',
-                text: '⠿'
-            }));
+                'aria-hidden': 'true'
+            }).append($('<i>', {'class': 'icon fa fa-arrows fa-fw m-0'})));
             $row.append($griffCell);
 
             var $nameCell = $('<td>', {text: act.name});
@@ -4184,6 +4206,13 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             oeffneAssistent();
         });
 
+        // Escape schließt das oberste Fenster des Assistenten, sofern kein Moodle-Dialog darüber liegt.
+        $(document).on('keydown', function(e) {
+            if (e.key === 'Escape' && !$('.modal.show').length) {
+                $('.local-kursassistent-overlay').last().find('.local-kursassistent-close').first().trigger('click');
+            }
+        });
+
         $(document).on('click', '.local-kursassistent-close', function() {
             $(this).closest('.local-kursassistent-overlay').remove();
             if (etwasEingefuegt) {
@@ -4252,6 +4281,12 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                     rendereStatistikPanel($stat, true);
                 }
             }
+            if (tab === 'bausteine' || tab === 'einrichtung') {
+                var $inline = $('[data-region="local-kursassistent-inline"]');
+                if ($inline.length) {
+                    zeigeInline($inline, tab);
+                }
+            }
             if (tab === 'uebersicht') {
                 var $uebersicht = $('[data-region="local-kursassistent-uebersicht"]');
                 if ($uebersicht.length) {
@@ -4262,9 +4297,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             $(document).on('click', '.local-kursassistent-dashboard-open', function() {
                 var bereich = $(this).attr('data-panel');
                 oeffneAssistent(function($overlay) {
-                    if (bereich === 'einrichtung') {
-                        oeffneGruppe($overlay, 'Kurseinrichtung');
-                    } else if (bereich === 'weitere') {
+                    if (bereich === 'weitere') {
                         oeffneGruppe($overlay, 'Lernpfade, Kompetenzen und Statistik');
                     }
                 });

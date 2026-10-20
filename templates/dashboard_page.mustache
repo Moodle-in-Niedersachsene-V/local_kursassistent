@@ -124,10 +124,8 @@
             <button type="button" class="btn btn-secondary mt-3 local-kursassistent-dashboard-open" data-panel="weitere">{{#str}} dashboard_weitere, local_kursassistent {{/str}}</button>
             {{/isuebersicht}}
             {{^isstand}}{{^isuebersicht}}
-            <div class="card"><div class="card-body">
-                <p>{{tabtext}}</p>
-                <button type="button" class="btn btn-primary local-kursassistent-dashboard-open" data-panel="{{tab}}">{{#str}} dashboard_oeffnen, local_kursassistent {{/str}}</button>
-            </div></div>
+            <p>{{tabtext}}</p>
+            <div class="local-kursassistent-dashboard-inline" data-region="local-kursassistent-inline"></div>
             {{/isuebersicht}}{{/isstand}}
             <div class="card mt-3"><div class="card-body" data-region="local-kursassistent-infos">
                 <div class="d-flex flex-wrap align-items-center mb-2">

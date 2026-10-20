@@ -86,9 +86,9 @@ Die Bereiche sind als Reiter angeordnet:
 
 - **Stand der Lernenden:** die Statistik mit Statusanzeige, Filtern und Anmerkungen (siehe 1.8).
 - **Lernpfade und Übersicht:** die Übersicht mit Abschluss, Voraussetzungen, Sichtbarkeit, Bewertung und Kompetenzen steht direkt auf der Seite. Über „Weitere Werkzeuge im Assistenten öffnen“ erreichst du Abschlussverfolgung, Voraussetzungen, Lernpfad und Statistik.
-- **Bausteine** und **Kurseinrichtung:** öffnen den Kursassistenten für den gewählten Kurs.
+- **Bausteine** und **Kurseinrichtung:** stehen ebenfalls direkt auf der Seite. Unter „Bausteine“ wählst du den Zielabschnitt und fügst Lerninformationen, Lernmaterial und Aktivitäten ein. Unter „Kurseinrichtung“ änderst du das Kursformat, übernimmst eine Kursvorlage oder wendest eine Abschnittsvorlage an.
 
-Im Fenster des Kursassistenten bleibt das „×“ oben rechts beim Scrollen sichtbar. Damit schließt du das Fenster jederzeit.
+Im Fenster des Kursassistenten bleibt das „×“ oben rechts beim Scrollen sichtbar. Damit oder mit der Taste Esc schließt du das Fenster jederzeit.
 
 **Kursinfos:** Unter den Reitern steht der Bereich „Kursinfos“. Mit „Neue Kursinfo“ schreibst du eine kurze Nachricht an alle Lernenden des Kurses oder nur an ausgewählte Personen. Die Lernenden lesen sie unter „Mein Fortschritt“. Bestehende Kursinfos kannst du ändern oder löschen.
 

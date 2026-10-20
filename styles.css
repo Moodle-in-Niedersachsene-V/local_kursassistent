@@ -1002,3 +1002,34 @@
     padding: 1.25rem 0 0.5rem;
     background: #fff;
 }
+
+.local-kursassistent-close {
+    opacity: 1;
+    font-size: 1.25rem;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    margin-left: 0.5rem;
+}
+
+.local-kursassistent-overlay.local-kursassistent-inline {
+    position: static;
+    display: block;
+    background: none;
+    z-index: auto;
+}
+
+.local-kursassistent-inline .local-kursassistent-modal {
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+    background: none;
+}
+
+.local-kursassistent-inline .local-kursassistent-header,
+.local-kursassistent-inline .local-kursassistent-fertig,
+.local-kursassistent-inline-einrichtung .local-kursassistent-sectionwrap,
+.local-kursassistent-inline-einrichtung .local-kursassistent-footer {
+    display: none !important;
+}
