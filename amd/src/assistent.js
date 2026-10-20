@@ -2589,6 +2589,36 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
     }
 
     /**
+     * Baut die Zelle mit dem Schalter, der die Bewertung einer Aktivität verbirgt oder zeigt.
+     *
+     * @param {Object} act Aktivität aus get_course_activities
+     * @return {jQuery}
+     */
+    function baueBewertungsZelle(act) {
+        var $cell = $('<td>', {'class': 'text-center'});
+        if (!act.hasgrade) {
+            return $cell.append($('<span>', {'class': 'text-muted', text: '–'}));
+        }
+        var verborgen = act.gradehidden ? 1 : 0;
+        var $toggle = $('<button>', {
+            type: 'button',
+            'class': 'btn btn-sm p-0 local-kursassistent-grade-toggle',
+            'data-cmid': act.cmid,
+            'data-hidden': verborgen,
+            title: verborgen ? 'Bewertung einblenden' : 'Bewertung ausblenden'
+        });
+        $toggle.append($('<img>', {
+            src: M.cfg.wwwroot + '/local/kursassistent/pix/' + (verborgen ? 'eye-off.svg' : 'eye.svg'),
+            alt: verborgen ? 'Bewertung verborgen' : 'Bewertung sichtbar',
+            'class': 'local-kursassistent-vis-icon'
+        }));
+        if (verborgen) {
+            $toggle.addClass('local-kursassistent-vis-hidden');
+        }
+        return $cell.append($toggle);
+    }
+
+    /**
      * Rendert das Übersichts-Panel mit Sichtbarkeitssteuerung.
      *
      * @param {jQuery} $container
@@ -2751,29 +2781,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             $row.append($duplCell);
 
             // Bewertung im Bewertungsbuch verbergen oder zeigen.
-            var $gradeCell = $('<td>', {'class': 'text-center'});
-            if (act.hasgrade) {
-                var gradeHidden = act.gradehidden ? 1 : 0;
-                var $gradeToggle = $('<button>', {
-                    type: 'button',
-                    'class': 'btn btn-sm p-0 local-kursassistent-grade-toggle',
-                    'data-cmid': act.cmid,
-                    'data-hidden': gradeHidden,
-                    title: gradeHidden ? 'Bewertung einblenden' : 'Bewertung ausblenden'
-                });
-                $gradeToggle.append($('<img>', {
-                    src: M.cfg.wwwroot + '/local/kursassistent/pix/' + (gradeHidden ? 'eye-off.svg' : 'eye.svg'),
-                    alt: gradeHidden ? 'Bewertung verborgen' : 'Bewertung sichtbar',
-                    'class': 'local-kursassistent-vis-icon'
-                }));
-                if (gradeHidden) {
-                    $gradeToggle.addClass('local-kursassistent-vis-hidden');
-                }
-                $gradeCell.append($gradeToggle);
-            } else {
-                $gradeCell.append($('<span>', {'class': 'text-muted', text: '–'}));
-            }
-            $row.append($gradeCell);
+            $row.append(baueBewertungsZelle(act));
 
             var $completionCell = $('<td>');
             var badgeClasses = {'0': 'badge-secondary', '1': 'badge-primary', '2': 'badge-success'};
