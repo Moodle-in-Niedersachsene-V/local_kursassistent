@@ -884,8 +884,10 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             if (tab === 'einrichtung') {
                 $overlay.find('.local-kursassistent-footer').remove();
             }
-            $overlay.find('.local-kursassistent-gruppeninhalt').removeClass('d-none');
-            $overlay.find('.local-kursassistent-gruppenpfeil').text('▾');
+            if (tab === 'einrichtung') {
+                $overlay.find('.local-kursassistent-gruppeninhalt').removeClass('d-none');
+                $overlay.find('.local-kursassistent-gruppenpfeil').text('▾');
+            }
             $region.empty().append($overlay);
         }).fail(Notification.exception);
     }
@@ -2617,6 +2619,19 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
     }
 
     /**
+     * Klappt die Aktivitäten eines Abschnitts in der Übersicht ein oder aus.
+     *
+     * @param {jQuery} $sectionRow Kopfzeile des Abschnitts
+     * @param {Boolean} einklappen True zum Einklappen
+     */
+    function setzeAbschnittKlappe($sectionRow, einklappen) {
+        $sectionRow.nextUntil('.local-kursassistent-section-row').toggleClass('d-none', einklappen);
+        var $btn = $sectionRow.find('.local-kursassistent-av-klapp');
+        $btn.attr('aria-expanded', einklappen ? 'false' : 'true');
+        $btn.find('.fa').toggleClass('fa-chevron-down', !einklappen).toggleClass('fa-chevron-right', einklappen);
+    }
+
+    /**
      * Baut die Zelle mit dem Schalter, der die Bewertung einer Aktivität verbirgt oder zeigt.
      *
      * @param {Object} act Aktivität aus get_course_activities
@@ -2681,7 +2696,17 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             'class': 'btn btn-sm btn-outline-secondary',
             text: 'Alle ausblenden'
         });
-        $sichtbarkeitBar.append($alleEinBtn, $alleAusBtn);
+        var $alleZuBtn = $('<button>', {
+            type: 'button',
+            'class': 'btn btn-sm btn-outline-secondary ml-3',
+            text: 'Alle Abschnitte einklappen'
+        });
+        var $alleAufBtn = $('<button>', {
+            type: 'button',
+            'class': 'btn btn-sm btn-outline-secondary',
+            text: 'Alle Abschnitte ausklappen'
+        });
+        $sichtbarkeitBar.append($alleEinBtn, $alleAusBtn, $alleZuBtn, $alleAufBtn);
         $container.append($sichtbarkeitBar);
 
         var $tabelle = $('<table>', {'class': 'table table-sm table-striped local-kursassistent-uebersicht-table'});
@@ -2714,6 +2739,13 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 sectionsSeen[act.sectionnum] = true;
                 var sectionVisible = act.sectionvisible !== undefined ? act.sectionvisible : 1;
                 var $sectionRow = $('<tr>', {'class': 'local-kursassistent-section-row'});
+                var $klappCell = $('<td>', {'class': 'text-center'});
+                $klappCell.append($('<button>', {
+                    type: 'button',
+                    'class': 'btn btn-sm p-0 local-kursassistent-av-klapp',
+                    'aria-expanded': 'true',
+                    title: 'Abschnitt ein- oder ausklappen'
+                }).append($('<i>', {'class': 'icon fa fa-chevron-down fa-fw m-0', 'aria-hidden': 'true'})));
                 var $sectionTd = $('<td>', {
                     'class': 'font-weight-bold local-kursassistent-av-sectionheader',
                     text: act.sectionname
@@ -2737,7 +2769,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                     $sectionToggle.addClass('local-kursassistent-vis-hidden');
                 }
                 $sectionVisCell.append($sectionToggle);
-                $sectionRow.append($('<td>'), $sectionTd, $sectionVisCell,
+                $sectionRow.append($klappCell, $sectionTd, $sectionVisCell,
                     $('<td>'), $('<td>'), $('<td>'), $('<td>'), $('<td>'));
                 $tbody.append($sectionRow);
                 lastSection = act.sectionnum;
@@ -2900,6 +2932,21 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
         });
         $alleAusBtn.on('click', function() {
             massenSichtbarkeit($container, 0);
+        });
+
+        // Abschnitte ein- und ausklappen.
+        $tabelle.on('click', '.local-kursassistent-av-klapp', function() {
+            setzeAbschnittKlappe($(this).closest('tr'), $(this).attr('aria-expanded') === 'true');
+        });
+        $alleZuBtn.on('click', function() {
+            $tabelle.find('.local-kursassistent-section-row').each(function() {
+                setzeAbschnittKlappe($(this), true);
+            });
+        });
+        $alleAufBtn.on('click', function() {
+            $tabelle.find('.local-kursassistent-section-row').each(function() {
+                setzeAbschnittKlappe($(this), false);
+            });
         });
 
         // Umsortieren per Ziehen aktivieren.
@@ -4212,9 +4259,19 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
         });
 
         // Escape schließt das oberste Fenster des Assistenten, sofern kein Moodle-Dialog darüber liegt.
+        // Auf der Dashboard-Seite führt Escape zurück in den Kurs, wenn gerade nichts eingegeben wird.
         $(document).on('keydown', function(e) {
-            if (e.key === 'Escape' && !$('.modal.show').length) {
-                $('.local-kursassistent-overlay').last().find('.local-kursassistent-close').first().trigger('click');
+            if (e.key !== 'Escape' || $('.modal.show').length) {
+                return;
+            }
+            var $fenster = $('.local-kursassistent-overlay').not('.local-kursassistent-inline').last();
+            if ($fenster.length) {
+                $fenster.find('.local-kursassistent-close').first().trigger('click');
+                return;
+            }
+            var $zu = $('[data-action="local-kursassistent-dashboard-close"]');
+            if ($zu.length && !$(e.target).is('input, textarea, select')) {
+                window.location.href = $zu.attr('href');
             }
         });
 

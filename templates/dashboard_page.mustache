@@ -23,6 +23,7 @@
     * hascourse - True if a course is selected
     * selector - HTML of the course selection
     * courseid, coursename, tab - Selected course and area
+    * closeurl - Address of the course the dashboard leads back to
     * helpdashboard, helpattention - HTML of the help icons
     * tabs - Areas: label, url, active
     * isstand, isbausteine, iseinrichtung, isuebersicht - Selected area
@@ -39,6 +40,7 @@
         "selector": "<select></select>",
         "courseid": 5,
         "coursename": "Maths 9a",
+        "closeurl": "https://example.org/course/view.php?id=5",
         "tab": "stand",
         "helpdashboard": "",
         "helpattention": "",
@@ -69,6 +71,8 @@
         <h2 class="h3 mb-0 mr-2">{{coursename}}</h2>
         {{{helpdashboard}}}
         <div class="ml-auto">{{{selector}}}</div>
+        <a class="close ml-3 local-kursassistent-close-page" href="{{closeurl}}" data-action="local-kursassistent-dashboard-close"
+            title="{{#str}} dashboard_schliessen, local_kursassistent {{/str}}" aria-label="{{#str}} dashboard_schliessen, local_kursassistent {{/str}}"><i class="icon fa fa-times fa-fw m-0" aria-hidden="true"></i></a>
     </div>
 
     <ul class="nav nav-tabs mb-3" aria-label="{{#str}} dashboard_bereiche, local_kursassistent {{/str}}">
