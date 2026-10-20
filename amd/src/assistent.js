@@ -879,6 +879,11 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             $overlay.find('.local-kursassistent-gruppe').filter(function() {
                 return $(this).attr('data-gruppe') !== tab;
             }).remove();
+            // Kopfzeile mit Schließen-Knopf und der Fertig-Knopf gehören nur zum Fenster.
+            $overlay.find('.local-kursassistent-header, .local-kursassistent-fertig').remove();
+            if (tab === 'einrichtung') {
+                $overlay.find('.local-kursassistent-footer').remove();
+            }
             $overlay.find('.local-kursassistent-gruppeninhalt').removeClass('d-none');
             $overlay.find('.local-kursassistent-gruppenpfeil').text('▾');
             $region.empty().append($overlay);

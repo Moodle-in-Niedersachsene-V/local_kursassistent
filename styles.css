@@ -1027,9 +1027,6 @@
     background: none;
 }
 
-.local-kursassistent-inline .local-kursassistent-header,
-.local-kursassistent-inline .local-kursassistent-fertig,
-.local-kursassistent-inline-einrichtung .local-kursassistent-sectionwrap,
-.local-kursassistent-inline-einrichtung .local-kursassistent-footer {
-    display: none !important;
+.local-kursassistent-inline-einrichtung .local-kursassistent-sectionwrap {
+    display: none;
 }
