@@ -85,7 +85,10 @@ Das Dashboard erreichst du über den Eintrag „Kursassistent“ in der Hauptnav
 Die Bereiche sind als Reiter angeordnet:
 
 - **Stand der Lernenden:** die Statistik mit Statusanzeige, Filtern und Anmerkungen (siehe 1.8).
-- **Bausteine**, **Kurseinrichtung** und **Lernpfade und Übersicht:** öffnen den Kursassistenten für den gewählten Kurs, bei „Lernpfade und Übersicht“ direkt die Übersicht.
+- **Lernpfade und Übersicht:** die Übersicht mit Abschluss, Voraussetzungen, Sichtbarkeit, Bewertung und Kompetenzen steht direkt auf der Seite. Über „Weitere Werkzeuge im Assistenten öffnen“ erreichst du Abschlussverfolgung, Voraussetzungen, Lernpfad und Statistik.
+- **Bausteine** und **Kurseinrichtung:** öffnen den Kursassistenten für den gewählten Kurs.
+
+Im Fenster des Kursassistenten bleibt das „×“ oben rechts beim Scrollen sichtbar. Damit schließt du das Fenster jederzeit.
 
 **Kursinfos:** Unter den Reitern steht der Bereich „Kursinfos“. Mit „Neue Kursinfo“ schreibst du eine kurze Nachricht an alle Lernenden des Kurses oder nur an ausgewählte Personen. Die Lernenden lesen sie unter „Mein Fortschritt“. Bestehende Kursinfos kannst du ändern oder löschen.
 

@@ -129,7 +129,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
         var $overlay = $('<div>', {'class': 'local-kursassistent-overlay'});
         var $modal = $('<div>', {'class': 'local-kursassistent-modal'});
 
-        var $header = $('<div>', {'class': 'd-flex align-items-center justify-content-between mb-2'});
+        var $header = $('<div>', {'class': 'd-flex align-items-center justify-content-between mb-2 local-kursassistent-header'});
         var $titleWrap = $('<div>', {'class': 'd-flex align-items-center'});
         $titleWrap.append($('<p>', {'class': 'font-weight-bold mb-0', text: 'Kursassistent'}));
         $titleWrap.append(erstelleHilfeIcon('assistent_help_title', 'assistent_help'));
@@ -4252,14 +4252,20 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                     rendereStatistikPanel($stat, true);
                 }
             }
+            if (tab === 'uebersicht') {
+                var $uebersicht = $('[data-region="local-kursassistent-uebersicht"]');
+                if ($uebersicht.length) {
+                    ladeUebersichtNeu($uebersicht);
+                }
+            }
 
             $(document).on('click', '.local-kursassistent-dashboard-open', function() {
                 var bereich = $(this).attr('data-panel');
                 oeffneAssistent(function($overlay) {
                     if (bereich === 'einrichtung') {
                         oeffneGruppe($overlay, 'Kurseinrichtung');
-                    } else if (bereich === 'uebersicht') {
-                        oeffneSubpanel($overlay, 'uebersicht');
+                    } else if (bereich === 'weitere') {
+                        oeffneGruppe($overlay, 'Lernpfade, Kompetenzen und Statistik');
                     }
                 });
             });

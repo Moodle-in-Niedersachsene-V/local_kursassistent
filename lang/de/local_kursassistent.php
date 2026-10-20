@@ -73,6 +73,7 @@ $string['dashboard_keinkurs'] = 'Du bist in keinem Kurs eingeschrieben, in dem d
 $string['dashboard_kurs'] = 'Kurs';
 $string['dashboard_nocompletion'] = 'In diesem Kurs ist die Abschlussverfolgung nicht aktiviert. Kennzahlen und Statistik gibt es erst, wenn sie in den Kurseinstellungen eingeschaltet ist.';
 $string['dashboard_oeffnen'] = 'Kursassistent öffnen';
+$string['dashboard_weitere'] = 'Weitere Werkzeuge im Assistenten öffnen (Abschlussverfolgung, Voraussetzungen, Lernpfad, Statistik)';
 $string['dashboardlink'] = 'Dashboard';
 $string['dashboardtitel'] = 'Kursassistent';
 $string['dateiauswaehlen'] = 'Datei auswählen';

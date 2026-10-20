@@ -73,6 +73,7 @@ $string['dashboard_keinkurs'] = 'You are not enrolled in a course in which you m
 $string['dashboard_kurs'] = 'Course';
 $string['dashboard_nocompletion'] = 'Completion tracking is not enabled in this course. Key figures and statistics are only available once it is switched on in the course settings.';
 $string['dashboard_oeffnen'] = 'Open course assistant';
+$string['dashboard_weitere'] = 'Open more tools in the assistant (completion, restrictions, learning path, statistics)';
 $string['dashboardlink'] = 'Dashboard';
 $string['dashboardtitel'] = 'Course assistant';
 $string['dateiauswaehlen'] = 'Select file';

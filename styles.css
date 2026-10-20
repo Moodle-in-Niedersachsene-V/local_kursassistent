@@ -993,3 +993,12 @@
 .local-kursassistent-info-text {
     white-space: pre-line;
 }
+
+.local-kursassistent-header {
+    position: sticky;
+    top: -1.25rem;
+    z-index: 5;
+    margin-top: -1.25rem;
+    padding: 1.25rem 0 0.5rem;
+    background: #fff;
+}
