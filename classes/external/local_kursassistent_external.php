@@ -2078,6 +2078,30 @@ class local_kursassistent_external extends external_api {
     // Kursstatistik - Teilnehmer-Abschluss.
 
     /**
+     * Ermittelt den Anzeigestatus einer Aktivitaet fuer eine Person.
+     *
+     * Ueberfaellig hat Vorrang, wenn der Abschluss bis zu einem Termin erwartet war.
+     * In Arbeit heisst: es gibt bereits Fortschritt (Aufruf oder nicht bestandener Abschluss), aber noch kein Abschluss.
+     *
+     * @param \stdClass $data Ergebnis von completion_info::get_data
+     * @param int $expected Erwarteter Abschluss (Zeitstempel), 0 ohne Termin
+     * @return string done, overdue, progress oder open
+     */
+    private static function activity_status(\stdClass $data, int $expected): string {
+        $state = (int) $data->completionstate;
+        if (in_array($state, [COMPLETION_COMPLETE, COMPLETION_COMPLETE_PASS])) {
+            return 'done';
+        }
+        if ($expected > 0 && $expected < time()) {
+            return 'overdue';
+        }
+        if ($state === COMPLETION_COMPLETE_FAIL || !empty($data->timemodified)) {
+            return 'progress';
+        }
+        return 'open';
+    }
+
+    /**
      * Parameter für get_course_statistics.
      *
      * @return external_function_parameters
@@ -2174,6 +2198,7 @@ class local_kursassistent_external extends external_api {
                     'userid' => (int) $user->id,
                     'completed' => $iscomplete,
                     'completionstate' => (int) $data->completionstate,
+                    'status' => self::activity_status($data, (int) $cm->completionexpected),
                     'grade' => $grades[(int) $user->id] ?? '',
                 ];
             }
@@ -2193,6 +2218,7 @@ class local_kursassistent_external extends external_api {
                 'sectionname' => $sectionname,
                 'totalusers' => count($users),
                 'completedusers' => $completedcount,
+                'due' => (int) $cm->completionexpected,
                 'usercompletions' => $usercompletions,
             ];
         }
@@ -2229,10 +2255,12 @@ class local_kursassistent_external extends external_api {
                 'sectionname' => new external_value(PARAM_TEXT, 'Abschnittsname'),
                 'totalusers' => new external_value(PARAM_INT, 'Gesamtzahl Teilnehmer'),
                 'completedusers' => new external_value(PARAM_INT, 'Abgeschlossen'),
+                'due' => new external_value(PARAM_INT, 'Erwarteter Abschluss (Zeitstempel), 0 ohne Termin', VALUE_DEFAULT, 0),
                 'usercompletions' => new external_multiple_structure(new external_single_structure([
                     'userid' => new external_value(PARAM_INT, 'Nutzer-ID'),
                     'completed' => new external_value(PARAM_BOOL, 'Abgeschlossen ja/nein'),
                     'completionstate' => new external_value(PARAM_INT, 'Abschlussstatus-Code'),
+                    'status' => new external_value(PARAM_ALPHA, 'done, overdue, progress oder open', VALUE_DEFAULT, 'open'),
                     'grade' => new external_value(PARAM_TEXT, 'Bewertung als Text, leer ohne Bewertung', VALUE_DEFAULT, ''),
                 ])),
             ])),
@@ -2350,6 +2378,12 @@ class local_kursassistent_external extends external_api {
                 'sectionname' => $sectionname,
                 'completed' => $iscomplete,
                 'completionstate' => (int) $data->completionstate,
+                'status' => self::activity_status($data, (int) $cm->completionexpected),
+                'due' => (int) $cm->completionexpected,
+                'duetext' => $cm->completionexpected
+                    ? userdate($cm->completionexpected, get_string('strftimedatefullshort', 'langconfig'))
+                    : '',
+                'url' => $cm->url ? $cm->url->out(false) : '',
                 'grade' => $grade,
                 'teachernote' => $notes[(int) $cm->id] ?? '',
             ];
@@ -2380,6 +2414,10 @@ class local_kursassistent_external extends external_api {
                 'sectionname' => new external_value(PARAM_TEXT, 'Abschnittsname'),
                 'completed' => new external_value(PARAM_BOOL, 'Abgeschlossen'),
                 'completionstate' => new external_value(PARAM_INT, 'Abschlussstatus-Code'),
+                'status' => new external_value(PARAM_ALPHA, 'done, overdue, progress oder open', VALUE_DEFAULT, 'open'),
+                'due' => new external_value(PARAM_INT, 'Erwarteter Abschluss (Zeitstempel), 0 ohne Termin', VALUE_DEFAULT, 0),
+                'duetext' => new external_value(PARAM_TEXT, 'Erwarteter Abschluss als Datum, leer ohne Termin', VALUE_DEFAULT, ''),
+                'url' => new external_value(PARAM_URL, 'Adresse der Aktivität, leer ohne eigene Seite', VALUE_DEFAULT, ''),
                 'grade' => new external_value(PARAM_TEXT, 'Eigene Bewertung als Text, leer ohne Bewertung', VALUE_DEFAULT, ''),
                 'teachernote' => new external_value(PARAM_RAW, 'Anmerkung der Lehrkraft zur Aktivität', VALUE_DEFAULT, ''),
             ])),

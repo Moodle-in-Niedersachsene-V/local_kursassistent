@@ -692,6 +692,61 @@
     font-weight: bold;
 }
 
+/* Statusanzeige mit Text: erledigt, in Arbeit, offen, überfällig. */
+.local-kursassistent-pill {
+    display: inline-block;
+    padding: 0.1rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.local-kursassistent-pill-done {
+    background: #d6efd8;
+    color: #14532d;
+}
+
+.local-kursassistent-pill-progress {
+    background: #fdebc8;
+    color: #6b4300;
+}
+
+.local-kursassistent-pill-open {
+    background: #e6eaee;
+    color: #33414f;
+}
+
+.local-kursassistent-pill-overdue {
+    background: #fbe9ea;
+    color: #8f1f25;
+}
+
+.local-kursassistent-stat-sectionhead {
+    background: #e8eef4;
+    border-left: 1px solid #c9d3dd;
+}
+
+.local-kursassistent-next-step {
+    border: 2px solid #0f6cbf;
+    border-radius: 0.5rem;
+    background: #f3f7fc;
+}
+
+.local-kursassistent-overdue-box {
+    border: 1px solid #e9a3a7;
+    border-radius: 0.5rem;
+}
+
+.local-kursassistent-section-toggle {
+    min-height: 44px;
+    background: #e8eef4;
+    border: 0;
+    border-radius: 0.25rem;
+    text-align: left;
+    font-weight: 700;
+}
+
 .local-kursassistent-stat-open {
     color: #adb5bd;
 }

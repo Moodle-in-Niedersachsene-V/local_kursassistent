@@ -1,58 +1,62 @@
-# Kursassistent (local_kursassistent)
+# Course assistant (local_kursassistent)
 
-Moodle-Plugin von [Moodle in Niedersachsen e. V.](https://moodle-ni.de)
+Moodle plugin by [Moodle in Niedersachsen e. V.](https://moodle-ni.de)
 
-Der Kursassistent vereinfacht Lehrkräften die Gestaltung von Kursen. Statt Textfelder,
-Icons und Formatierungen von Hand anzulegen, wählen sie im Kurs vorbereitete Bausteine
-aus – etwa „Lernziele", „Materialien", „Video" oder „Aufgabe" – und füllen nur noch den
-Inhalt aus. Die Bausteine sind von der Schul-Administration frei erweiterbar.
+[Deutsche Version](README.de.md)
 
-## Funktionsumfang
+The course assistant helps teachers build courses. Instead of creating text fields, icons
+and formatting by hand, they pick prepared building blocks in the course, such as "learning
+goals", "materials", "video" or "assignment", and only fill in the content. Site administrators
+can extend the building blocks freely.
 
-- **Lerninformationen** – Textbausteine mit Icon und Überschrift (Lernziele, Voraussetzungen, Tipps, …)
-- **Lernmaterial** – Dateien und Bilder über den Moodle-Datei-Picker, Videos per PeerTube-Auswahl,
-  Direkt-Upload oder externem Link
-- **Aktivitäten** – Sprung in Moodles „Aktivität hinzufügen" mit vorausgewähltem Typ und Zielabschnitt
-- **Kurseinrichtung** – Kursformat ändern, Inhalte einer Kursvorlage übernehmen, Abschnittsvorlagen
-  anwenden und speichern
-- **Lernpfade, Kompetenzen und Statistik** – Abschlussverfolgung und Voraussetzungen, lineare Lernpfade,
-  Übersicht mit Sichtbarkeit, Umsortieren per Ziehen und Duplizieren (auch in einen anderen Kurs),
-  Zuordnen von Kompetenzen aus dem Exabis-Kompetenzraster, Statistik mit Anmerkungen zu Teilnehmenden, allgemein oder je Aktivität
-- **Mein Fortschritt** – Teilnehmende sehen ihren eigenen Abschlussfortschritt im Kurs
-- **Abschnittsverwaltung** – Kursabschnitte direkt im Assistenten umbenennen oder neu anlegen
-- **Anleitung** – von der Administration frei editierbarer Hilfetext für Lehrkräfte
+## Features
 
-## Voraussetzungen
+- **Learning information**: text blocks with icon and heading (learning goals, prerequisites, tips, ...)
+- **Learning material**: files and images through the Moodle file picker, videos through a
+  PeerTube selection, direct upload or an external link
+- **Activities**: jump to Moodle's "Add an activity" with the type and target section preselected
+- **Course setup**: change the course format, apply the content of a course template, apply
+  and save section templates
+- **Learning paths, competencies and statistics**: completion tracking and prerequisites, linear
+  learning paths, an overview with visibility, reordering by drag and drop and duplicating
+  (also into another course), assigning competencies from the Exabis competence grid, and
+  statistics with a status per person and activity (done, in progress, open, overdue), filters
+  and notes on participants, general or per activity
+- **My progress**: participants see their own completion progress in the course with the status
+  of each activity, their next step and collapsible sections
+- **Section management**: rename or create course sections directly in the assistant
+- **Guide**: help text for teachers that administrators can edit freely
 
-| Anforderung | Wert |
+## Requirements
+
+| Requirement | Value |
 |---|---|
-| Moodle | ab 5.1 (`requires` 2025041400); ab 5.2 wird die neue Kursmodul-Schnittstelle von Moodle genutzt |
-| PHP | 8.3 oder 8.4 |
-| Datenbank | MariaDB, MySQL oder PostgreSQL |
+| Moodle | 5.1 or later (`requires` 2025041400); from 5.2 on the new course module interface of Moodle is used |
+| PHP | 8.3 or 8.4 |
+| Database | MariaDB, MySQL or PostgreSQL |
 
-Optionale Zusatzplugins erweitern den Funktionsumfang; fehlen sie, blendet der Assistent
-die betroffenen Bausteine aus. Eine feste Abhängigkeit besteht nicht, eine bestimmte
-Installationsreihenfolge ist nicht erforderlich.
+Optional additional plugins extend the features. If they are missing, the assistant hides the
+affected building blocks. There is no hard dependency and no required installation order.
 
-| Plugin | Erweitert um |
+| Plugin | Adds |
 |---|---|
-| `repository_peertubeoauth` | Auswahl vorhandener PeerTube-Videos |
-| `local_peertubeupload` | Video-Upload durch die Lehrkraft |
-| `repository_nextclouddirect` | Nextcloud als Speicherort im Datei-Picker |
-| `block_exacomp` | Spalte „Kompetenzen" in der Übersicht (Zuordnen und Entfernen) |
+| `repository_peertubeoauth` | Selection of existing PeerTube videos |
+| `local_peertubeupload` | Video upload by the teacher |
+| `repository_nextclouddirect` | Nextcloud as a location in the file picker |
+| `block_exacomp` | "Competencies" column in the overview (assign and remove) |
 
 ## Installation
 
-1. ZIP über Website-Administration → Plugins → Plugins installieren hochladen, oder den
-   Ordner nach `local/kursassistent/` entpacken.
-2. Datenbank-Aktualisierung ausführen.
-3. Unter Website-Administration → Plugins → Lokale Plugins → Kursassistent die Bausteine
-   prüfen und bei Bedarf ergänzen.
+1. Upload the ZIP through Site administration > Plugins > Install plugins, or unpack the
+   folder to `local/kursassistent/`.
+2. Run the database upgrade.
+3. Under Site administration > Plugins > Local plugins > Course assistant, check the building
+   blocks and add more if needed.
 
-## Dokumentation
+## Documentation
 
-- [Anleitung für Lehrkräfte und Administration](docs/Anleitung.md)
+- [Guide for teachers and administrators](docs/Anleitung.md) (German)
 
-## Lizenz
+## License
 
-GNU GPL v3 oder später. Siehe [http://www.gnu.org/copyleft/gpl.html](http://www.gnu.org/copyleft/gpl.html).
+GNU GPL v3 or later. See [http://www.gnu.org/copyleft/gpl.html](http://www.gnu.org/copyleft/gpl.html).

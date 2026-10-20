@@ -20,34 +20,65 @@
     Detail table of the course statistics: students x activities with a note per cell.
 
     Context variables required for this template:
-    * activities - List of activities (name, modname)
+    * opencount, overduecount - Number of persons with open or overdue activities (for the filter buttons)
+    * sectionoptions - Sections for the section filter (sectionnum, name)
+    * activities - List of activities (name, modname, sectionnum)
+    * sections - Section headers above the activity columns (name, colspan, sectionnum)
     * users - List of students with cells, total and the general note
     * footer - Completion sums per activity and overall
 
     Example context (json):
     {
-        "activities": [{"name": "Task 1", "modname": "assign"}],
+        "opencount": 1,
+        "overduecount": 0,
+        "sectionoptions": [{"sectionnum": 1, "name": "Topic 1"}],
+        "sections": [{"name": "Topic 1", "colspan": 1, "sectionnum": 1}],
+        "activities": [{"name": "Task 1", "modname": "assign", "sectionnum": 1}],
         "users": [
             {
                 "userid": 7,
                 "fullname": "Anna Example",
                 "total": "1/1 (100%)",
+                "hasopen": false,
+                "hasoverdue": false,
                 "cells": [
-                    {"userid": 7, "cmid": 12, "done": true, "grade": "85,00", "hasnote": true, "note": "Well done", "label": "Edit note on Task 1 for Anna Example"}
+                    {"userid": 7, "cmid": 12, "sectionnum": 1, "status": "done", "statuslabel": "done", "grade": "85,00", "hasnote": true, "note": "Well done", "label": "Edit note on Task 1 for Anna Example"}
                 ],
                 "general": {"userid": 7, "cmid": 0, "hasnote": true, "note": "Reliable", "label": "Edit general note for Anna Example"}
             }
         ],
-        "footer": {"cells": [{"text": "1/1 (100%)"}], "overall": "1/1 (100%)"}
+        "footer": {"cells": [{"text": "1/1 (100%)", "sectionnum": 1}], "overall": "1/1 (100%)"}
     }
 }}
+<div class="local-kursassistent-stat-toolbar d-flex flex-wrap align-items-center mb-2">
+    <div class="btn-group mr-3 mb-1" role="group" aria-label="{{#str}} filter_label, local_kursassistent {{/str}}">
+        <button type="button" class="btn btn-primary local-kursassistent-stat-filter" data-filter="all" aria-pressed="true">{{#str}} filter_alle, local_kursassistent {{/str}}</button>
+        <button type="button" class="btn btn-outline-primary local-kursassistent-stat-filter" data-filter="open" aria-pressed="false">{{#str}} filter_offen, local_kursassistent {{/str}} ({{opencount}})</button>
+        <button type="button" class="btn btn-outline-primary local-kursassistent-stat-filter" data-filter="overdue" aria-pressed="false">{{#str}} filter_ueberfaellig, local_kursassistent {{/str}} ({{overduecount}})</button>
+    </div>
+    <label class="mb-1 mr-2 small text-muted" for="local-kursassistent-stat-section">{{#str}} filter_abschnitt, local_kursassistent {{/str}}</label>
+    <select id="local-kursassistent-stat-section" class="custom-select w-auto mb-1 local-kursassistent-stat-section-select">
+        <option value="">{{#str}} filter_alle_abschnitte, local_kursassistent {{/str}}</option>
+        {{#sectionoptions}}
+        <option value="{{sectionnum}}">{{name}}</option>
+        {{/sectionoptions}}
+    </select>
+</div>
 <div class="local-kursassistent-stat-table-wrap">
     <table class="table table-sm table-bordered local-kursassistent-stat-table">
         <thead>
+            <tr class="local-kursassistent-stat-sectionrow">
+                <th class="local-kursassistent-stat-sticky"></th>
+                {{#sections}}
+                <th colspan="{{colspan}}" class="small local-kursassistent-stat-sectionhead" data-section="{{sectionnum}}" data-span="{{colspan}}">{{name}}</th>
+                {{/sections}}
+                <th></th>
+                <th></th>
+            </tr>
             <tr>
                 <th class="local-kursassistent-stat-sticky">{{#str}} statistik_teilnehmer, local_kursassistent {{/str}}</th>
                 {{#activities}}
-                <th class="local-kursassistent-stat-th-activity" title="{{name}} ({{modname}})"><span>{{name}}</span></th>
+                <th class="local-kursassistent-stat-th-activity" data-section="{{sectionnum}}" title="{{name}} ({{modname}})"><span>{{name}}</span></th>
                 {{/activities}}
                 <th class="text-center">{{#str}} statistik_gesamt, local_kursassistent {{/str}}</th>
                 <th class="text-center local-kursassistent-stat-comment-th">{{#str}} statistik_allgemeine_anmerkung, local_kursassistent {{/str}}</th>
@@ -55,14 +86,13 @@
         </thead>
         <tbody>
             {{#users}}
-            <tr>
+            <tr class="local-kursassistent-stat-row" data-hasopen="{{hasopen}}" data-hasoverdue="{{hasoverdue}}">
                 <td class="local-kursassistent-stat-sticky small">{{fullname}}</td>
                 {{#cells}}
-                <td class="text-center">
+                <td class="text-center" data-section="{{sectionnum}}">
                     <button type="button" class="btn btn-link local-kursassistent-note-btn"
-                        data-userid="{{userid}}" data-cmid="{{cmid}}" title="{{note}}" aria-label="{{label}}">
-                        {{#done}}<span class="local-kursassistent-stat-done">✓</span>{{/done}}
-                        {{^done}}<span class="local-kursassistent-stat-open">–</span>{{/done}}
+                        data-userid="{{userid}}" data-cmid="{{cmid}}" title="{{note}}" aria-label="{{statuslabel}}. {{label}}">
+                        <span class="local-kursassistent-pill local-kursassistent-pill-{{status}}">{{statuslabel}}</span>
                         {{#grade}}<span class="small font-weight-bold text-dark ml-1 local-kursassistent-stat-grade">{{grade}}</span>{{/grade}}
                         <i class="icon fa fa-comment text-primary ml-1 local-kursassistent-note-icon{{^hasnote}} d-none{{/hasnote}}" aria-hidden="true"></i>
                     </button>
@@ -85,7 +115,7 @@
             <tr>
                 <td class="local-kursassistent-stat-sticky small font-weight-bold">{{#str}} statistik_abgeschlossen, local_kursassistent {{/str}}</td>
                 {{#footer.cells}}
-                <td class="text-center small">{{text}}</td>
+                <td class="text-center small" data-section="{{sectionnum}}">{{text}}</td>
                 {{/footer.cells}}
                 <td class="text-center small font-weight-bold">{{footer.overall}}</td>
                 <td></td>
@@ -93,3 +123,9 @@
         </tfoot>
     </table>
 </div>
+<ul class="list-inline small text-muted mt-2 mb-0">
+    <li class="list-inline-item"><span class="local-kursassistent-pill local-kursassistent-pill-done">{{#str}} status_done, local_kursassistent {{/str}}</span> {{#str}} legende_done, local_kursassistent {{/str}}</li>
+    <li class="list-inline-item"><span class="local-kursassistent-pill local-kursassistent-pill-progress">{{#str}} status_progress, local_kursassistent {{/str}}</span> {{#str}} legende_progress, local_kursassistent {{/str}}</li>
+    <li class="list-inline-item"><span class="local-kursassistent-pill local-kursassistent-pill-open">{{#str}} status_open, local_kursassistent {{/str}}</span> {{#str}} legende_open, local_kursassistent {{/str}}</li>
+    <li class="list-inline-item"><span class="local-kursassistent-pill local-kursassistent-pill-overdue">{{#str}} status_overdue, local_kursassistent {{/str}}</span> {{#str}} legende_overdue, local_kursassistent {{/str}}</li>
+</ul>

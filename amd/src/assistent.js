@@ -3821,34 +3821,57 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 if (!completionMap[uc.userid]) {
                     completionMap[uc.userid] = {};
                 }
-                completionMap[uc.userid][a.cmid] = {completed: uc.completed, grade: uc.grade || ''};
+                completionMap[uc.userid][a.cmid] = {
+                    completed: uc.completed,
+                    status: uc.status || (uc.completed ? 'done' : 'open'),
+                    grade: uc.grade || ''
+                };
             });
         });
 
         var count = response.activities.length;
+        var openCount = 0;
+        var overdueCount = 0;
         var users = response.users.map(function(user) {
             var completed = 0;
+            var hasOpen = false;
+            var hasOverdue = false;
             var cells = response.activities.map(function(a) {
                 var entry = (completionMap[user.userid] && completionMap[user.userid][a.cmid]) || {};
-                var done = !!entry.completed;
+                var status = entry.status || 'open';
                 var note = commentsMap[noteKey(user.userid, a.cmid)] || '';
-                if (done) {
+                if (status === 'done') {
                     completed++;
+                } else {
+                    hasOpen = true;
+                }
+                if (status === 'overdue') {
+                    hasOverdue = true;
                 }
                 return {
                     userid: user.userid,
                     cmid: a.cmid,
-                    done: done,
+                    sectionnum: a.sectionnum,
+                    status: status,
+                    statuslabel: labels.status[status],
                     grade: entry.grade || '',
                     hasnote: note !== '',
                     note: note,
                     label: fuelleBeschriftung(labels.cell, a.name, user.fullname)
                 };
             });
+            if (hasOpen) {
+                openCount++;
+            }
+            if (hasOverdue) {
+                overdueCount++;
+            }
             var general = commentsMap[noteKey(user.userid, 0)] || '';
             return {
                 userid: user.userid,
                 fullname: user.fullname,
+                hasopen: hasOpen,
+                hasoverdue: hasOverdue,
                 cells: cells,
                 total: completed + '/' + count + ' (' + (count > 0 ? Math.round((completed / count) * 100) : 0) + '%)',
                 general: {
@@ -3865,14 +3888,31 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
         var footerCells = response.activities.map(function(a) {
             overallDone += a.completedusers;
             var pct = a.totalusers > 0 ? Math.round((a.completedusers / a.totalusers) * 100) : 0;
-            return {text: a.completedusers + '/' + a.totalusers + ' (' + pct + '%)'};
+            return {text: a.completedusers + '/' + a.totalusers + ' (' + pct + '%)', sectionnum: a.sectionnum};
         });
         var overallTotal = count * response.users.length;
         var overallPct = overallTotal > 0 ? Math.round((overallDone / overallTotal) * 100) : 0;
 
+        // Abschnitte in der Reihenfolge der Spalten zusammenfassen.
+        var sectionList = [];
+        response.activities.forEach(function(a) {
+            var last = sectionList[sectionList.length - 1];
+            if (last && last.sectionnum === a.sectionnum) {
+                last.colspan++;
+            } else {
+                sectionList.push({sectionnum: a.sectionnum, name: a.sectionname, colspan: 1});
+            }
+        });
+
         return {
+            opencount: openCount,
+            overduecount: overdueCount,
+            sectionoptions: sectionList.map(function(sec) {
+                return {sectionnum: sec.sectionnum, name: sec.name};
+            }),
+            sections: sectionList,
             activities: response.activities.map(function(a) {
-                return {name: a.name, modname: a.modname};
+                return {name: a.name, modname: a.modname, sectionnum: a.sectionnum};
             }),
             users: users,
             footer: {cells: footerCells, overall: overallDone + '/' + overallTotal + ' (' + overallPct + '%)'}
@@ -3898,17 +3938,72 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 param: {aktivitaet: '@@A@@', person: '@@P@@'}},
             {key: 'kommentar_titel_allgemein', component: 'local_kursassistent', param: {person: '@@P@@'}},
             {key: 'kommentar_fehler', component: 'local_kursassistent'},
-            {key: 'kommentar_platzhalter', component: 'local_kursassistent'}
+            {key: 'kommentar_platzhalter', component: 'local_kursassistent'},
+            {key: 'status_done', component: 'local_kursassistent'},
+            {key: 'status_progress', component: 'local_kursassistent'},
+            {key: 'status_open', component: 'local_kursassistent'},
+            {key: 'status_overdue', component: 'local_kursassistent'}
         ]).then(function(strings) {
-            var labels = {cell: strings[0], general: strings[1]};
+            var labels = {
+                cell: strings[0],
+                general: strings[1],
+                status: {done: strings[6], progress: strings[7], open: strings[8], overdue: strings[9]}
+            };
             titles = {cell: strings[2], general: strings[3], error: strings[4], placeholder: strings[5]};
             var context = baueTabellenKontext(response, commentsMap, labels);
             return Templates.renderForPromise('local_kursassistent/stat_table', context);
         }).then(function(result) {
             Templates.replaceNodeContents($container, result.html, result.js);
             bindeAnmerkungen($container, response, commentsMap, titles);
+            bindeFilter($container);
             return null;
         }).catch(Notification.exception);
+    }
+
+    /**
+     * Verdrahtet Filter und Abschnittsauswahl der Detail-Tabelle.
+     *
+     * @param {jQuery} $container Container mit der Tabelle
+     */
+    function bindeFilter($container) {
+        var filter = 'all';
+        var section = '';
+
+        var wende = function() {
+            $container.find('.local-kursassistent-stat-row').each(function() {
+                var $row = $(this);
+                var show = true;
+                if (filter === 'open') {
+                    show = $row.attr('data-hasopen') === 'true';
+                } else if (filter === 'overdue') {
+                    show = $row.attr('data-hasoverdue') === 'true';
+                }
+                $row.toggleClass('d-none', !show);
+            });
+            // Spalten eines nicht gewählten Abschnitts ausblenden.
+            $container.find('[data-section]').each(function() {
+                var $el = $(this);
+                $el.toggleClass('d-none', section !== '' && $el.attr('data-section') !== String(section));
+            });
+            // Ein offener Anmerkungs-Editor passt nach einem Filterwechsel nicht mehr zur Ansicht.
+            $container.find('.local-kursassistent-note-editor').remove();
+        };
+
+        $container.on('click', '.local-kursassistent-stat-filter', function() {
+            filter = $(this).attr('data-filter');
+            $container.find('.local-kursassistent-stat-filter').each(function() {
+                var aktiv = $(this).attr('data-filter') === filter;
+                $(this).attr('aria-pressed', aktiv ? 'true' : 'false')
+                    .toggleClass('btn-primary', aktiv)
+                    .toggleClass('btn-outline-primary', !aktiv);
+            });
+            wende();
+        });
+
+        $container.on('change', '.local-kursassistent-stat-section-select', function() {
+            section = $(this).val();
+            wende();
+        });
     }
 
     /**
