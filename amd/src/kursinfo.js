@@ -126,6 +126,19 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/templates', 'core/str'
     }
 
     /**
+     * Löscht eine Kursinfo auf dem Server und lädt die Liste neu.
+     *
+     * @param {Number} infoid Kursinfo-ID
+     * @return {Promise}
+     */
+    function deleteInfo(infoid) {
+        return Ajax.call([{
+            methodname: 'local_kursassistent_delete_course_info',
+            args: {courseid: courseid, infoid: infoid}
+        }])[0].then(load).catch(Notification.exception);
+    }
+
+    /**
      * Löscht eine Kursinfo nach Rückfrage.
      *
      * @param {Number} infoid Kursinfo-ID
@@ -138,10 +151,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/templates', 'core/str'
             {key: 'cancel', component: 'core'}
         ]).then(function(strings) {
             Notification.confirm(strings[0], strings[1], strings[2], strings[3], function() {
-                Ajax.call([{
-                    methodname: 'local_kursassistent_delete_course_info',
-                    args: {courseid: courseid, infoid: infoid}
-                }])[0].then(load).catch(Notification.exception);
+                deleteInfo(infoid);
             });
             return null;
         }).catch(Notification.exception);
