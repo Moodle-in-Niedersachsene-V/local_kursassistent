@@ -195,7 +195,7 @@ define(['jquery'], function($) {
      */
     function baueHinweis(daten, courseid) {
         var formular = istZielseite(daten);
-        var kursUrl = M.cfg.wwwroot + '/course/view.php?id=' + courseid;
+        var kursUrl = daten.zurueck || M.cfg.wwwroot + '/course/view.php?id=' + courseid;
         var $hinweis = $('<div>', {
             'class': 'alert alert-info d-flex align-items-center local-kursassistent-rueckkehr',
             role: 'status'

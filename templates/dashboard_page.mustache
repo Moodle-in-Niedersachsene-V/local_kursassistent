@@ -124,8 +124,13 @@
             <div class="local-kursassistent-dashboard-stat" data-region="local-kursassistent-stat"></div>
             {{/isstand}}
             {{#isuebersicht}}
+            <div class="btn-group mb-3" role="group" data-region="local-kursassistent-werkzeuge" aria-label="{{#str}} werkzeuge_aria, local_kursassistent {{/str}}">
+                <button type="button" class="btn btn-outline-primary active" aria-pressed="true" data-werkzeug="uebersicht">{{#str}} werkzeug_uebersicht, local_kursassistent {{/str}}</button>
+                <button type="button" class="btn btn-outline-primary" aria-pressed="false" data-werkzeug="abschluss">{{#str}} werkzeug_abschluss, local_kursassistent {{/str}}</button>
+                <button type="button" class="btn btn-outline-primary" aria-pressed="false" data-werkzeug="voraussetzungen">{{#str}} werkzeug_voraussetzungen, local_kursassistent {{/str}}</button>
+                <button type="button" class="btn btn-outline-primary" aria-pressed="false" data-werkzeug="lernpfad">{{#str}} werkzeug_lernpfad, local_kursassistent {{/str}}</button>
+            </div>
             <div class="local-kursassistent-dashboard-uebersicht" data-region="local-kursassistent-uebersicht"></div>
-            <button type="button" class="btn btn-secondary mt-3 local-kursassistent-dashboard-open" data-panel="weitere">{{#str}} dashboard_weitere, local_kursassistent {{/str}}</button>
             {{/isuebersicht}}
             {{^isstand}}{{^isuebersicht}}
             <p>{{tabtext}}</p>

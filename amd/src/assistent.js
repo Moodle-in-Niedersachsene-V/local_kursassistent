@@ -32,6 +32,10 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
      * Wird beim ersten Aufbau der Übersicht verbraucht.
      */
     var rueckkehrNeu = null;
+    var dashboardAktiv = false;
+
+    // Bereich des Dashboards, in den die Rückkehr nach einem Moodle-Formular führt.
+    var ZIELTAB = {datei: 'bausteine', aktivitaet: 'uebersicht', kursformat: 'einrichtung', vorlage: 'einrichtung'};
 
     /**
      * Erzeugt ein Moodle-konformes Hilfe-Icon (blaues Fragezeichen mit Popover).
@@ -212,7 +216,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             e.preventDefault();
             navigiereMitWarnung($overlay, M.cfg.wwwroot + '/course/edit.php?id=' + courseid,
                 'Kursformat ändern', function(weiter) {
-                    Rueckkehr.merke({courseid: courseid, art: 'kursformat', titel: 'Kursformat ändern'});
+                    merkeRueck({courseid: courseid, art: 'kursformat', titel: 'Kursformat ändern'});
                     weiter();
                 });
         });
@@ -233,7 +237,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 navigiereMitWarnung($overlay, M.cfg.wwwroot +
                     '/local/kursassistent/vorlagen.php?courseid=' + courseid, 'Kursvorlage übernehmen',
                 function(weiter) {
-                    Rueckkehr.merke({courseid: courseid, art: 'vorlage', titel: 'Kursvorlage übernehmen'});
+                    merkeRueck({courseid: courseid, art: 'vorlage', titel: 'Kursvorlage übernehmen'});
                     weiter();
                 });
             });
@@ -652,7 +656,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 var url = M.cfg.wwwroot + '/local/kursassistent/pick_file.php?courseid=' +
                     courseid + '&sectionnum=' + sectionnum + '&typeid=' + b.id;
                 navigiereMitWarnung($overlay, url, b.titel, function(weiter) {
-                    Rueckkehr.merke({
+                    merkeRueck({
                         courseid: courseid,
                         art: 'datei',
                         titel: b.titel,
@@ -830,7 +834,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             vorher: null
         };
         var fertig = function() {
-            Rueckkehr.merke(daten);
+            merkeRueck(daten);
             weiter();
         };
 
@@ -843,6 +847,19 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             });
             fertig();
         }).fail(fertig);
+    }
+
+    /**
+     * Merkt die Rückkehr und, auf dem Dashboard, den Bereich, in den sie zurückführen soll.
+     *
+     * @param {Object} daten Angaben zur Rückkehr
+     */
+    function merkeRueck(daten) {
+        if (dashboardAktiv) {
+            daten.zurueck = M.cfg.wwwroot + '/local/kursassistent/dashboard.php?courseid=' + courseid +
+                '&tab=' + (ZIELTAB[daten.art] || 'stand');
+        }
+        Rueckkehr.merke(daten);
     }
 
     /**
@@ -868,8 +885,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
      *
      * @param {jQuery} $region Bereich der Seite
      * @param {String} tab bausteine oder einrichtung
+     * @param {Function} [danach] Wird mit dem aufgebauten Bereich aufgerufen
      */
-    function zeigeInline($region, tab) {
+    function zeigeInline($region, tab, danach) {
         Ajax.call([{
             methodname: 'local_kursassistent_get_bausteine',
             args: {courseid: courseid}
@@ -889,6 +907,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 $overlay.find('.local-kursassistent-gruppenpfeil').text('▾');
             }
             $region.empty().append($overlay);
+            if (danach) {
+                danach($overlay);
+            }
         }).fail(Notification.exception);
     }
 
@@ -899,9 +920,12 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
      * @param {String} bezeichnung Beschriftung der Gruppe
      */
     function oeffneGruppe($overlay, bezeichnung) {
-        $overlay.find('.local-kursassistent-gruppenheader').filter(function() {
+        var $header = $overlay.find('.local-kursassistent-gruppenheader').filter(function() {
             return $(this).text().indexOf(bezeichnung) !== -1;
-        }).first().trigger('click');
+        }).first();
+        if ($header.next('.local-kursassistent-gruppeninhalt').hasClass('d-none')) {
+            $header.trigger('click');
+        }
     }
 
     /**
@@ -4306,12 +4330,94 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
     function pruefeRueckkehr() {
         var ergebnis = Rueckkehr.leseErgebnis();
         var rueckkehr = Rueckkehr.lese(courseid);
-        if (rueckkehr) {
-            Rueckkehr.loesche();
-            oeffneAssistent(function($overlay) {
-                zeigeRueckkehrErgebnis($overlay, rueckkehr, ergebnis);
-            });
+        if (!rueckkehr) {
+            return;
         }
+        if (rueckkehr.zurueck) {
+            // Der Wechsel kam vom Dashboard, dorthin geht es zurück.
+            var ziel = new window.URL(rueckkehr.zurueck);
+            if (ergebnis !== null) {
+                ziel.searchParams.set('kaergebnis', ergebnis);
+            }
+            window.location.replace(ziel.toString());
+            return;
+        }
+        Rueckkehr.loesche();
+        oeffneAssistent(function($overlay) {
+            zeigeRueckkehrErgebnis($overlay, rueckkehr, ergebnis);
+        });
+    }
+
+    /**
+     * Zeigt ein Werkzeug der Reiters Lernpfade und Übersicht auf der Dashboard-Seite.
+     *
+     * @param {jQuery} $container Bereich der Seite
+     * @param {String} werkzeug uebersicht, abschluss, voraussetzungen oder lernpfad
+     */
+    function zeigeWerkzeug($container, werkzeug) {
+        $container.empty().append($('<p>', {'class': 'text-muted', text: 'Lade Aktivitäten …'}));
+        Ajax.call([{
+            methodname: 'local_kursassistent_get_course_activities',
+            args: {courseid: courseid}
+        }])[0].done(function(response) {
+            $container.empty();
+            if (!response.completionenabled && werkzeug !== 'uebersicht') {
+                $container.append($('<div>', {
+                    'class': 'alert alert-warning',
+                    text: 'Die Abschlussverfolgung ist in diesem Kurs nicht aktiviert. ' +
+                        'Bitte aktiviere sie zuerst in den Kurseinstellungen.'
+                }));
+                $container.append($('<a>', {
+                    href: M.cfg.wwwroot + '/course/edit.php?id=' + courseid,
+                    'class': 'btn btn-primary btn-sm',
+                    text: 'Kurseinstellungen öffnen'
+                }));
+                return;
+            }
+            if (werkzeug === 'abschluss') {
+                rendereAbschlussPanel($container, response);
+            } else if (werkzeug === 'voraussetzungen') {
+                rendereVoraussetzungenPanel($container, response);
+            } else if (werkzeug === 'lernpfad') {
+                rendereLernpfadPanel($container, response);
+            } else {
+                rendereUebersichtPanel($container, response);
+            }
+        }).fail(function() {
+            $container.empty().append($('<div>', {
+                'class': 'alert alert-danger',
+                text: 'Aktivitäten konnten nicht geladen werden.'
+            }));
+        });
+    }
+
+    /**
+     * Liest die Rückkehr nach einem Moodle-Formular für die Dashboard-Seite.
+     *
+     * Gehört die Rückkehr zu einem anderen Bereich, wird dorthin gewechselt.
+     *
+     * @param {String} tab Aktueller Bereich
+     * @return {Object|null|Boolean} Rückkehr und Ergebnis, null ohne Rückkehr, false beim Wechsel des Bereichs
+     */
+    function dashboardRueckkehr(tab) {
+        var ergebnis = Rueckkehr.leseErgebnis();
+        var rueckkehr = Rueckkehr.lese(courseid);
+        if (!rueckkehr) {
+            return null;
+        }
+        var ziel = ZIELTAB[rueckkehr.art] || tab;
+        if (ziel !== tab) {
+            var adresse = new window.URL(M.cfg.wwwroot + '/local/kursassistent/dashboard.php');
+            adresse.searchParams.set('courseid', courseid);
+            adresse.searchParams.set('tab', ziel);
+            if (ergebnis !== null) {
+                adresse.searchParams.set('kaergebnis', ergebnis);
+            }
+            window.location.replace(adresse.toString());
+            return false;
+        }
+        Rueckkehr.loesche();
+        return {rueckkehr: rueckkehr, ergebnis: ergebnis};
     }
 
     return {
@@ -4334,8 +4440,12 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
          */
         initDashboard: function(cid, tab) {
             courseid = cid;
+            dashboardAktiv = true;
             bindeAllgemein();
-            pruefeRueckkehr();
+            var rk = dashboardRueckkehr(tab);
+            if (rk === false) {
+                return;
+            }
 
             if (tab === 'stand') {
                 var $stat = $('[data-region="local-kursassistent-stat"]');
@@ -4346,24 +4456,29 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             if (tab === 'bausteine' || tab === 'einrichtung') {
                 var $inline = $('[data-region="local-kursassistent-inline"]');
                 if ($inline.length) {
-                    zeigeInline($inline, tab);
+                    zeigeInline($inline, tab, function($overlay) {
+                        if (rk) {
+                            zeigeRueckkehrErgebnis($overlay, rk.rueckkehr, rk.ergebnis);
+                        }
+                    });
                 }
             }
             if (tab === 'uebersicht') {
-                var $uebersicht = $('[data-region="local-kursassistent-uebersicht"]');
-                if ($uebersicht.length) {
-                    ladeUebersichtNeu($uebersicht);
+                var $werkzeug = $('[data-region="local-kursassistent-uebersicht"]');
+                if (rk && rk.rueckkehr.vorher) {
+                    rueckkehrNeu = {vorher: rk.rueckkehr.vorher, titel: rk.rueckkehr.titel};
+                }
+                if ($werkzeug.length) {
+                    zeigeWerkzeug($werkzeug, 'uebersicht');
+                    $('[data-region="local-kursassistent-werkzeuge"]').on('click', '[data-werkzeug]', function() {
+                        var $knopf = $(this);
+                        $knopf.closest('[data-region="local-kursassistent-werkzeuge"]').find('[data-werkzeug]')
+                            .removeClass('active').attr('aria-pressed', 'false');
+                        $knopf.addClass('active').attr('aria-pressed', 'true');
+                        zeigeWerkzeug($werkzeug, $knopf.attr('data-werkzeug'));
+                    });
                 }
             }
-
-            $(document).on('click', '.local-kursassistent-dashboard-open', function() {
-                var bereich = $(this).attr('data-panel');
-                oeffneAssistent(function($overlay) {
-                    if (bereich === 'weitere') {
-                        oeffneGruppe($overlay, 'Lernpfade, Kompetenzen und Statistik');
-                    }
-                });
-            });
         }
     };
 });

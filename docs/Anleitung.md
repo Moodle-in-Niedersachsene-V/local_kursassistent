@@ -85,10 +85,10 @@ Das Dashboard erreichst du über den Eintrag „Kursassistent“ in der Hauptnav
 Die Bereiche sind als Reiter angeordnet:
 
 - **Stand der Lernenden:** die Statistik mit Statusanzeige, Filtern und Anmerkungen (siehe 1.8).
-- **Lernpfade und Übersicht:** die Übersicht mit Abschluss, Voraussetzungen, Sichtbarkeit, Bewertung und Kompetenzen steht direkt auf der Seite. Über „Weitere Werkzeuge im Assistenten öffnen“ erreichst du Abschlussverfolgung, Voraussetzungen, Lernpfad und Statistik.
+- **Lernpfade und Übersicht:** Über die Knöpfe oben im Reiter wechselst du zwischen den Werkzeugen **Übersicht** (Abschluss, Voraussetzungen, Sichtbarkeit, Bewertung und Kompetenzen), **Abschlussverfolgung**, **Voraussetzungen** und **Lernpfad erstellen**. Alle arbeiten direkt auf der Seite. Die Statistik findest du im Reiter „Stand der Lernenden“.
 - **Bausteine** und **Kurseinrichtung:** stehen ebenfalls direkt auf der Seite. Unter „Bausteine“ wählst du den Zielabschnitt und fügst Lerninformationen, Lernmaterial und Aktivitäten ein. Unter „Kurseinrichtung“ änderst du das Kursformat, übernimmst eine Kursvorlage oder wendest eine Abschnittsvorlage an.
 
-Im Fenster des Kursassistenten bleibt das „×“ oben rechts beim Scrollen sichtbar. Damit oder mit der Taste Esc schließt du das Fenster jederzeit. Auf der Dashboard-Seite führt das „×“ oben rechts (oder Esc) zurück in den Kurs. In der Übersicht klappst du die Kursabschnitte mit dem Pfeil vor dem Abschnittsnamen ein und aus, oder alle auf einmal mit den Knöpfen darüber.
+Wenn du für eine Aktivität, eine Datei, das Kursformat oder eine Kursvorlage zu einer Moodle-Seite wechselst, führt der Weg danach zurück auf das Dashboard, in den passenden Reiter. Im Fenster des Kursassistenten bleibt das „×“ oben rechts beim Scrollen sichtbar. Damit oder mit der Taste Esc schließt du das Fenster jederzeit. Auf der Dashboard-Seite führt das „×“ oben rechts (oder Esc) zurück in den Kurs. In der Übersicht klappst du die Kursabschnitte mit dem Pfeil vor dem Abschnittsnamen ein und aus, oder alle auf einmal mit den Knöpfen darüber.
 
 **Kursinfos:** Unter den Reitern steht der Bereich „Kursinfos“. Mit „Neue Kursinfo“ schreibst du eine kurze Nachricht an alle Lernenden des Kurses oder nur an ausgewählte Personen. Die Lernenden lesen sie unter „Mein Fortschritt“. Bestehende Kursinfos kannst du ändern oder löschen.
 
