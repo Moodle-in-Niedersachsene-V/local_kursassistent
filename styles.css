@@ -989,3 +989,7 @@
     font-size: 11px;
     vertical-align: middle;
 }
+
+.local-kursassistent-info-text {
+    white-space: pre-line;
+}

@@ -45,4 +45,18 @@ class observer {
             'cmid' => $event->objectid,
         ]);
     }
+
+    /**
+     * Removes the course infos and notes when a course is deleted.
+     *
+     * @param \core\event\course_deleted $event
+     */
+    public static function course_deleted(\core\event\course_deleted $event): void {
+        global $DB;
+
+        $courseid = (int) $event->objectid;
+        \local_kursassistent\course_info::delete_for_course($courseid);
+        $DB->delete_records('local_kursassistent_comment', ['courseid' => $courseid]);
+        $DB->delete_records('local_kursassistent_log', ['courseid' => $courseid]);
+    }
 }

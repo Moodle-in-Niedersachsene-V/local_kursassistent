@@ -17,10 +17,15 @@
 namespace local_kursassistent\privacy;
 
 use core_privacy\local\metadata\collection;
+use core_privacy\local\metadata\provider as metadata_provider;
 use core_privacy\local\request\approved_contextlist;
 use core_privacy\local\request\contextlist;
+use core_privacy\local\request\core_userlist_provider;
+use core_privacy\local\request\plugin\provider as plugin_provider;
+use core_privacy\local\request\user_preference_provider;
 use core_privacy\local\request\userlist;
 use core_privacy\local\request\approved_userlist;
+use core_privacy\local\request\transform;
 use core_privacy\local\request\writer;
 
 /**
@@ -30,10 +35,7 @@ use core_privacy\local\request\writer;
  * @copyright  2026 Moodle in Niedersachsen e. V.
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class provider implements
-    \core_privacy\local\metadata\provider,
-    \core_privacy\local\request\core_userlist_provider,
-    \core_privacy\local\request\plugin\provider {
+class provider implements core_userlist_provider, metadata_provider, plugin_provider, user_preference_provider {
     /**
      * Beschreibt die gespeicherten personenbezogenen Daten.
      *
@@ -65,7 +67,41 @@ class provider implements
             'timecreated' => 'privacy:metadata:local_kursassistent_sectpl:timecreated',
         ], 'privacy:metadata:local_kursassistent_sectpl');
 
+        $collection->add_database_table('local_kursassistent_info', [
+            'authorid' => 'privacy:metadata:local_kursassistent_info:authorid',
+            'toall' => 'privacy:metadata:local_kursassistent_info:toall',
+            'infotext' => 'privacy:metadata:local_kursassistent_info:infotext',
+            'timecreated' => 'privacy:metadata:local_kursassistent_info:timecreated',
+        ], 'privacy:metadata:local_kursassistent_info');
+
+        $collection->add_database_table('local_kursassistent_info_user', [
+            'infoid' => 'privacy:metadata:local_kursassistent_info_user:infoid',
+            'userid' => 'privacy:metadata:local_kursassistent_info_user:userid',
+        ], 'privacy:metadata:local_kursassistent_info_user');
+
+        $collection->add_user_preference(
+            'local_kursassistent_lastcourse',
+            'privacy:metadata:preference:lastcourse'
+        );
+
         return $collection;
+    }
+
+    /**
+     * Exportiert die Nutzereinstellungen (zuletzt geöffneter Kurs im Dashboard).
+     *
+     * @param int $userid
+     */
+    public static function export_user_preferences(int $userid): void {
+        $value = get_user_preferences('local_kursassistent_lastcourse', null, $userid);
+        if ($value !== null) {
+            writer::export_user_preference(
+                'local_kursassistent',
+                'local_kursassistent_lastcourse',
+                $value,
+                get_string('privacy:metadata:preference:lastcourse', 'local_kursassistent')
+            );
+        }
     }
 
     /**
@@ -95,6 +131,24 @@ class provider implements
             'contextlevel' => CONTEXT_COURSE,
             'studentid' => $userid,
             'teacherid' => $userid,
+        ]);
+
+        // Kursinfos: als Autorin oder Autor und als Empfänger.
+        $sql = "SELECT ctx.id
+                  FROM {local_kursassistent_info} i
+                  JOIN {context} ctx ON ctx.instanceid = i.courseid AND ctx.contextlevel = :contextlevel
+                 WHERE i.authorid = :authorid
+                 UNION
+                SELECT ctx.id
+                  FROM {local_kursassistent_info} i2
+                  JOIN {local_kursassistent_info_user} iu ON iu.infoid = i2.id
+                  JOIN {context} ctx ON ctx.instanceid = i2.courseid AND ctx.contextlevel = :contextlevel2
+                 WHERE iu.userid = :recipientid";
+        $contextlist->add_from_sql($sql, [
+            'contextlevel' => CONTEXT_COURSE,
+            'authorid' => $userid,
+            'contextlevel2' => CONTEXT_COURSE,
+            'recipientid' => $userid,
         ]);
 
         // Abschnittsvorlagen haben keinen Kursbezug, sie gehoeren der anlegenden Person.
@@ -135,6 +189,14 @@ class provider implements
         $userlist->add_from_sql('userid', $sql, ['courseid' => $context->instanceid]);
         $sql = "SELECT teacherid AS userid FROM {local_kursassistent_comment} WHERE courseid = :courseid2";
         $userlist->add_from_sql('userid', $sql, ['courseid2' => $context->instanceid]);
+
+        $sql = "SELECT authorid AS userid FROM {local_kursassistent_info} WHERE courseid = :courseid3";
+        $userlist->add_from_sql('userid', $sql, ['courseid3' => $context->instanceid]);
+        $sql = "SELECT iu.userid
+                  FROM {local_kursassistent_info_user} iu
+                  JOIN {local_kursassistent_info} i ON i.id = iu.infoid
+                 WHERE i.courseid = :courseid4";
+        $userlist->add_from_sql('userid', $sql, ['courseid4' => $context->instanceid]);
     }
 
     /**
@@ -218,6 +280,26 @@ class provider implements
                     (object) ['kommentare' => $commentdata]
                 );
             }
+
+            // Kursinfos, die die Person geschrieben oder erhalten hat.
+            $infos = [];
+            foreach (\local_kursassistent\course_info::get_for_course($context->instanceid) as $info) {
+                $isauthor = $DB->record_exists('local_kursassistent_info', ['id' => $info['id'], 'authorid' => $userid]);
+                if ($isauthor || $info['toall'] || in_array($userid, $info['userids'])) {
+                    $infos[] = [
+                        'infotext' => $info['infotext'],
+                        'authorname' => $info['authorname'],
+                        'toall' => transform::yesno($info['toall']),
+                        'timecreated' => transform::datetime($info['timecreated']),
+                    ];
+                }
+            }
+            if (!empty($infos)) {
+                writer::with_context($context)->export_data(
+                    [get_string('pluginname', 'local_kursassistent'), 'kursinfos'],
+                    (object) ['kursinfos' => $infos]
+                );
+            }
         }
     }
 
@@ -240,6 +322,7 @@ class provider implements
 
         $DB->delete_records('local_kursassistent_log', ['courseid' => $context->instanceid]);
         $DB->delete_records('local_kursassistent_comment', ['courseid' => $context->instanceid]);
+        \local_kursassistent\course_info::delete_for_course($context->instanceid);
     }
 
     /**
@@ -271,6 +354,7 @@ class provider implements
                 'courseid = :courseid AND (studentid = :studentid OR teacherid = :teacherid)',
                 ['courseid' => $context->instanceid, 'studentid' => $userid, 'teacherid' => $userid]
             );
+            \local_kursassistent\course_info::delete_for_user($context->instanceid, $userid);
         }
     }
 
@@ -305,6 +389,7 @@ class provider implements
                 'courseid = :courseid AND (studentid = :studentid OR teacherid = :teacherid)',
                 ['courseid' => $context->instanceid, 'studentid' => $userid, 'teacherid' => $userid]
             );
+            \local_kursassistent\course_info::delete_for_user($context->instanceid, $userid);
         }
     }
 }

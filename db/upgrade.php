@@ -203,5 +203,39 @@ function xmldb_local_kursassistent_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026100122, 'local', 'kursassistent');
     }
 
+    if ($oldversion < 2026100133) {
+        $dbman = $DB->get_manager();
+
+        // Kursinfos der Lehrkraft.
+        $table = new xmldb_table('local_kursassistent_info');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('authorid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('toall', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1');
+            $table->add_field('infotext', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('courseid_idx', XMLDB_INDEX_NOTUNIQUE, ['courseid']);
+            $table->add_index('authorid_idx', XMLDB_INDEX_NOTUNIQUE, ['authorid']);
+            $dbman->create_table($table);
+        }
+
+        // Empfaenger einzelner Kursinfos.
+        $table = new xmldb_table('local_kursassistent_info_user');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('infoid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('infoid_userid_idx', XMLDB_INDEX_UNIQUE, ['infoid', 'userid']);
+            $table->add_index('userid_idx', XMLDB_INDEX_NOTUNIQUE, ['userid']);
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026100133, 'local', 'kursassistent');
+    }
+
     return true;
 }

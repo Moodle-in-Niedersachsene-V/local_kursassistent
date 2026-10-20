@@ -1,0 +1,47 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_kursassistent/kursinfo_list
+
+    List of the course infos of a course for the teacher.
+
+    Context variables required for this template:
+    * hasinfos - True if there is at least one info
+    * infos - Infos: id, infotext, timetext, authorname, toall, recipientstext
+
+    Example context (json):
+    {
+        "hasinfos": true,
+        "infos": [
+            {"id": 1, "infotext": "Test on Friday.", "timetext": "20.10.26, 08:15", "authorname": "Max Teacher", "toall": false, "recipientstext": "Anna Example, Ben Example"}
+        ]
+    }
+}}
+{{^hasinfos}}
+<p class="text-muted mb-0">{{#str}} kursinfo_keine, local_kursassistent {{/str}}</p>
+{{/hasinfos}}
+{{#infos}}
+<div class="border rounded p-3 mb-2" data-region="local-kursassistent-info" data-infoid="{{id}}">
+    <div class="d-flex flex-wrap align-items-center mb-1">
+        <span class="small text-muted flex-grow-1">{{timetext}} · {{authorname}}</span>
+        <span class="badge badge-secondary">{{#toall}}{{#str}} kursinfo_analle, local_kursassistent {{/str}}{{/toall}}{{^toall}}{{recipientstext}}{{/toall}}</span>
+    </div>
+    <div class="local-kursassistent-info-text mb-2">{{infotext}}</div>
+    <button type="button" class="btn btn-sm btn-secondary mr-1" data-action="local-kursassistent-info-edit" data-infoid="{{id}}">{{#str}} edit, core {{/str}}</button>
+    <button type="button" class="btn btn-sm btn-outline-danger" data-action="local-kursassistent-info-delete" data-infoid="{{id}}">{{#str}} delete, core {{/str}}</button>
+</div>
+{{/infos}}

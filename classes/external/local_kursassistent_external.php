@@ -2272,6 +2272,7 @@ class local_kursassistent_external extends external_api {
                 'activities' => [],
                 'completedcount' => 0,
                 'totalcount' => 0,
+                'infos' => self::own_infos($params['courseid']),
             ];
         }
 
@@ -2357,7 +2358,28 @@ class local_kursassistent_external extends external_api {
             'completedcount' => $completedcount,
             'totalcount' => count($activities),
             'teachercomment' => $notes[0] ?? '',
+            'infos' => self::own_infos($params['courseid']),
         ];
+    }
+
+    /**
+     * Kursinfos, die die aktuelle Person sehen darf.
+     *
+     * @param int $courseid
+     * @return array
+     */
+    protected static function own_infos(int $courseid): array {
+        global $USER;
+
+        $result = [];
+        foreach (\local_kursassistent\course_info::get_for_user((int) $USER->id, $courseid) as $info) {
+            $result[] = [
+                'infotext' => $info->infotext,
+                'authorname' => $info->authorname,
+                'timetext' => userdate($info->timecreated, get_string('strftimedatetimeshort', 'langconfig')),
+            ];
+        }
+        return $result;
     }
 
     /**
@@ -2386,6 +2408,11 @@ class local_kursassistent_external extends external_api {
             'completedcount' => new external_value(PARAM_INT, 'Abgeschlossene Aktivitäten'),
             'totalcount' => new external_value(PARAM_INT, 'Gesamtzahl Aktivitäten'),
             'teachercomment' => new external_value(PARAM_RAW, 'Kommentar der Lehrkraft', VALUE_DEFAULT, ''),
+            'infos' => new external_multiple_structure(new external_single_structure([
+                'infotext' => new external_value(PARAM_TEXT, 'Text der Kursinfo'),
+                'authorname' => new external_value(PARAM_TEXT, 'Name der Lehrkraft'),
+                'timetext' => new external_value(PARAM_TEXT, 'Datum'),
+            ]), 'Kursinfos für die Person', VALUE_DEFAULT, []),
         ]);
     }
 
@@ -3032,6 +3059,199 @@ class local_kursassistent_external extends external_api {
      * @return external_single_structure
      */
     public static function replace_competencies_returns(): external_single_structure {
+        return new external_single_structure([
+            'success' => new external_value(PARAM_BOOL, 'Erfolgreich'),
+        ]);
+    }
+
+    // Kursinfos der Lehrkraft.
+
+    /**
+     * Parameter für get_course_infos.
+     *
+     * @return external_function_parameters
+     */
+    public static function get_course_infos_parameters(): external_function_parameters {
+        return new external_function_parameters([
+            'courseid' => new external_value(PARAM_INT, 'Kurs-ID'),
+        ]);
+    }
+
+    /**
+     * Liefert alle Kursinfos eines Kurses und die Lernenden als mögliche Empfänger.
+     *
+     * @param int $courseid
+     * @return array
+     */
+    public static function get_course_infos(int $courseid): array {
+        $params = self::validate_parameters(self::get_course_infos_parameters(), ['courseid' => $courseid]);
+        $context = \context_course::instance($params['courseid']);
+        self::validate_context($context);
+        require_capability('local/kursassistent:use', $context);
+
+        $infos = [];
+        foreach (\local_kursassistent\course_info::get_for_course($params['courseid']) as $info) {
+            $info['timetext'] = userdate($info['timecreated'], get_string('strftimedatetimeshort', 'langconfig'));
+            $infos[] = $info;
+        }
+
+        $fields = 'u.id, ' . implode(', ', array_map(function ($f) {
+            return 'u.' . $f;
+        }, \core_user\fields::get_name_fields()));
+        $students = [];
+        foreach (get_enrolled_users($context, 'mod/assign:submit', 0, $fields, 'u.lastname ASC, u.firstname ASC') as $user) {
+            $students[] = ['userid' => (int) $user->id, 'fullname' => fullname($user)];
+        }
+
+        return ['infos' => $infos, 'students' => $students];
+    }
+
+    /**
+     * Rückgabestruktur für get_course_infos.
+     *
+     * @return external_single_structure
+     */
+    public static function get_course_infos_returns(): external_single_structure {
+        return new external_single_structure([
+            'infos' => new external_multiple_structure(new external_single_structure([
+                'id' => new external_value(PARAM_INT, 'Kursinfo-ID'),
+                'toall' => new external_value(PARAM_BOOL, 'An alle Lernenden'),
+                'infotext' => new external_value(PARAM_TEXT, 'Text'),
+                'timecreated' => new external_value(PARAM_INT, 'Erstellt'),
+                'timemodified' => new external_value(PARAM_INT, 'Geändert'),
+                'timetext' => new external_value(PARAM_TEXT, 'Erstellt als Text'),
+                'authorname' => new external_value(PARAM_TEXT, 'Name der Lehrkraft'),
+                'userids' => new external_multiple_structure(new external_value(PARAM_INT, 'User-ID')),
+                'recipients' => new external_multiple_structure(new external_value(PARAM_TEXT, 'Name')),
+            ])),
+            'students' => new external_multiple_structure(new external_single_structure([
+                'userid' => new external_value(PARAM_INT, 'User-ID'),
+                'fullname' => new external_value(PARAM_TEXT, 'Name'),
+            ])),
+        ]);
+    }
+
+    /**
+     * Parameter für save_course_info.
+     *
+     * @return external_function_parameters
+     */
+    public static function save_course_info_parameters(): external_function_parameters {
+        return new external_function_parameters([
+            'courseid' => new external_value(PARAM_INT, 'Kurs-ID'),
+            'text' => new external_value(PARAM_TEXT, 'Text der Kursinfo'),
+            'toall' => new external_value(PARAM_BOOL, 'An alle Lernenden'),
+            'userids' => new external_multiple_structure(
+                new external_value(PARAM_INT, 'User-ID'),
+                'Empfänger, wenn nicht an alle',
+                VALUE_DEFAULT,
+                []
+            ),
+            'infoid' => new external_value(PARAM_INT, 'Zu ändernde Kursinfo, 0 = neu', VALUE_DEFAULT, 0),
+        ]);
+    }
+
+    /**
+     * Speichert eine Kursinfo.
+     *
+     * @param int $courseid
+     * @param string $text
+     * @param bool $toall
+     * @param array $userids
+     * @param int $infoid
+     * @return array
+     */
+    public static function save_course_info(int $courseid, string $text, bool $toall, array $userids = [], int $infoid = 0): array {
+        global $USER;
+
+        $params = self::validate_parameters(self::save_course_info_parameters(), [
+            'courseid' => $courseid,
+            'text' => $text,
+            'toall' => $toall,
+            'userids' => $userids,
+            'infoid' => $infoid,
+        ]);
+        $context = \context_course::instance($params['courseid']);
+        self::validate_context($context);
+        require_capability('local/kursassistent:use', $context);
+
+        $text = trim($params['text']);
+        if ($text === '') {
+            throw new \moodle_exception('kursinfo_leer', 'local_kursassistent');
+        }
+        if (!$params['toall']) {
+            if (empty($params['userids'])) {
+                throw new \moodle_exception('kursinfo_keinempfaenger', 'local_kursassistent');
+            }
+            // Empfänger müssen im Kurs eingeschrieben sein, sonst ließen sich Einträge zu fremden Konten anlegen.
+            foreach ($params['userids'] as $userid) {
+                if (!is_enrolled($context, $userid)) {
+                    throw new \moodle_exception('kommentar_keinteilnehmer', 'local_kursassistent');
+                }
+            }
+        }
+
+        $id = \local_kursassistent\course_info::save(
+            $params['courseid'],
+            (int) $USER->id,
+            $text,
+            $params['toall'],
+            $params['userids'],
+            $params['infoid']
+        );
+        return ['success' => true, 'infoid' => $id];
+    }
+
+    /**
+     * Rückgabestruktur für save_course_info.
+     *
+     * @return external_single_structure
+     */
+    public static function save_course_info_returns(): external_single_structure {
+        return new external_single_structure([
+            'success' => new external_value(PARAM_BOOL, 'Erfolgreich'),
+            'infoid' => new external_value(PARAM_INT, 'Kursinfo-ID'),
+        ]);
+    }
+
+    /**
+     * Parameter für delete_course_info.
+     *
+     * @return external_function_parameters
+     */
+    public static function delete_course_info_parameters(): external_function_parameters {
+        return new external_function_parameters([
+            'courseid' => new external_value(PARAM_INT, 'Kurs-ID'),
+            'infoid' => new external_value(PARAM_INT, 'Kursinfo-ID'),
+        ]);
+    }
+
+    /**
+     * Löscht eine Kursinfo.
+     *
+     * @param int $courseid
+     * @param int $infoid
+     * @return array
+     */
+    public static function delete_course_info(int $courseid, int $infoid): array {
+        $params = self::validate_parameters(self::delete_course_info_parameters(), [
+            'courseid' => $courseid,
+            'infoid' => $infoid,
+        ]);
+        $context = \context_course::instance($params['courseid']);
+        self::validate_context($context);
+        require_capability('local/kursassistent:use', $context);
+
+        \local_kursassistent\course_info::delete($params['courseid'], $params['infoid']);
+        return ['success' => true];
+    }
+
+    /**
+     * Rückgabestruktur für delete_course_info.
+     *
+     * @return external_single_structure
+     */
+    public static function delete_course_info_returns(): external_single_structure {
         return new external_single_structure([
             'success' => new external_value(PARAM_BOOL, 'Erfolgreich'),
         ]);

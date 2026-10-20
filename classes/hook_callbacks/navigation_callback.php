@@ -127,4 +127,45 @@ class navigation_callback {
             $PAGE->requires->js_call_amd('local_kursassistent/fortschritt', 'init', [(int) $course->id]);
         }
     }
+
+    /**
+     * Adds the entry "Course assistant" to the primary navigation for persons who may use it in a course.
+     *
+     * The result is kept in the session for ten minutes so the course list is not searched on every page.
+     *
+     * @param \core\hook\navigation\primary_extend $hook
+     */
+    public static function primary_extend(\core\hook\navigation\primary_extend $hook): void {
+        global $SESSION;
+
+        if (!isloggedin() || isguestuser()) {
+            return;
+        }
+
+        $cache = $SESSION->local_kursassistent_nav ?? null;
+        if (!is_array($cache) || ($cache['time'] ?? 0) < time() - 600) {
+            $allowed = is_siteadmin();
+            if (!$allowed) {
+                foreach (enrol_get_my_courses(['id']) as $course) {
+                    if (has_capability('local/kursassistent:use', \context_course::instance($course->id))) {
+                        $allowed = true;
+                        break;
+                    }
+                }
+            }
+            $cache = ['time' => time(), 'allowed' => $allowed];
+            $SESSION->local_kursassistent_nav = $cache;
+        }
+        if (empty($cache['allowed'])) {
+            return;
+        }
+
+        $hook->get_primaryview()->add(
+            get_string('pluginname', 'local_kursassistent'),
+            new \moodle_url('/local/kursassistent/dashboard.php'),
+            \navigation_node::TYPE_CUSTOM,
+            null,
+            'local_kursassistent_primary'
+        );
+    }
 }

@@ -80,12 +80,14 @@ Neben dem Zielabschnitt-Dropdown findest du zwei kleine Schaltflächen:
 
 ### 1.7a Dashboard
 
-Im Kurs gibt es neben „Kursassistent“ den Eintrag „Dashboard“. Das Dashboard zeigt oben deinen Kurs in einer Liste (rechts oben) und darunter Kennzahlen: Lernende im Kurs, durchschnittlicher Fortschritt, überfällige Aktivitäten und den nächsten Termin. Rechts steht „Braucht Aufmerksamkeit“ mit den Lernenden, bei denen Aktivitäten überfällig sind. Die Kennzahlen setzen voraus, dass die Abschlussverfolgung im Kurs aktiviert ist.
+Das Dashboard erreichst du über den Eintrag „Kursassistent“ in der Hauptnavigation oben, ohne vorher einen Kurs zu öffnen. Es zeigt zuerst den Kurs, den du zuletzt benutzt hast. Zusätzlich gibt es im Kurs den Eintrag „Dashboard“. Das Dashboard zeigt oben deinen Kurs in einer Liste (rechts oben) und darunter Kennzahlen: Lernende im Kurs, durchschnittlicher Fortschritt, überfällige Aktivitäten und den nächsten Termin. Rechts steht „Braucht Aufmerksamkeit“ mit den Lernenden, bei denen Aktivitäten überfällig sind. Die Kennzahlen setzen voraus, dass die Abschlussverfolgung im Kurs aktiviert ist.
 
 Die Bereiche sind als Reiter angeordnet:
 
 - **Stand der Lernenden:** die Statistik mit Statusanzeige, Filtern und Anmerkungen (siehe 1.8).
 - **Bausteine**, **Kurseinrichtung** und **Lernpfade und Übersicht:** öffnen den Kursassistenten für den gewählten Kurs, bei „Lernpfade und Übersicht“ direkt die Übersicht.
+
+**Kursinfos:** Unter den Reitern steht der Bereich „Kursinfos“. Mit „Neue Kursinfo“ schreibst du eine kurze Nachricht an alle Lernenden des Kurses oder nur an ausgewählte Personen. Die Lernenden lesen sie unter „Mein Fortschritt“. Bestehende Kursinfos kannst du ändern oder löschen.
 
 ### 1.8 Lernpfade, Kompetenzen und Statistik
 

@@ -1,0 +1,62 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_kursassistent/kursinfo_form
+
+    Form to write or change a course info.
+
+    Context variables required for this template:
+    * infoid - Id of the info to change, 0 for a new one
+    * infotext - Text
+    * toall - True if the info goes to all learners
+    * students - Learners: userid, fullname, selected
+
+    Example context (json):
+    {
+        "infoid": 0,
+        "infotext": "",
+        "toall": true,
+        "students": [{"userid": 7, "fullname": "Anna Example", "selected": false}]
+    }
+}}
+<form class="border rounded p-3 mb-3" data-region="local-kursassistent-info-form" data-infoid="{{infoid}}">
+    <div class="form-group">
+        <label for="local-kursassistent-info-text">{{#str}} kursinfo_text, local_kursassistent {{/str}}</label>
+        <textarea id="local-kursassistent-info-text" class="form-control" rows="4" maxlength="2000">{{infotext}}</textarea>
+    </div>
+    <fieldset class="form-group">
+        <legend class="h6">{{#str}} kursinfo_empfaenger, local_kursassistent {{/str}}</legend>
+        <div class="form-check">
+            <input type="radio" class="form-check-input" name="local-kursassistent-info-to" id="local-kursassistent-info-all" value="all"{{#toall}} checked{{/toall}}>
+            <label class="form-check-label" for="local-kursassistent-info-all">{{#str}} kursinfo_analle, local_kursassistent {{/str}}</label>
+        </div>
+        <div class="form-check">
+            <input type="radio" class="form-check-input" name="local-kursassistent-info-to" id="local-kursassistent-info-some" value="some"{{^toall}} checked{{/toall}}>
+            <label class="form-check-label" for="local-kursassistent-info-some">{{#str}} kursinfo_ausgewaehlte, local_kursassistent {{/str}}</label>
+        </div>
+    </fieldset>
+    <div class="form-group{{#toall}} d-none{{/toall}}" data-region="local-kursassistent-info-students">
+        {{#students}}
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="local-kursassistent-info-u{{userid}}" value="{{userid}}"{{#selected}} checked{{/selected}}>
+            <label class="form-check-label" for="local-kursassistent-info-u{{userid}}">{{fullname}}</label>
+        </div>
+        {{/students}}
+    </div>
+    <button type="submit" class="btn btn-primary mr-1">{{#str}} savechanges, core {{/str}}</button>
+    <button type="button" class="btn btn-secondary" data-action="local-kursassistent-info-cancel">{{#str}} cancel, core {{/str}}</button>
+</form>

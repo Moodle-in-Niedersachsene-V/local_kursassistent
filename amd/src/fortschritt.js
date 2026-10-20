@@ -128,7 +128,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/templates', 'core/str'
             hasoverdue: overdueList.length > 0,
             overdue: overdueList,
             sections: groupBySection(activities, statusLabels),
-            teachercomment: response.teachercomment || ''
+            teachercomment: response.teachercomment || '',
+            hasinfos: (response.infos || []).length > 0,
+            infos: response.infos || []
         };
     }
 

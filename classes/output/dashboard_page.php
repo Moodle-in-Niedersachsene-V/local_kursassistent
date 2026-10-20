@@ -81,6 +81,7 @@ class dashboard_page implements renderable, templatable {
         $data['coursename'] = $this->courses[$this->courseid];
         $data['tab'] = $this->tab;
         $data['helpdashboard'] = $output->help_icon('dashboard', 'local_kursassistent');
+        $data['helpinfo'] = $output->help_icon('kursinfo', 'local_kursassistent');
         $data['helpattention'] = $output->help_icon('dashboard_attention', 'local_kursassistent');
 
         $tabs = [];

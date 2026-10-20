@@ -29,4 +29,8 @@ $observers = [
         'eventname' => '\\core\\event\\course_module_deleted',
         'callback' => '\\local_kursassistent\\observer::course_module_deleted',
     ],
+    [
+        'eventname' => '\\core\\event\\course_deleted',
+        'callback' => '\\local_kursassistent\\observer::course_deleted',
+    ],
 ];

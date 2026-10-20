@@ -241,4 +241,28 @@ $functions = [
         'ajax' => true,
         'capabilities' => 'local/kursassistent:use',
     ],
+    'local_kursassistent_get_course_infos' => [
+        'classname' => 'local_kursassistent\external\local_kursassistent_external',
+        'methodname' => 'get_course_infos',
+        'description' => 'Liefert die Kursinfos eines Kurses und die Lernenden als Empfänger',
+        'type' => 'read',
+        'ajax' => true,
+        'capabilities' => 'local/kursassistent:use',
+    ],
+    'local_kursassistent_save_course_info' => [
+        'classname' => 'local_kursassistent\external\local_kursassistent_external',
+        'methodname' => 'save_course_info',
+        'description' => 'Speichert eine Kursinfo an alle oder einzelne Lernende',
+        'type' => 'write',
+        'ajax' => true,
+        'capabilities' => 'local/kursassistent:use',
+    ],
+    'local_kursassistent_delete_course_info' => [
+        'classname' => 'local_kursassistent\external\local_kursassistent_external',
+        'methodname' => 'delete_course_info',
+        'description' => 'Löscht eine Kursinfo',
+        'type' => 'write',
+        'ajax' => true,
+        'capabilities' => 'local/kursassistent:use',
+    ],
 ];

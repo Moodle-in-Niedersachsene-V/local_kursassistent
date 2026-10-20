@@ -45,8 +45,13 @@ if ($courseid && !isset($courses[$courseid])) {
         $courseid = 0;
     }
 }
-if (!$courseid && $courses) {
-    $courseid = (int) array_key_first($courses);
+if (!$courseid) {
+    // Ohne Angabe den zuletzt benutzten Kurs öffnen, sonst den ersten der Liste.
+    $last = (int) get_user_preferences('local_kursassistent_lastcourse', 0);
+    $courseid = isset($courses[$last]) ? $last : (int) (array_key_first($courses) ?? 0);
+}
+if ($courseid) {
+    set_user_preference('local_kursassistent_lastcourse', $courseid);
 }
 
 $PAGE->set_url(new moodle_url('/local/kursassistent/dashboard.php', ['courseid' => $courseid, 'tab' => $tab]));
@@ -57,6 +62,7 @@ $PAGE->set_heading(get_string('dashboardtitel', 'local_kursassistent'));
 $PAGE->requires->css('/local/kursassistent/styles.css');
 if ($courseid) {
     $PAGE->requires->js_call_amd('local_kursassistent/assistent', 'initDashboard', [$courseid, $tab]);
+    $PAGE->requires->js_call_amd('local_kursassistent/kursinfo', 'init', [$courseid]);
 }
 
 $renderer = $PAGE->get_renderer('local_kursassistent');

@@ -29,4 +29,8 @@ $callbacks = [
         'hook' => \core\hook\output\before_http_headers::class,
         'callback' => \local_kursassistent\hook_callbacks\navigation_callback::class . '::add_assets',
     ],
+    [
+        'hook' => \core\hook\navigation\primary_extend::class,
+        'callback' => \local_kursassistent\hook_callbacks\navigation_callback::class . '::primary_extend',
+    ],
 ];

@@ -32,6 +32,7 @@
     * sections - Sections: sectionname, sectionkey, donecount, totalcount, expanded, activities
       (modname, name, completed, status, statuslabel, showprogress, grade, teachernote)
     * teachercomment - Optional note of the teacher, plain text
+    * hasinfos, infos - Course infos of the teacher: infotext, authorname, timetext
 
     Example context (json):
     {
@@ -59,7 +60,9 @@
                 ]
             }
         ],
-        "teachercomment": "Well done so far."
+        "teachercomment": "Well done so far.",
+        "hasinfos": true,
+        "infos": [{"infotext": "Test on Friday.", "authorname": "Max Teacher", "timetext": "20.10.26, 08:15"}]
     }
 }}
 <div class="local-kursassistent-overlay">
@@ -68,6 +71,17 @@
             <p class="font-weight-bold mb-0">{{#str}} meinfortschritt, local_kursassistent {{/str}}</p>
             <button type="button" class="close local-kursassistent-progress-close" aria-label="{{#str}} closebuttontitle, core {{/str}}">&times;</button>
         </div>
+        {{#hasinfos}}
+        <div class="local-kursassistent-teacher-comment mb-3 px-3 py-2">
+            <div class="small font-weight-bold mb-1">{{#str}} kursinfo_title, local_kursassistent {{/str}}</div>
+            {{#infos}}
+            <div class="mb-2">
+                <div class="local-kursassistent-info-text">{{infotext}}</div>
+                <div class="small text-muted">{{authorname}} · {{timetext}}</div>
+            </div>
+            {{/infos}}
+        </div>
+        {{/hasinfos}}
         {{#notenabled}}
         <div class="alert alert-info">{{#str}} progress_notenabled, local_kursassistent {{/str}}</div>
         {{/notenabled}}

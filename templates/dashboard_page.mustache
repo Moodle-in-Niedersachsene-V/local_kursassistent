@@ -30,6 +30,7 @@
     * completionenabled - True if completion tracking is on in the course
     * studentcount, avgpercent, overduecount, overduepersons, hasnextdue, nextdue - Key figures
     * hasattention, attention - Persons with overdue activities: name, text
+    * helpinfo - HTML of the help icon of the course infos
 
     Example context (json):
     {
@@ -54,6 +55,7 @@
         "overduepersons": "3 persons",
         "hasnextdue": true,
         "nextdue": "Test 1 · 29.10.26",
+        "helpinfo": "",
         "hasattention": true,
         "attention": [{"name": "Anna Example", "text": "2 overdue"}]
     }
@@ -123,6 +125,15 @@
                 <button type="button" class="btn btn-primary local-kursassistent-dashboard-open" data-panel="{{tab}}">{{#str}} dashboard_oeffnen, local_kursassistent {{/str}}</button>
             </div></div>
             {{/isstand}}
+            <div class="card mt-3"><div class="card-body" data-region="local-kursassistent-infos">
+                <div class="d-flex flex-wrap align-items-center mb-2">
+                    <h3 class="h5 mb-0 mr-1">{{#str}} kursinfo_title, local_kursassistent {{/str}}</h3>
+                    {{{helpinfo}}}
+                    <button type="button" class="btn btn-primary btn-sm ml-auto" data-action="local-kursassistent-info-new">{{#str}} kursinfo_neu, local_kursassistent {{/str}}</button>
+                </div>
+                <div data-region="local-kursassistent-info-formarea"></div>
+                <div data-region="local-kursassistent-info-list"></div>
+            </div></div>
         </div>
         <div class="col-lg-3 mb-3">
             <div class="card"><div class="card-body">
