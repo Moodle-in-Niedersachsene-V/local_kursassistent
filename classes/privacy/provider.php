@@ -79,6 +79,9 @@ class provider implements core_userlist_provider, metadata_provider, plugin_prov
             'userid' => 'privacy:metadata:local_kursassistent_info_user:userid',
         ], 'privacy:metadata:local_kursassistent_info_user');
 
+        // Automatisch vergebene Kompetenzen speichert Exabis selbst.
+        $collection->link_plugin('block_exacomp', 'privacy:metadata:exacomp');
+
         $collection->add_user_preference(
             'local_kursassistent_lastcourse',
             'privacy:metadata:preference:lastcourse'

@@ -33,4 +33,8 @@ $callbacks = [
         'hook' => \core\hook\navigation\primary_extend::class,
         'callback' => \local_kursassistent\hook_callbacks\navigation_callback::class . '::primary_extend',
     ],
+    [
+        'hook' => \block_workplanner\hook\extend_planner::class,
+        'callback' => \local_kursassistent\hook_callbacks\workplanner_callback::class . '::extend_planner',
+    ],
 ];

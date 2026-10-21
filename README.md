@@ -24,6 +24,7 @@ can extend the building blocks freely.
   and notes on participants, general or per activity
 - **My progress**: participants see their own completion progress in the course with the status
   of each activity, their next step and collapsible sections
+- **Work planner (block_workplanner)**: if the block is installed, learners see course infos, teacher notes per activity and the competencies of the activities there. Competencies are awarded in Exabis automatically once a learner has completed all activities a competency is assigned to (can be switched off in the settings)
 - **Course infos**: write a short message to all learners or to selected learners; learners read it under "My progress"
 - **Dashboard**: also reachable from the main navigation; choose the course from a list, see key figures (students, progress, overdue activities, next date) and who needs attention, and open the areas of the assistant
 - **Section management**: rename or create course sections directly in the assistant

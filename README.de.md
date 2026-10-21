@@ -21,6 +21,7 @@ Inhalt aus. Die Bausteine sind von der Schul-Administration frei erweiterbar.
   Übersicht mit Sichtbarkeit, Umsortieren per Ziehen und Duplizieren (auch in einen anderen Kurs),
   Zuordnen von Kompetenzen aus dem Exabis-Kompetenzraster, Statistik mit Statusanzeige, Filtern und Anmerkungen zu Teilnehmenden, allgemein oder je Aktivität
 - **Mein Fortschritt** – Teilnehmende sehen ihren eigenen Abschlussfortschritt im Kurs mit Stand je Aktivität (erledigt, in Arbeit, offen, überfällig), ihrem nächsten Schritt und einklappbaren Abschnitten
+- **Arbeitsplaner (block_workplanner)** – ist der Block installiert, sehen Lernende dort Kursinfos, Hinweise der Lehrkraft je Aktivität und die Kompetenzen der Aktivitäten. Kompetenzen werden in Exabis automatisch vergeben, sobald alle Aktivitäten einer Kompetenz abgeschlossen sind (in den Einstellungen abschaltbar)
 - **Kursinfos** – kurze Nachricht an alle oder ausgewählte Lernende, sichtbar unter „Mein Fortschritt“
 - **Dashboard** – auch über die Hauptnavigation erreichbar; Kurs aus einer Liste wählen, Kennzahlen (Lernende, Fortschritt, überfällige Aktivitäten, nächster Termin) und wer Aufmerksamkeit braucht sehen, Bereiche des Assistenten öffnen
 - **Abschnittsverwaltung** – Kursabschnitte direkt im Assistenten umbenennen oder neu anlegen

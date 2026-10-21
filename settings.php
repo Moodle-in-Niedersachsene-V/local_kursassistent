@@ -34,6 +34,21 @@ if ($hassiteconfig) {
         1
     ));
 
+    $settings->add(new admin_setting_configcheckbox(
+        'local_kursassistent/awardcompetencies',
+        get_string('awardcompetencies', 'local_kursassistent'),
+        get_string('awardcompetencies_desc', 'local_kursassistent'),
+        1
+    ));
+
+    $settings->add(new admin_setting_configtext(
+        'local_kursassistent/awardvalue',
+        get_string('awardvalue', 'local_kursassistent'),
+        get_string('awardvalue_desc', 'local_kursassistent'),
+        3,
+        PARAM_INT
+    ));
+
     $kategorien = ['0' => get_string('vorlagenkategorie_keine', 'local_kursassistent')]
         + \core_course_category::make_categories_list();
     $settings->add(new admin_setting_configselect(

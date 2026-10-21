@@ -229,3 +229,20 @@ Ist das Plugin `block_exacomp` installiert, erscheint in der Übersicht die Spal
 - Das Duplizieren läuft intern über Sicherung und Wiederherstellung und kann bei umfangreichen Aktivitäten einige Sekunden dauern. Solange läuft eine Rückmeldung im Fenster.
 - Beim Duplizieren, auch in einen anderen Kurs, werden keine Nutzerdaten wie Abgaben oder Bewertungen übertragen. Es entsteht keine Sicherungsdatei; temporäre Dateien werden nach dem Vorgang entfernt.
 - Notizen zu Teilnehmenden sind personenbezogene Daten. Sie sind über die Moodle-Datenanfragen exportier- und löschbar, sollten aber im Verarbeitungsverzeichnis der Schule berücksichtigt werden.
+
+### Arbeitsplaner (block_workplanner)
+
+Ist der Arbeitsplaner für Lernende (Block `block_workplanner`) auf der Website installiert, zeigt er Daten des Kursassistenten an. Dazu musst du nichts einstellen.
+
+- **Infos deiner Lehrkräfte:** Die Kursinfos, die du im Dashboard schreibst. Lernende sehen nur Infos an alle und Infos, die an sie gerichtet sind.
+- **Hinweis deiner Lehrkraft:** Die Anmerkung, die du je Aktivität für eine Person oder für alle schreibst und für die Lernenden sichtbar lässt. Allgemeine Anmerkungen zur Person erscheinen dort noch nicht.
+- **Kompetenzen:** Die Kompetenzen, die du in der Übersicht den Aktivitäten zugeordnet hast. Dafür muss Exabis installiert sein.
+
+**Kompetenzen automatisch vergeben:** Sobald eine Person **alle** Aktivitäten abgeschlossen hat, denen eine Kompetenz zugeordnet ist, trägt der Kursassistent die Kompetenz im Kompetenzraster von Exabis ein. Dabei gilt:
+
+- Gezählt werden nur Aktivitäten, die die Person sehen kann und die eine Abschlussverfolgung haben.
+- Eingetragen wird in der Rolle Lehrkraft, mit der ersten Lehrkraft des Kurses als Bewertende, die in Exabis als Lehrkraft eingetragen ist.
+- Hat eine Lehrkraft die Kompetenz schon bewertet, bleibt ihre Bewertung unverändert.
+- Wird ein Abschluss zurückgenommen, entzieht der Kursassistent die Kompetenz nicht. Das entscheidest du in Exabis.
+- Jede Vergabe wird im Protokoll als Ereignis „Kompetenz automatisch vergeben“ festgehalten.
+- Administratorinnen und Administratoren können die Vergabe unter Website-Administration, Plugins, Lokale Plugins, Kursassistent abschalten und den Wert für „erreicht“ ändern. Voreingestellt sind an und der Wert 3 (in der Standardskala „vollständig erreicht“).

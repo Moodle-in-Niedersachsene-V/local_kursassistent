@@ -367,4 +367,214 @@ class exacomp_bruecke {
 
         self::rufe_funktion_auf('block_exacomp_relate_example_to_activity', [$courseid, $cmid, $auswahl]);
     }
+
+    /**
+     * Liefert die Titel von Deskriptoren, die eine Person im Kurs sehen darf.
+     *
+     * Gelesen wird direkt aus den Tabellen von Exabis. Der Kompetenzbaum über dessen Webservice
+     * ist auf Lehrkräfte ausgelegt und prüft deren Rechte, Lernende erreichen ihn nicht. Verwendet
+     * werden nur Felder, deren Vorhandensein geprüft wurde. Deskriptoren, die im Kurs oder für die
+     * Person ausgeblendet sind, fehlen in der Antwort.
+     *
+     * @param int[] $descriptorids Gesuchte Deskriptor-IDs
+     * @param int $courseid
+     * @param int $userid Person, für die gelesen wird
+     * @return array Deskriptor-ID als Schlüssel, Titel als Wert
+     */
+    public static function get_titel(array $descriptorids, int $courseid, int $userid): array {
+        global $DB;
+
+        if (!self::verfuegbar() || empty($descriptorids)) {
+            return [];
+        }
+        $dbman = $DB->get_manager();
+        if (!self::felder_vorhanden($dbman, 'block_exacompdescriptors', ['id', 'title'])) {
+            return [];
+        }
+
+        [$insql, $params] = $DB->get_in_or_equal(array_map('intval', $descriptorids), SQL_PARAMS_NAMED);
+        $titel = [];
+        foreach ($DB->get_records_select('block_exacompdescriptors', "id $insql", $params, '', 'id, title') as $satz) {
+            $titel[(int) $satz->id] = trim((string) $satz->title);
+        }
+
+        if (self::felder_vorhanden($dbman, 'block_exacompdescrvisibility', ['courseid', 'descrid', 'studentid', 'visible'])) {
+            $versteckt = $DB->get_fieldset_select(
+                'block_exacompdescrvisibility',
+                'descrid',
+                'courseid = :courseid AND visible = 0 AND (studentid = 0 OR studentid = :userid)',
+                ['courseid' => $courseid, 'userid' => $userid]
+            );
+            foreach ($versteckt as $descrid) {
+                unset($titel[(int) $descrid]);
+            }
+        }
+
+        return array_filter($titel, function ($t) {
+            return $t !== '';
+        });
+    }
+
+    /**
+     * Prüft, ob eine Tabelle von Exabis die benötigten Felder hat.
+     *
+     * @param \database_manager $dbman
+     * @param string $tabelle
+     * @param string[] $felder
+     * @return bool
+     */
+    protected static function felder_vorhanden(\database_manager $dbman, string $tabelle, array $felder): bool {
+        $table = new \xmldb_table($tabelle);
+        if (!$dbman->table_exists($table)) {
+            return false;
+        }
+        foreach ($felder as $feld) {
+            if (!$dbman->field_exists($table, new \xmldb_field($feld))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Sucht die Lehrkraft des Kurses, die im Kompetenzraster als Lehrkraft eingetragen ist.
+     *
+     * @param int $courseid
+     * @return \stdClass|null
+     */
+    protected static function finde_lehrkraft(int $courseid): ?\stdClass {
+        global $USER;
+
+        $context = \context_course::instance($courseid);
+        $kandidaten = get_users_by_capability($context, 'local/kursassistent:use', 'u.*', 'u.id ASC', '', '', '', '', false, true);
+        $vorher = $USER;
+        foreach ($kandidaten as $kandidat) {
+            \core\session\manager::set_user($kandidat);
+            try {
+                $ist = (bool) self::rufe_funktion_auf('block_exacomp_is_teacher', [$courseid]);
+            } finally {
+                \core\session\manager::set_user($vorher);
+            }
+            if ($ist) {
+                return $kandidat;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Vergibt einer Person eine Kompetenz, wenn noch keine Lehrkraft sie bewertet hat.
+     *
+     * Eingetragen wird in der Rolle Lehrkraft mit der Lehrkraft des Kurses als Bewertender, den
+     * Wert bestimmt die Einstellung awardvalue. Exabis trägt als Bewertenden immer die angemeldete
+     * Person ein; deshalb wechselt der Aufruf für die Dauer des Eintrags auf die Lehrkraft und
+     * danach zurück. Die Funktion von Exabis ist keine zugesicherte Schnittstelle: Ihre Parameter
+     * werden vorher geprüft, und das Ergebnis wird nach dem Schreiben nachgelesen.
+     * Eine vorhandene Bewertung einer Lehrkraft bleibt unverändert.
+     *
+     * @param int $courseid
+     * @param int $userid Person, die die Kompetenz erhält
+     * @param int $descriptorid Deskriptor
+     * @return bool True, wenn die Kompetenz neu vergeben wurde
+     */
+    public static function vergebe_kompetenz(int $courseid, int $userid, int $descriptorid): bool {
+        global $DB, $USER;
+
+        if (!self::verfuegbar() || !self::lade_bibliothek_vergabe()) {
+            return false;
+        }
+        $dbman = $DB->get_manager();
+        $felder = ['userid', 'compid', 'comptype', 'courseid', 'role', 'value'];
+        if (!self::felder_vorhanden($dbman, 'block_exacompcompuser', $felder)) {
+            return false;
+        }
+
+        $bedingung = [
+            'userid' => $userid,
+            'compid' => $descriptorid,
+            'comptype' => BLOCK_EXACOMP_TYPE_DESCRIPTOR,
+            'courseid' => $courseid,
+            'role' => BLOCK_EXACOMP_ROLE_TEACHER,
+        ];
+        // Ist schon eine Bewertung der Lehrkraft da, bleibt sie, auch wenn sie "nicht erreicht" lautet.
+        $vorhanden = $DB->get_record('block_exacompcompuser', $bedingung, 'id, value', IGNORE_MULTIPLE);
+        if ($vorhanden && $vorhanden->value !== null) {
+            return false;
+        }
+
+        $lehrkraft = self::finde_lehrkraft($courseid);
+        if (!$lehrkraft) {
+            return false;
+        }
+
+        $wert = (int) get_config('local_kursassistent', 'awardvalue');
+        if ($wert <= 0) {
+            $wert = 3;
+        }
+
+        $vorher = $USER;
+        \core\session\manager::set_user($lehrkraft);
+        try {
+            self::rufe_funktion_auf('block_exacomp_set_user_competence', [
+                $userid, $descriptorid, BLOCK_EXACOMP_TYPE_DESCRIPTOR, $courseid, BLOCK_EXACOMP_ROLE_TEACHER, $wert,
+            ]);
+        } finally {
+            \core\session\manager::set_user($vorher);
+        }
+
+        $danach = $DB->get_record('block_exacompcompuser', $bedingung, 'id, value', IGNORE_MULTIPLE);
+        if (!$danach || (int) $danach->value !== $wert) {
+            return false;
+        }
+
+        \local_kursassistent\event\competency_awarded::create([
+            'context' => \context_course::instance($courseid),
+            'relateduserid' => $userid,
+            'userid' => (int) $lehrkraft->id,
+            'objectid' => $descriptorid,
+            'other' => ['descriptorid' => $descriptorid, 'value' => $wert],
+        ])->trigger();
+
+        return true;
+    }
+
+    /**
+     * Lädt die Funktionsbibliothek von Exabis und prüft die Funktion zum Eintragen einer Bewertung.
+     *
+     * Wie bei lade_bibliothek() gilt: Die Funktion ist keine zugesicherte Schnittstelle. Da der Aufruf
+     * mit Positionsargumenten erfolgt, werden Konstanten und die Reihenfolge der Parameter kontrolliert.
+     * Weicht etwas ab, wird nichts geschrieben.
+     *
+     * @return bool
+     */
+    protected static function lade_bibliothek_vergabe(): bool {
+        $verzeichnis = \core_component::get_component_directory('block_exacomp');
+        if (!$verzeichnis || !file_exists($verzeichnis . '/lib/lib.php')) {
+            return false;
+        }
+
+        ob_start();
+        try {
+            require_once($verzeichnis . '/lib/lib.php');
+        } finally {
+            ob_end_clean();
+        }
+
+        $benoetigt = ['block_exacomp_set_user_competence', 'block_exacomp_is_teacher'];
+        foreach ($benoetigt as $funktion) {
+            if (!function_exists($funktion)) {
+                return false;
+            }
+        }
+        if (!defined('BLOCK_EXACOMP_TYPE_DESCRIPTOR') || !defined('BLOCK_EXACOMP_ROLE_TEACHER')) {
+            return false;
+        }
+
+        $namen = [];
+        foreach ((new \ReflectionFunction('block_exacomp_set_user_competence'))->getParameters() as $eintrag) {
+            $namen[] = $eintrag->getName();
+        }
+
+        return array_slice($namen, 0, 6) === ['userid', 'compid', 'comptype', 'courseid', 'role', 'value'];
+    }
 }
