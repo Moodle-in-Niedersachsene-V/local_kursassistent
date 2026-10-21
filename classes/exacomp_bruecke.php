@@ -416,6 +416,42 @@ class exacomp_bruecke {
     }
 
     /**
+     * Liefert, welche Person im Kurs von einer Lehrkraft eine Kompetenz mit einem Wert über null erhalten hat.
+     *
+     * Gelesen wird direkt aus der Bewertungstabelle von Exabis, nur lesend und nur mit geprüften Feldern.
+     *
+     * @param int $courseid
+     * @return array Person als Schlüssel, darunter die Deskriptor-ID als Schlüssel mit dem Wert true
+     */
+    public static function get_bewertungen(int $courseid): array {
+        global $DB;
+
+        if (!self::verfuegbar() || !self::lade_bibliothek_vergabe()) {
+            return [];
+        }
+        $felder = ['userid', 'compid', 'comptype', 'courseid', 'role', 'value'];
+        if (!self::felder_vorhanden($DB->get_manager(), 'block_exacompcompuser', $felder)) {
+            return [];
+        }
+
+        $sql = "SELECT id, userid, compid
+                  FROM {block_exacompcompuser}
+                 WHERE courseid = :courseid AND comptype = :comptype AND role = :role AND value > 0";
+        $ergebnis = [];
+        $satz = $DB->get_recordset_sql($sql, [
+            'courseid' => $courseid,
+            'comptype' => BLOCK_EXACOMP_TYPE_DESCRIPTOR,
+            'role' => BLOCK_EXACOMP_ROLE_TEACHER,
+        ]);
+        foreach ($satz as $zeile) {
+            $ergebnis[(int) $zeile->userid][(int) $zeile->compid] = true;
+        }
+        $satz->close();
+
+        return $ergebnis;
+    }
+
+    /**
      * Prüft, ob eine Tabelle von Exabis die benötigten Felder hat.
      *
      * @param \database_manager $dbman

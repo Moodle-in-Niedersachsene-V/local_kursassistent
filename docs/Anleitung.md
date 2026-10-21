@@ -90,6 +90,8 @@ Die Bereiche sind als Reiter angeordnet:
 
 Wenn du für eine Aktivität, eine Datei, das Kursformat oder eine Kursvorlage zu einer Moodle-Seite wechselst, führt der Weg danach zurück auf das Dashboard, in den passenden Reiter. Im Fenster des Kursassistenten bleibt das „×“ oben rechts beim Scrollen sichtbar. Damit oder mit der Taste Esc schließt du das Fenster jederzeit. Auf der Dashboard-Seite führt das „×“ oben rechts (oder Esc) zurück in den Kurs. In der Übersicht klappst du die Kursabschnitte mit dem Pfeil vor dem Abschnittsnamen ein und aus, oder alle auf einmal mit den Knöpfen darüber.
 
+**Kompetenzstand:** Ist Exabis installiert und hast du Kompetenzen Aktivitäten zugeordnet, erscheint im Reiter „Stand der Lernenden“ unter der Tabelle der Bereich „Kompetenzstand“. Er zeigt je Kompetenz, wer sie erreicht hat. Erreicht ist eine Kompetenz, sobald die Person alle zugeordneten Aktivitäten abgeschlossen hat, oder wenn eine Lehrkraft sie in Exabis bewertet hat. Die Anzeige reagiert sofort auf den Abschluss, auch bevor der Kursassistent die Kompetenz in Exabis einträgt.
+
 **Kursinfos:** Unter den Reitern steht der Bereich „Kursinfos“. Mit „Neue Kursinfo“ schreibst du eine kurze Nachricht an alle Lernenden des Kurses oder nur an ausgewählte Personen. Die Lernenden lesen sie unter „Mein Fortschritt“. Bestehende Kursinfos kannst du ändern oder löschen.
 
 ### 1.8 Lernpfade, Kompetenzen und Statistik

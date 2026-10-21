@@ -3313,4 +3313,56 @@ class local_kursassistent_external extends external_api {
             'success' => new external_value(PARAM_BOOL, 'Erfolgreich'),
         ]);
     }
+
+    // Kompetenzstand für die Lehrkraft.
+
+    /**
+     * Parameter für get_competency_status.
+     *
+     * @return external_function_parameters
+     */
+    public static function get_competency_status_parameters(): external_function_parameters {
+        return new external_function_parameters([
+            'courseid' => new external_value(PARAM_INT, 'Kurs-ID'),
+        ]);
+    }
+
+    /**
+     * Liefert, welche Lernenden die den Aktivitäten zugeordneten Kompetenzen erreicht haben.
+     *
+     * @param int $courseid
+     * @return array
+     */
+    public static function get_competency_status(int $courseid): array {
+        global $DB;
+
+        $params = self::validate_parameters(self::get_competency_status_parameters(), ['courseid' => $courseid]);
+        $context = \context_course::instance($params['courseid']);
+        self::validate_context($context);
+        require_capability('local/kursassistent:use', $context);
+
+        $course = $DB->get_record('course', ['id' => $params['courseid']], '*', MUST_EXIST);
+        return \local_kursassistent\kompetenzstand::collect($course, $context);
+    }
+
+    /**
+     * Rückgabestruktur für get_competency_status.
+     *
+     * @return external_single_structure
+     */
+    public static function get_competency_status_returns(): external_single_structure {
+        return new external_single_structure([
+            'available' => new external_value(PARAM_BOOL, 'Kompetenzraster von Exabis verfügbar'),
+            'competencies' => new external_multiple_structure(new external_single_structure([
+                'descriptorid' => new external_value(PARAM_INT, 'Deskriptor-ID'),
+                'title' => new external_value(PARAM_TEXT, 'Titel'),
+                'activities' => new external_value(PARAM_INT, 'Anzahl zugeordneter Aktivitäten'),
+                'achieved' => new external_multiple_structure(new external_value(PARAM_INT, 'User-ID')),
+            ])),
+            'users' => new external_multiple_structure(new external_single_structure([
+                'userid' => new external_value(PARAM_INT, 'User-ID'),
+                'fullname' => new external_value(PARAM_TEXT, 'Name'),
+            ])),
+        ]);
+    }
 }

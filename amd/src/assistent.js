@@ -3812,6 +3812,65 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
     //  Statistik-Panel
 
     /**
+     * Zeigt, welche Lernenden die den Aktivitäten zugeordneten Kompetenzen erreicht haben.
+     *
+     * Der Bereich bleibt leer, wenn das Kompetenzraster fehlt oder keine Kompetenz zugeordnet ist.
+     *
+     * @param {jQuery} $region Bereich der Dashboard-Seite
+     */
+    function rendereKompetenzStand($region) {
+        var $inhalt = $region.find('[data-region="local-kursassistent-kompetenzen-inhalt"]');
+        Ajax.call([{
+            methodname: 'local_kursassistent_get_competency_status',
+            args: {courseid: courseid}
+        }])[0].done(function(response) {
+            if (!response.available) {
+                return;
+            }
+            $region.removeClass('d-none');
+            if (response.competencies.length === 0 || response.users.length === 0) {
+                $inhalt.append($('<p>', {
+                    'class': 'text-muted mb-0',
+                    text: 'Es sind noch keine Kompetenzen den Aktivitäten zugeordnet oder keine Lernenden eingeschrieben.'
+                }));
+                return;
+            }
+            var $kopf = $('<tr>').append($('<th>', {scope: 'col', text: 'Kompetenz'}));
+            $kopf.append($('<th>', {scope: 'col', 'class': 'text-center', text: 'Erreicht'}));
+            response.users.forEach(function(user) {
+                $kopf.append($('<th>', {scope: 'col', 'class': 'text-center small', text: user.fullname}));
+            });
+            var $tbody = $('<tbody>');
+            response.competencies.forEach(function(komp) {
+                var erreicht = {};
+                komp.achieved.forEach(function(id) {
+                    erreicht[id] = true;
+                });
+                var $zeile = $('<tr>').append($('<th>', {scope: 'row', 'class': 'font-weight-normal', text: komp.title}));
+                $zeile.append($('<td>', {
+                    'class': 'text-center text-nowrap',
+                    text: komp.achieved.length + ' von ' + response.users.length
+                }));
+                response.users.forEach(function(user) {
+                    var $zelle = $('<td>', {'class': 'text-center'});
+                    if (erreicht[user.userid]) {
+                        $zelle.append($('<i>', {'class': 'icon fa fa-check text-success m-0', title: 'Erreicht'}))
+                            .append($('<span>', {'class': 'sr-only', text: 'Erreicht'}));
+                    } else {
+                        $zelle.append($('<span>', {'class': 'text-muted', 'aria-hidden': 'true', text: '–'}))
+                            .append($('<span>', {'class': 'sr-only', text: 'Noch nicht erreicht'}));
+                    }
+                    $zeile.append($zelle);
+                });
+                $tbody.append($zeile);
+            });
+            var $tabelle = $('<table>', {'class': 'table table-sm table-striped local-kursassistent-kompetenz-table'});
+            $tabelle.append($('<thead>').append($kopf), $tbody);
+            $inhalt.append($('<div>', {'class': 'table-responsive'}).append($tabelle));
+        }).fail(Notification.exception);
+    }
+
+    /**
      * Rendert das Statistik-Panel mit Fortschrittsbalken und Detail-Tabelle.
      *
      * @param {jQuery} $subpanel
@@ -4496,6 +4555,10 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 var $stat = $('[data-region="local-kursassistent-stat"]');
                 if ($stat.length) {
                     rendereStatistikPanel($stat, true);
+                }
+                var $kompetenzen = $('[data-region="local-kursassistent-kompetenzen"]');
+                if ($kompetenzen.length) {
+                    rendereKompetenzStand($kompetenzen);
                 }
             }
             if (tab === 'bausteine' || tab === 'einrichtung') {

@@ -82,6 +82,7 @@ class dashboard_page implements renderable, templatable {
         $data['tab'] = $this->tab;
         $data['closeurl'] = (new moodle_url('/course/view.php', ['id' => $this->courseid]))->out(false);
         $data['helpdashboard'] = $output->help_icon('dashboard', 'local_kursassistent');
+        $data['helpkompetenz'] = $output->help_icon('kompetenzstand', 'local_kursassistent');
         $data['helpinfo'] = $output->help_icon('kursinfo', 'local_kursassistent');
         $data['helpattention'] = $output->help_icon('dashboard_attention', 'local_kursassistent');
 

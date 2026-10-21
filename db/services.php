@@ -233,6 +233,14 @@ $functions = [
         'ajax' => true,
         'capabilities' => 'local/kursassistent:use, moodle/course:manageactivities',
     ],
+    'local_kursassistent_get_competency_status' => [
+        'classname' => 'local_kursassistent\\external\\local_kursassistent_external',
+        'methodname' => 'get_competency_status',
+        'description' => 'Liefert, wer die zugeordneten Kompetenzen erreicht hat',
+        'type' => 'read',
+        'ajax' => true,
+        'capabilities' => 'local/kursassistent:use',
+    ],
     'local_kursassistent_get_competencies' => [
         'classname' => 'local_kursassistent\external\local_kursassistent_external',
         'methodname' => 'get_competencies',

@@ -32,6 +32,7 @@
     * studentcount, avgpercent, overduecount, overduepersons, hasnextdue, nextdue - Key figures
     * hasattention, attention - Persons with overdue activities: name, text
     * helpinfo - HTML of the help icon of the course infos
+    * helpkompetenz - HTML of the help icon of the competency status
 
     Example context (json):
     {
@@ -58,6 +59,7 @@
         "hasnextdue": true,
         "nextdue": "Test 1 · 29.10.26",
         "helpinfo": "",
+        "helpkompetenz": "",
         "hasattention": true,
         "attention": [{"name": "Anna Example", "text": "2 overdue"}]
     }
@@ -122,6 +124,10 @@
         <div class="col-lg-9 mb-3">
             {{#isstand}}
             <div class="local-kursassistent-dashboard-stat" data-region="local-kursassistent-stat"></div>
+            <div class="card mt-3 d-none" data-region="local-kursassistent-kompetenzen"><div class="card-body">
+                <h3 class="h5 d-flex align-items-center">{{#str}} kompetenzstand_title, local_kursassistent {{/str}} {{{helpkompetenz}}}</h3>
+                <div data-region="local-kursassistent-kompetenzen-inhalt"></div>
+            </div></div>
             {{/isstand}}
             {{#isuebersicht}}
             <div class="btn-group mb-3" role="group" data-region="local-kursassistent-werkzeuge" aria-label="{{#str}} werkzeuge_aria, local_kursassistent {{/str}}">
