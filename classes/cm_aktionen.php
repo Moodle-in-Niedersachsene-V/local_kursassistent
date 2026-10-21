@@ -152,6 +152,30 @@ class cm_aktionen {
     }
 
     /**
+     * Löscht ein Kursmodul.
+     *
+     * Moodle löscht im Hintergrund und legt eine Sicherung im Papierkorb des Kurses ab, sofern
+     * dieser aktiv ist. Das Modul gilt sofort als in Löschung und verschwindet aus dem Kurs.
+     *
+     * @param \stdClass $course Kurs, in dem das Modul liegt
+     * @param int $cmid Zu löschendes Kursmodul
+     * @return void
+     */
+    public static function loeschen(\stdClass $course, int $cmid): void {
+        global $CFG;
+
+        require_once($CFG->dirroot . '/course/lib.php');
+
+        if (self::neue_api_vorhanden()) {
+            self::aktionen($course)->delete($cmid, true);
+            return;
+        }
+
+        // Moodle 5.1: bisheriger Weg.
+        course_delete_module($cmid, true);
+    }
+
+    /**
      * Setzt die Sichtbarkeit eines Kursmoduls.
      *
      * @param \stdClass $course Kurs, in dem das Modul liegt

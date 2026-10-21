@@ -2643,6 +2643,22 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
     }
 
     /**
+     * Löscht eine Aktivität und baut die Übersicht neu auf.
+     *
+     * @param {jQuery} $container Panel mit der Übersichtstabelle
+     * @param {Number} cmid Kursmodul-ID
+     */
+    function loescheAktivitaet($container, cmid) {
+        Ajax.call([{
+            methodname: 'local_kursassistent_delete_activity',
+            args: {courseid: courseid, cmid: cmid}
+        }])[0].done(function() {
+            ladeUebersichtNeu($container);
+            zeigePanelMeldung($container, 'Die Aktivität wurde gelöscht.', 'erfolg');
+        }).fail(Notification.exception);
+    }
+
+    /**
      * Klappt die Aktivitäten eines Abschnitts in der Übersicht ein oder aus.
      *
      * @param {jQuery} $sectionRow Kopfzeile des Abschnitts
@@ -2740,6 +2756,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 $('<th>', {text: 'Aktivität'}),
                 $('<th>', {text: 'Sichtbar', 'class': 'text-center', style: 'width:70px'}),
                 $('<th>', {text: 'Kopie', 'class': 'text-center', style: 'width:60px'}),
+                $('<th>', {text: 'Löschen', 'class': 'text-center', style: 'width:70px'}),
                 $('<th>', {'class': 'text-center', style: 'width:90px'}).append(
                     $('<span>', {text: 'Bewertung'}),
                     erstelleHilfeIcon('uebersicht_bewertung_help_title', 'uebersicht_bewertung_help')
@@ -2794,7 +2811,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 }
                 $sectionVisCell.append($sectionToggle);
                 $sectionRow.append($klappCell, $sectionTd, $sectionVisCell,
-                    $('<td>'), $('<td>'), $('<td>'), $('<td>'), $('<td>'));
+                    $('<td>'), $('<td>'), $('<td>'), $('<td>'), $('<td>'), $('<td>'));
                 $tbody.append($sectionRow);
                 lastSection = act.sectionnum;
             }
@@ -2862,6 +2879,18 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             }));
             $duplCell.append($duplBtn);
             $row.append($duplCell);
+
+            // Löschen.
+            var $loeschCell = $('<td>', {'class': 'text-center'});
+            $loeschCell.append($('<button>', {
+                type: 'button',
+                'class': 'btn btn-sm p-0 local-kursassistent-loesch-btn',
+                'data-cmid': act.cmid,
+                'data-name': act.name,
+                title: 'Aktivität löschen',
+                'aria-label': 'Aktivität löschen: ' + act.name
+            }).append($('<i>', {'class': 'icon fa fa-trash-o fa-fw m-0 text-danger', 'aria-hidden': 'true'})));
+            $row.append($loeschCell);
 
             // Bewertung im Bewertungsbuch verbergen oder zeigen.
             $row.append(baueBewertungsZelle(act));
@@ -2987,6 +3016,22 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             '.local-kursassistent-komp-btn', function() {
                 oeffneKompetenzDialog($container, parseInt($(this).data('cmid'), 10));
             });
+
+        // Löschen-Schaltflächen.
+        $container.off('click.kaloeschen').on('click.kaloeschen', '.local-kursassistent-loesch-btn', function() {
+            var cmid = parseInt($(this).data('cmid'), 10);
+            var name = String($(this).data('name'));
+            Notification.confirm(
+                'Aktivität löschen',
+                'Soll „' + name + '“ wirklich gelöscht werden? Abgaben und Bewertungen dieser Aktivität gehen verloren. ' +
+                    'Ist der Papierkorb des Kurses aktiv, lässt sich die Aktivität dort wiederherstellen.',
+                'Löschen',
+                'Abbrechen',
+                function() {
+                    loescheAktivitaet($container, cmid);
+                }
+            );
+        });
 
         // Duplizieren-Schaltflächen.
         $container.off('click.kaduplizieren').on('click.kaduplizieren',

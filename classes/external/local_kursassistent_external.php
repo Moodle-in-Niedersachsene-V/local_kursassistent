@@ -3256,4 +3256,61 @@ class local_kursassistent_external extends external_api {
             'success' => new external_value(PARAM_BOOL, 'Erfolgreich'),
         ]);
     }
+
+    // Aktivität löschen.
+
+    /**
+     * Parameter für delete_activity.
+     *
+     * @return external_function_parameters
+     */
+    public static function delete_activity_parameters(): external_function_parameters {
+        return new external_function_parameters([
+            'courseid' => new external_value(PARAM_INT, 'Kurs-ID'),
+            'cmid' => new external_value(PARAM_INT, 'Kursmodul-ID'),
+        ]);
+    }
+
+    /**
+     * Löscht eine Aktivität des Kurses.
+     *
+     * Verlangt das Recht, Aktivitäten zu verwalten, damit die Funktion nicht mehr erlaubt als Moodle selbst.
+     *
+     * @param int $courseid
+     * @param int $cmid
+     * @return array
+     */
+    public static function delete_activity(int $courseid, int $cmid): array {
+        global $DB;
+
+        $params = self::validate_parameters(self::delete_activity_parameters(), [
+            'courseid' => $courseid,
+            'cmid' => $cmid,
+        ]);
+
+        $context = \context_course::instance($params['courseid']);
+        self::validate_context($context);
+        require_capability('local/kursassistent:use', $context);
+
+        // Das Kursmodul muss zum aufgerufenen Kurs gehören.
+        $DB->get_record('course_modules', ['id' => $params['cmid'], 'course' => $params['courseid']], 'id', MUST_EXIST);
+        require_capability('moodle/course:manageactivities', \context_module::instance($params['cmid']));
+
+        $course = get_course($params['courseid']);
+        \local_kursassistent\cm_aktionen::loeschen($course, $params['cmid']);
+        rebuild_course_cache($course->id, true);
+
+        return ['success' => true];
+    }
+
+    /**
+     * Rückgabestruktur für delete_activity.
+     *
+     * @return external_single_structure
+     */
+    public static function delete_activity_returns(): external_single_structure {
+        return new external_single_structure([
+            'success' => new external_value(PARAM_BOOL, 'Erfolgreich'),
+        ]);
+    }
 }

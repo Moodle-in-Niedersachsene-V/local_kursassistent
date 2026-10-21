@@ -225,6 +225,14 @@ $functions = [
         'ajax' => true,
         'capabilities' => 'local/kursassistent:use',
     ],
+    'local_kursassistent_delete_activity' => [
+        'classname' => 'local_kursassistent\\external\\local_kursassistent_external',
+        'methodname' => 'delete_activity',
+        'description' => 'Löscht eine Aktivität des Kurses',
+        'type' => 'write',
+        'ajax' => true,
+        'capabilities' => 'local/kursassistent:use, moodle/course:manageactivities',
+    ],
     'local_kursassistent_get_competencies' => [
         'classname' => 'local_kursassistent\external\local_kursassistent_external',
         'methodname' => 'get_competencies',
