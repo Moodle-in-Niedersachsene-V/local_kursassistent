@@ -74,12 +74,16 @@ class statistics {
 
         $modinfo = get_fast_modinfo($course);
 
-        // Eingeschriebene Teilnehmer mit Studentenrolle holen.
+        // Eingeschriebene Teilnehmer mit Studentenrolle holen. fullname() braucht alle Namensfelder,
+        // sonst meldet Moodle fehlende Felder des Nutzerobjekts.
+        $namensfelder = 'u.id, ' . implode(', ', array_map(function ($feld) {
+            return 'u.' . $feld;
+        }, \core_user\fields::get_name_fields()));
         $users = get_enrolled_users(
             $context,
             'mod/assign:submit',
             0,
-            'u.id, u.firstname, u.lastname',
+            $namensfelder,
             'u.lastname ASC, u.firstname ASC'
         );
 
