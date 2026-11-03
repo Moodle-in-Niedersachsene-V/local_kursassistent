@@ -203,7 +203,7 @@ class kursverwaltung extends external_api {
                     $contextid,
                     $component,
                     $filearea,
-                    0,
+                    null,
                     $file->get_filepath(),
                     $file->get_filename(),
                     true

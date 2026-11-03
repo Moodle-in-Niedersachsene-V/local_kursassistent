@@ -1060,15 +1060,18 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             $liste.append($('<p>', {'class': 'small text-muted', text: 'Es gibt noch keine Sicherung dieses Kurses.'}));
         } else {
             var $tabelle = $('<table>', {'class': 'table table-sm'});
-            daten.files.forEach(function(datei) {
+            daten.files.forEach(function(datei, index) {
                 var $zeile = $('<tr>');
                 $zeile.append($('<td>', {text: datei.filename}), $('<td>', {'class': 'text-nowrap', text: datei.time}),
                     $('<td>', {'class': 'text-nowrap', text: datei.size}));
-                $zeile.append($('<td>', {'class': 'text-right'}).append($('<a>', {
-                    'class': 'btn btn-outline-primary btn-sm',
-                    href: datei.url,
-                    text: 'Herunterladen'
-                })));
+                // Die neueste Sicherung lädt der große Knopf unter der Liste herunter.
+                var $aktion = $('<td>', {'class': 'text-right'});
+                if (index === 0) {
+                    $aktion.append($('<span>', {'class': 'badge badge-secondary', text: 'Neueste'}));
+                } else {
+                    $aktion.append($('<a>', {'class': 'btn btn-outline-primary btn-sm', href: datei.url, text: 'Herunterladen'}));
+                }
+                $zeile.append($aktion);
                 $tabelle.append($zeile);
             });
             $liste.append($tabelle);
