@@ -165,7 +165,11 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 return;
             }
 
-            var $gruppe = $('<div>', {'class': 'local-kursassistent-gruppe', 'data-gruppe': 'bausteine'});
+            var $gruppe = $('<div>', {
+                'class': 'local-kursassistent-gruppe',
+                'data-gruppe': 'bausteine',
+                'data-bereich': kat.key
+            });
             var $gruppenHeader = $('<div>', {'class': 'local-kursassistent-gruppenheader'});
             var $labelWrap = $('<span>', {'class': 'd-flex align-items-center'});
             $labelWrap.append($('<span>', {text: kat.label}));
@@ -211,6 +215,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             alt: '',
             'class': 'local-kursassistent-icon-img'
         }));
+        $formatItem.attr('data-einrichtung', 'kursformat');
         $formatItem.append($formatIcon, $('<span>', {text: 'Kursformat ändern'}));
         $formatItem.on('click', function(e) {
             e.preventDefault();
@@ -231,6 +236,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 alt: '',
                 'class': 'local-kursassistent-icon-img'
             }));
+            $vorlageItem.attr('data-einrichtung', 'vorlage');
             $vorlageItem.append($vorlageIcon, $('<span>', {text: 'Kursvorlage übernehmen'}));
             $vorlageItem.on('click', function(e) {
                 e.preventDefault();
@@ -253,6 +259,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             alt: '',
             'class': 'local-kursassistent-icon-img'
         }));
+        $sectplItem.attr('data-einrichtung', 'abschnittsvorlagen');
         $sectplItem.append($sectplIcon, $('<span>', {text: 'Abschnittsvorlagen'}));
         $sectplItem.on('click', function(e) {
             e.preventDefault();
@@ -881,6 +888,106 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
     }
 
     /**
+     * Erklärungen zu den Bereichen der Kurseinrichtung.
+     */
+    var EINRICHTUNGSTEXT = {
+        kursformat: 'Ändere das Format des Kurses, zum Beispiel Themen- oder Wochenformat. ' +
+            'Die Kurseinstellungen öffnen sich, danach geht es hier weiter.',
+        vorlage: 'Übernimm die Struktur einer Kursvorlage in diesen Kurs.',
+        abschnittsvorlagen: 'Wende eine Abschnittsvorlage auf einen Abschnitt des Kurses an.'
+    };
+
+    /**
+     * Ersetzt die untereinander liegenden Gruppen auf der Dashboard-Seite durch eine Knopfleiste.
+     *
+     * Wie bei Lernpfade und Übersicht ist immer genau ein Bereich sichtbar, beim ersten Aufruf der erste.
+     *
+     * @param {jQuery} $overlay Aufgebauter Assistent
+     * @param {String} tab bausteine oder einrichtung
+     */
+    function baueBereichsleiste($overlay, tab) {
+        var bereiche = [];
+        var $beschreibung = $();
+        if (tab === 'einrichtung') {
+            var $inhalt = $overlay.find('.local-kursassistent-gruppeninhalt').first();
+            $beschreibung = $('<p>', {'class': 'text-muted mb-2'});
+            $inhalt.prepend($beschreibung);
+            $overlay.find('.local-kursassistent-navitem[data-einrichtung]').each(function() {
+                var $item = $(this);
+                bereiche.push({
+                    key: $item.attr('data-einrichtung'),
+                    label: $item.children('span').last().text(),
+                    $inhalt: $item,
+                    text: EINRICHTUNGSTEXT[$item.attr('data-einrichtung')] || ''
+                });
+            });
+        } else {
+            $overlay.find('.local-kursassistent-gruppe').each(function() {
+                var $gruppe = $(this);
+                bereiche.push({
+                    key: $gruppe.attr('data-bereich'),
+                    label: $gruppe.find('.local-kursassistent-gruppenheader .d-flex > span').first().text(),
+                    $inhalt: $gruppe,
+                    text: ''
+                });
+            });
+        }
+        if (bereiche.length === 0) {
+            return;
+        }
+        // Die Überschriften der Gruppen bleiben als feste Überschrift mit Hilfesymbol stehen.
+        $overlay.addClass('local-kursassistent-bereichsmodus');
+        $overlay.find('.local-kursassistent-liste').off('click', '.local-kursassistent-gruppenheader');
+
+        var $leiste = $('<div>', {
+            'class': 'btn-group mb-3 local-kursassistent-bereichsleiste',
+            role: 'group',
+            'aria-label': 'Bereiche'
+        });
+        var waehle = function(key) {
+            bereiche.forEach(function(bereich) {
+                var aktiv = bereich.key === key;
+                bereich.$inhalt.toggleClass('d-none', !aktiv);
+                bereich.$knopf.toggleClass('active', aktiv).attr('aria-pressed', aktiv ? 'true' : 'false');
+                if (aktiv && $beschreibung.length) {
+                    $beschreibung.text(bereich.text);
+                }
+            });
+        };
+        bereiche.forEach(function(bereich) {
+            bereich.$knopf = $('<button>', {
+                type: 'button',
+                'class': 'btn btn-outline-primary',
+                'aria-pressed': 'false',
+                'data-bereich-knopf': bereich.key,
+                text: bereich.label
+            });
+            bereich.$knopf.on('click', function() {
+                waehle(bereich.key);
+            });
+            $leiste.append(bereich.$knopf);
+        });
+        $overlay.find('.local-kursassistent-modal').prepend($leiste);
+        waehle(bereiche[0].key);
+    }
+
+    /**
+     * Wählt einen Bereich der Knopfleiste, ohne Leiste klappt sie die Gruppe mit der Bezeichnung auf.
+     *
+     * @param {jQuery} $overlay
+     * @param {String} key Schlüssel des Bereichs
+     * @param {String} bezeichnung Beschriftung der Gruppe im Fenster
+     */
+    function oeffneBereich($overlay, key, bezeichnung) {
+        var $knopf = $overlay.find('[data-bereich-knopf="' + key + '"]');
+        if ($knopf.length) {
+            $knopf.trigger('click');
+        } else {
+            oeffneGruppe($overlay, bezeichnung);
+        }
+    }
+
+    /**
      * Zeigt Bausteine oder Kurseinrichtung direkt auf der Dashboard-Seite statt in einem Fenster.
      *
      * @param {jQuery} $region Bereich der Seite
@@ -902,10 +1009,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             if (tab === 'einrichtung') {
                 $overlay.find('.local-kursassistent-footer').remove();
             }
-            if (tab === 'einrichtung') {
-                $overlay.find('.local-kursassistent-gruppeninhalt').removeClass('d-none');
-                $overlay.find('.local-kursassistent-gruppenpfeil').text('▾');
-            }
+            $overlay.find('.local-kursassistent-gruppeninhalt').removeClass('d-none');
+            baueBereichsleiste($overlay, tab);
             $region.empty().append($overlay);
             if (danach) {
                 danach($overlay);
@@ -940,7 +1045,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
      * @param {String|null} ergebnis Wert des Parameters kaergebnis aus der Adresse
      */
     function zeigeEinrichtungRueckkehr($overlay, rueckkehr, ergebnis) {
-        oeffneGruppe($overlay, 'Kurseinrichtung');
+        oeffneBereich($overlay, rueckkehr.art === 'vorlage' ? 'vorlage' : 'kursformat', 'Kurseinrichtung');
         if (rueckkehr.art === 'vorlage' && ergebnis === 'vorlage') {
             zeigeMeldung($overlay, 'Die Kursvorlage wurde übernommen.', 'erfolg');
         }
@@ -959,7 +1064,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
     function zeigeDateiRueckkehr($overlay, rueckkehr, ergebnis) {
         var $abschnitt = $overlay.find('.local-kursassistent-section');
         $abschnitt.val(String(rueckkehr.sectionnum));
-        oeffneGruppe($overlay, 'Lernmaterial');
+        oeffneBereich($overlay, 'material', 'Lernmaterial');
 
         if (ergebnis === 'datei') {
             zeigeMeldung($overlay, 'Der Baustein „' + rueckkehr.titel + '“ wurde in „' +

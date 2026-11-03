@@ -1038,3 +1038,20 @@
     min-height: 2.5rem;
     text-align: center;
 }
+
+.local-kursassistent-bereichsmodus .local-kursassistent-gruppe {
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+}
+
+.local-kursassistent-bereichsmodus .local-kursassistent-gruppenheader {
+    padding-left: 0;
+    background: transparent;
+    cursor: default;
+    font-size: 1.25rem;
+}
+
+.local-kursassistent-bereichsmodus .local-kursassistent-gruppenpfeil {
+    display: none;
+}
