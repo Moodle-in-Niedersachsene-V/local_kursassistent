@@ -15,7 +15,8 @@ Inhalt aus. Die Bausteine sind von der Schul-Administration frei erweiterbar.
 - **Lernmaterial** – Dateien und Bilder über den Moodle-Datei-Picker, Videos per PeerTube-Auswahl,
   Direkt-Upload oder externem Link
 - **Aktivitäten** – Sprung in Moodles „Aktivität hinzufügen" mit vorausgewähltem Typ und Zielabschnitt
-- **Kurseinrichtung** – Kursformat ändern, Inhalte einer Kursvorlage übernehmen, Abschnittsvorlagen
+- **Kurseinrichtung** – Kursformat ändern, Inhalte einer Kursvorlage übernehmen, Abschnittsvorlagen, neuen Kurs erstellen (leer oder als Kopie eines bestehenden Kurses), Kurs ohne Eingeschriebene sichern und die Sicherung direkt herunterladen
+- **Weitere Aktivitäten** – eine Schaltfläche öffnet den Kurs im Bearbeitungsmodus mit der vollständigen Aktivitätenauswahl von Moodle
   anwenden und speichern
 - **Lernpfade, Kompetenzen und Statistik** – Abschlussverfolgung und Voraussetzungen, lineare Lernpfade,
   Übersicht mit Sichtbarkeit, Umsortieren per Ziehen und Duplizieren (auch in einen anderen Kurs),

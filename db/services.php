@@ -281,4 +281,28 @@ $functions = [
         'ajax' => true,
         'capabilities' => 'local/kursassistent:use',
     ],
+    'local_kursassistent_get_kurserstellung' => [
+        'classname' => 'local_kursassistent\\external\\kursverwaltung',
+        'methodname' => 'get_kurserstellung',
+        'description' => 'Liefert Kursbereiche zum Anlegen von Kursen und Kurse als Grundlage',
+        'type' => 'read',
+        'ajax' => true,
+        'capabilities' => 'local/kursassistent:use',
+    ],
+    'local_kursassistent_get_backups' => [
+        'classname' => 'local_kursassistent\\external\\kursverwaltung',
+        'methodname' => 'get_backups',
+        'description' => 'Liefert die Sicherungen des Kurses mit Download-Adresse',
+        'type' => 'read',
+        'ajax' => true,
+        'capabilities' => 'local/kursassistent:use, moodle/backup:backupcourse, moodle/backup:downloadfile',
+    ],
+    'local_kursassistent_create_backup' => [
+        'classname' => 'local_kursassistent\\external\\kursverwaltung',
+        'methodname' => 'create_backup',
+        'description' => 'Sichert den Kurs ohne Eingeschriebene und Nutzerdaten',
+        'type' => 'write',
+        'ajax' => true,
+        'capabilities' => 'local/kursassistent:use, moodle/backup:backupcourse, moodle/backup:downloadfile',
+    ],
 ];

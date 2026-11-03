@@ -124,6 +124,29 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
     }
 
     /**
+     * Baut die Schaltfläche, die den Kurs im Bearbeitungsmodus öffnet.
+     *
+     * Dort steht die vollständige Aktivitätenauswahl von Moodle zur Verfügung, auch für Aktivitäten,
+     * die die Schuladministration hier nicht angeboten hat.
+     *
+     * @return {jQuery}
+     */
+    function baueMehrAktivitaeten() {
+        var $zeile = $('<div>', {'class': 'd-flex align-items-center mt-3 local-kursassistent-mehraktivitaeten'});
+        var $knopf = $('<button>', {
+            type: 'button',
+            'class': 'btn btn-outline-secondary btn-sm',
+            text: 'Weitere Aktivitäten im Kurs auswählen'
+        });
+        $knopf.on('click', function() {
+            window.location.href = M.cfg.wwwroot + '/course/view.php?id=' + courseid +
+                '&edit=on&sesskey=' + encodeURIComponent(M.cfg.sesskey);
+        });
+        $zeile.append($knopf, erstelleHilfeIcon('aktivitaet_mehr_help_title', 'aktivitaet_mehr_help'));
+        return $zeile;
+    }
+
+    /**
      * Baut das Modal-Markup basierend auf den geladenen Bausteinen.
      *
      * @param {Object} response Antwort von local_kursassistent_get_bausteine
@@ -191,6 +214,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                     'class': 'small text-muted mt-2 mb-1',
                     text: 'Moodle öffnet jetzt das Einstellungsformular. Danach geht es hier weiter.'
                 }));
+                $gruppenInhalt.append(baueMehrAktivitaeten());
             }
         });
 
@@ -894,8 +918,179 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
         kursformat: 'Ändere das Format des Kurses, zum Beispiel Themen- oder Wochenformat. ' +
             'Die Kurseinstellungen öffnen sich, danach geht es hier weiter.',
         vorlage: 'Übernimm die Struktur einer Kursvorlage in diesen Kurs.',
-        abschnittsvorlagen: 'Wende eine Abschnittsvorlage auf einen Abschnitt des Kurses an.'
+        abschnittsvorlagen: 'Wende eine Abschnittsvorlage auf einen Abschnitt des Kurses an.',
+        kurserstellung: 'Lege einen neuen Kurs an, leer oder mit einem bestehenden Kurs als Grundlage.',
+        sicherung: 'Sichere diesen Kurs ohne Eingeschriebene und lade die Sicherung direkt herunter.'
     };
+
+    /**
+     * Zeigt eine Fehlermeldung in einem Bereich.
+     *
+     * @param {jQuery} $panel
+     * @param {String} text
+     */
+    function zeigePanelFehler($panel, text) {
+        $panel.empty().append($('<div>', {'class': 'alert alert-danger', text: text}));
+    }
+
+    /**
+     * Baut die Auswahl für den Weg zum neuen Kurs und den Weiter-Knopf.
+     *
+     * @param {jQuery} $panel
+     * @param {Object} daten Kursbereiche und Kurse als Grundlage
+     */
+    function baueKurserstellung($panel, daten) {
+        var name = 'local-kursassistent-erstellart';
+        var $leer = $('<input>', {type: 'radio', name: name, id: name + '-leer', value: 'leer', checked: true});
+        var $kopie = $('<input>', {type: 'radio', name: name, id: name + '-kopie', value: 'kopie'});
+        var $kategorie = $('<select>', {'class': 'form-control mb-3', id: name + '-kategorie'});
+        daten.kategorien.forEach(function(k) {
+            $kategorie.append($('<option>', {value: k.id, text: k.name}));
+        });
+        var $quelle = $('<select>', {'class': 'form-control mb-3', id: name + '-quelle'});
+        daten.quellkurse.forEach(function(k) {
+            $quelle.append($('<option>', {value: k.id, text: k.name}));
+        });
+        $kopie.prop('disabled', daten.quellkurse.length === 0);
+
+        var $leerBox = $('<div>', {'class': 'mb-3'});
+        $leerBox.append($('<div>', {'class': 'form-check mb-2'}).append($leer,
+            $('<label>', {'class': 'form-check-label ml-1', 'for': name + '-leer', text: 'Leeren Kurs erstellen'})));
+        $leerBox.append($('<label>', {'class': 'small text-muted', 'for': name + '-kategorie', text: 'Kursbereich'}), $kategorie);
+
+        var $kopieBox = $('<div>', {'class': 'mb-3'});
+        $kopieBox.append($('<div>', {'class': 'form-check mb-2'}).append($kopie,
+            $('<label>', {'class': 'form-check-label ml-1', 'for': name + '-kopie',
+                text: 'Bestehenden Kurs als Grundlage verwenden'})));
+        $kopieBox.append($('<label>', {'class': 'small text-muted', 'for': name + '-quelle', text: 'Kurs als Grundlage'}), $quelle);
+        $kopieBox.append($('<p>', {'class': 'small text-muted', text: 'Den Kursbereich wählst du im nächsten Schritt.'}));
+
+        var umschalten = function() {
+            var kopie = $kopie.is(':checked');
+            $kategorie.prop('disabled', kopie);
+            $quelle.prop('disabled', !kopie);
+        };
+        $leer.on('change', umschalten);
+        $kopie.on('change', umschalten);
+        umschalten();
+
+        var $weiter = $('<button>', {type: 'button', 'class': 'btn btn-primary', text: 'Weiter'});
+        $weiter.on('click', function() {
+            if ($kopie.is(':checked')) {
+                window.location.href = M.cfg.wwwroot + '/backup/copy.php?id=' + encodeURIComponent($quelle.val());
+            } else {
+                window.location.href = M.cfg.wwwroot + '/course/edit.php?category=' + encodeURIComponent($kategorie.val());
+            }
+        });
+        var $zeile = $('<div>', {'class': 'd-flex align-items-center'});
+        $zeile.append($weiter, erstelleHilfeIcon('kat_kurserstellung_help_title', 'kat_kurserstellung_help'));
+        $panel.empty().append($leerBox, $kopieBox, $zeile);
+    }
+
+    /**
+     * Zeigt die Kurserstellung: leerer Kurs in einem Kursbereich oder Kopie eines bestehenden Kurses.
+     *
+     * @param {jQuery} $panel
+     */
+    function rendereKurserstellung($panel) {
+        $panel.empty().append($('<p>', {'class': 'text-muted', text: 'Lade Kursbereiche …'}));
+        Ajax.call([{
+            methodname: 'local_kursassistent_get_kurserstellung',
+            args: {courseid: courseid}
+        }])[0].done(function(daten) {
+            if (daten.kategorien.length === 0) {
+                $panel.empty().append($('<div>', {
+                    'class': 'alert alert-info',
+                    text: 'Du darfst in keinem Kursbereich Kurse anlegen. Bitte wende dich an die Schuladministration.'
+                }));
+                return;
+            }
+            baueKurserstellung($panel, daten);
+        }).fail(function() {
+            zeigePanelFehler($panel, 'Die Kursbereiche konnten nicht geladen werden.');
+        });
+    }
+
+    /**
+     * Baut die Liste der Sicherungen mit Download-Knöpfen.
+     *
+     * @param {jQuery} $liste
+     * @param {Object} daten Antwort von local_kursassistent_get_backups
+     */
+    function baueSicherungsliste($liste, daten) {
+        $liste.empty();
+        if (daten.files.length === 0) {
+            $liste.append($('<p>', {'class': 'small text-muted', text: 'Es gibt noch keine Sicherung dieses Kurses.'}));
+        } else {
+            var $tabelle = $('<table>', {'class': 'table table-sm'});
+            daten.files.forEach(function(datei) {
+                var $zeile = $('<tr>');
+                $zeile.append($('<td>', {text: datei.filename}), $('<td>', {'class': 'text-nowrap', text: datei.time}),
+                    $('<td>', {'class': 'text-nowrap', text: datei.size}));
+                $zeile.append($('<td>', {'class': 'text-right'}).append($('<a>', {
+                    'class': 'btn btn-outline-primary btn-sm',
+                    href: datei.url,
+                    text: 'Herunterladen'
+                })));
+                $tabelle.append($zeile);
+            });
+            $liste.append($tabelle);
+        }
+        $liste.append($('<a>', {href: daten.restoreurl, 'class': 'small', text: 'Alle Sicherungen in Moodle öffnen'}));
+    }
+
+    /**
+     * Zeigt die Kurssicherung ohne Eingeschriebene mit direktem Download.
+     *
+     * @param {jQuery} $panel
+     */
+    function rendereSicherung($panel) {
+        $panel.empty().append($('<p>', {'class': 'text-muted', text: 'Lade Sicherungen …'}));
+        var laden = function() {
+            return Ajax.call([{methodname: 'local_kursassistent_get_backups', args: {courseid: courseid}}])[0];
+        };
+        laden().done(function(daten) {
+            if (!daten.cancreate || !daten.candownload) {
+                $panel.empty().append($('<div>', {
+                    'class': 'alert alert-info',
+                    text: 'Du hast kein Recht, diesen Kurs zu sichern. Bitte wende dich an die Schuladministration.'
+                }));
+                return;
+            }
+            var $meldung = $('<div>', {'class': 'mb-2'});
+            var $liste = $('<div>', {'class': 'mt-3'});
+            var $knopf = $('<button>', {
+                type: 'button',
+                'class': 'btn btn-primary',
+                text: 'Sicherung ohne Eingeschriebene erstellen'
+            });
+            $knopf.on('click', function() {
+                $knopf.prop('disabled', true).text('Sicherung läuft …');
+                $meldung.empty();
+                Ajax.call([{methodname: 'local_kursassistent_create_backup', args: {courseid: courseid}}])[0]
+                    .then(function() {
+                        $meldung.append($('<div>', {'class': 'alert alert-success', text: 'Die Sicherung wurde erstellt.'}));
+                        return laden();
+                    })
+                    .then(function(neu) {
+                        baueSicherungsliste($liste, neu);
+                        return neu;
+                    })
+                    .fail(function() {
+                        $meldung.append($('<div>', {'class': 'alert alert-danger', text: 'Die Sicherung ist fehlgeschlagen.'}));
+                    })
+                    .always(function() {
+                        $knopf.prop('disabled', false).text('Sicherung ohne Eingeschriebene erstellen');
+                    });
+            });
+            var $zeile = $('<div>', {'class': 'd-flex align-items-center'});
+            $zeile.append($knopf, erstelleHilfeIcon('kat_sicherung_help_title', 'kat_sicherung_help'));
+            baueSicherungsliste($liste, daten);
+            $panel.empty().append($zeile, $meldung, $liste);
+        }).fail(function() {
+            zeigePanelFehler($panel, 'Die Sicherungen konnten nicht geladen werden.');
+        });
+    }
 
     /**
      * Ersetzt die untereinander liegenden Gruppen auf der Dashboard-Seite durch eine Knopfleiste.
@@ -919,6 +1114,20 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                     label: $item.children('span').last().text(),
                     $inhalt: $item,
                     text: EINRICHTUNGSTEXT[$item.attr('data-einrichtung')] || ''
+                });
+            });
+            [
+                {key: 'kurserstellung', label: 'Kurs erstellen', render: rendereKurserstellung},
+                {key: 'sicherung', label: 'Kurs sichern', render: rendereSicherung}
+            ].forEach(function(neu) {
+                var $panel = $('<div>', {'class': 'local-kursassistent-bereichspanel d-none'});
+                $inhalt.append($panel);
+                bereiche.push({
+                    key: neu.key,
+                    label: neu.label,
+                    $inhalt: $panel,
+                    text: EINRICHTUNGSTEXT[neu.key],
+                    render: neu.render
                 });
             });
         } else {
@@ -951,6 +1160,10 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 bereich.$knopf.toggleClass('active', aktiv).attr('aria-pressed', aktiv ? 'true' : 'false');
                 if (aktiv && $beschreibung.length) {
                     $beschreibung.text(bereich.text);
+                }
+                if (aktiv && bereich.render && !bereich.gerendert) {
+                    bereich.gerendert = true;
+                    bereich.render(bereich.$inhalt);
                 }
             });
         };
