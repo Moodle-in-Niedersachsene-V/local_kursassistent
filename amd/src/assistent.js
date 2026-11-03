@@ -1073,7 +1073,21 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             });
             $liste.append($tabelle);
         }
-        $liste.append($('<a>', {href: daten.restoreurl, 'class': 'small', text: 'Alle Sicherungen in Moodle öffnen'}));
+        // Der Knopf lädt die neueste Sicherung direkt herunter. Die Liste ist nach Datum absteigend sortiert.
+        if (daten.files.length > 0) {
+            $liste.append($('<a>', {
+                'class': 'btn btn-primary mt-2',
+                href: daten.files[0].url,
+                text: 'Kurssicherung herunterladen'
+            }));
+        } else {
+            $liste.append($('<button>', {
+                type: 'button',
+                'class': 'btn btn-primary mt-2',
+                disabled: true,
+                text: 'Kurssicherung herunterladen'
+            }));
+        }
     }
 
     /**

@@ -61,6 +61,17 @@ class kurssicherung {
                     }
                 }
             }
+            // Ohne ausdrücklichen Namen heißt die Datei nur backup.mbz und ist dem Kurs nicht zuzuordnen.
+            if ($plan->setting_exists('filename')) {
+                $dateiname = \backup_plan_dbops::get_default_backup_filename(
+                    \backup::FORMAT_MOODLE,
+                    \backup::TYPE_1COURSE,
+                    $courseid,
+                    false,
+                    false
+                );
+                $plan->get_setting('filename')->set_value($dateiname);
+            }
             $controller->set_status(\backup::STATUS_AWAITING);
             $controller->execute_plan();
             $ergebnis = $controller->get_results();
