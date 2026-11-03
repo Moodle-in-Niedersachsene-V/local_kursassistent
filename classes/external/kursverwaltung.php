@@ -57,10 +57,7 @@ class kursverwaltung extends external_api {
         self::validate_context($context);
         require_capability('local/kursassistent:use', $context);
 
-        $kategorien = [];
-        foreach (\core_course_category::make_categories_list('moodle/course:create') as $id => $name) {
-            $kategorien[] = ['id' => (int) $id, 'name' => $name];
-        }
+        $kategorien = self::erlaubte_kursbereiche();
 
         $quellkurse = [];
         if ($kategorien) {
@@ -79,6 +76,44 @@ class kursverwaltung extends external_api {
         }
 
         return ['kategorien' => $kategorien, 'quellkurse' => $quellkurse];
+    }
+
+    /**
+     * Liefert die Kursbereiche, in denen die angemeldete Person Kurse anlegen darf.
+     *
+     * Das Recht wird für jeden Kursbereich einzeln geprüft, ohne den Zwischenspeicher von
+     * core_course_category, damit gerade vergebene Rollen sofort wirken.
+     *
+     * @return array Liste aus id und Name mit dem Pfad der übergeordneten Kursbereiche
+     */
+    private static function erlaubte_kursbereiche(): array {
+        global $DB;
+
+        $zeilen = $DB->get_records('course_categories', null, 'sortorder', 'id, name, path');
+
+        $namen = [];
+        foreach ($zeilen as $zeile) {
+            $namen[$zeile->id] = $zeile->name;
+        }
+
+        $ergebnis = [];
+        foreach ($zeilen as $zeile) {
+            $kontext = \context_coursecat::instance($zeile->id);
+            if (!has_capability('moodle/course:create', $kontext)) {
+                continue;
+            }
+            $teile = [];
+            foreach (array_filter(explode('/', $zeile->path)) as $id) {
+                if (isset($namen[$id])) {
+                    $teile[] = format_string($namen[$id], true, ['context' => $kontext]);
+                }
+            }
+            $ergebnis[] = ['id' => (int) $zeile->id, 'name' => implode(' / ', $teile)];
+        }
+        usort($ergebnis, function ($a, $b) {
+            return strcmp($a['name'], $b['name']);
+        });
+        return $ergebnis;
     }
 
     /**
