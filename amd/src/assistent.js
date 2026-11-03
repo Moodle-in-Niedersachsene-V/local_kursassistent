@@ -924,6 +924,43 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
     };
 
     /**
+     * Verfolgt einen Hintergrundauftrag, bis er fertig ist.
+     *
+     * @param {String} art sicherung oder kopie
+     * @param {jQuery} $anzeige Bereich für die Statusmeldung
+     * @param {Boolean} mitEnde false: nur laufende Aufträge anzeigen, alte Ergebnisse ignorieren
+     * @param {Function} fertig Wird mit der Antwort aufgerufen, wenn der Auftrag endet
+     */
+    function ueberwacheAuftrag(art, $anzeige, mitEnde, fertig) {
+        var versuche = 0;
+        var gesehen = false;
+        var pruefe = function() {
+            Ajax.call([{
+                methodname: 'local_kursassistent_get_job_status',
+                args: {courseid: courseid, art: art}
+            }])[0].done(function(r) {
+                if (r.status === 'wartet' || r.status === 'laeuft') {
+                    var text = r.status === 'wartet' ?
+                        'Der Auftrag wartet auf den nächsten Cron-Lauf …' : 'Der Auftrag läuft im Hintergrund …';
+                    $anzeige.empty().append($('<div>', {'class': 'alert alert-info', text: text}));
+                    gesehen = true;
+                    versuche++;
+                    if (versuche < 240) {
+                        window.setTimeout(pruefe, 5000);
+                    }
+                } else if ((mitEnde || gesehen) && (r.status === 'fertig' || r.status === 'fehler')) {
+                    $anzeige.empty().append($('<div>', {
+                        'class': 'alert ' + (r.status === 'fertig' ? 'alert-success' : 'alert-danger'),
+                        text: r.text
+                    }));
+                    fertig(r);
+                }
+            });
+        };
+        pruefe();
+    }
+
+    /**
      * Zeigt eine Fehlermeldung in einem Bereich.
      *
      * @param {jQuery} $panel
@@ -1064,17 +1101,23 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
                 'class': 'btn btn-primary',
                 text: 'Sicherung ohne Eingeschriebene erstellen'
             });
+            var aktualisiere = function() {
+                laden().done(function(neu) {
+                    baueSicherungsliste($liste, neu);
+                });
+            };
             $knopf.on('click', function() {
                 $knopf.prop('disabled', true).text('Sicherung läuft …');
                 $meldung.empty();
                 Ajax.call([{methodname: 'local_kursassistent_create_backup', args: {courseid: courseid}}])[0]
-                    .then(function() {
+                    .then(function(antwort) {
+                        if (antwort.queued) {
+                            ueberwacheAuftrag('sicherung', $meldung, true, aktualisiere);
+                            return null;
+                        }
                         $meldung.append($('<div>', {'class': 'alert alert-success', text: 'Die Sicherung wurde erstellt.'}));
-                        return laden();
-                    })
-                    .then(function(neu) {
-                        baueSicherungsliste($liste, neu);
-                        return neu;
+                        aktualisiere();
+                        return null;
                     })
                     .fail(function() {
                         $meldung.append($('<div>', {'class': 'alert alert-danger', text: 'Die Sicherung ist fehlgeschlagen.'}));
@@ -1087,6 +1130,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             $zeile.append($knopf, erstelleHilfeIcon('kat_sicherung_help_title', 'kat_sicherung_help'));
             baueSicherungsliste($liste, daten);
             $panel.empty().append($zeile, $meldung, $liste);
+            ueberwacheAuftrag('sicherung', $meldung, false, aktualisiere);
         }).fail(function() {
             zeigePanelFehler($panel, 'Die Sicherungen konnten nicht geladen werden.');
         });
@@ -2916,6 +2960,21 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/sortable_l
             }
         }])[0].done(function(response) {
             $panel.remove();
+            if (response.queued) {
+                var $status = $('<div>', {'class': 'local-kursassistent-panelmeldung'});
+                $container.find('.local-kursassistent-panelmeldung').remove();
+                $container.prepend($status);
+                ueberwacheAuftrag('kopie', $status, true, function(r) {
+                    if (r.status === 'fertig' && r.targetcourseid === courseid) {
+                        $status.remove();
+                        zeigePanelMeldung($container, 'Die Kopie wurde erstellt.', 'erfolg');
+                        ladeUebersichtNeu($container);
+                    } else if (r.status === 'fertig') {
+                        $status.append($('<a>', {href: r.targetcourseurl, target: '_blank', text: 'Zum Zielkurs'}));
+                    }
+                });
+                return;
+            }
             if (response.targetcourseid === courseid) {
                 zeigePanelMeldung($container, 'Die Kopie wurde erstellt.', 'erfolg');
                 ladeUebersichtNeu($container);

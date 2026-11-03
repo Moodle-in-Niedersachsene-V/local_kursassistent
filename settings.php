@@ -35,6 +35,13 @@ if ($hassiteconfig) {
     ));
 
     $settings->add(new admin_setting_configcheckbox(
+        'local_kursassistent/hintergrund',
+        get_string('hintergrund', 'local_kursassistent'),
+        get_string('hintergrund_desc', 'local_kursassistent'),
+        1
+    ));
+
+    $settings->add(new admin_setting_configcheckbox(
         'local_kursassistent/awardcompetencies',
         get_string('awardcompetencies', 'local_kursassistent'),
         get_string('awardcompetencies_desc', 'local_kursassistent'),

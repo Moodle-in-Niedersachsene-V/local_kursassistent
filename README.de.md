@@ -16,6 +16,7 @@ Inhalt aus. Die Bausteine sind von der Schul-Administration frei erweiterbar.
   Direkt-Upload oder externem Link
 - **Aktivitäten** – Sprung in Moodles „Aktivität hinzufügen" mit vorausgewähltem Typ und Zielabschnitt
 - **Kurseinrichtung** – Kursformat ändern, Inhalte einer Kursvorlage übernehmen, Abschnittsvorlagen, neuen Kurs erstellen (leer oder als Kopie eines bestehenden Kurses), Kurs ohne Eingeschriebene sichern und die Sicherung direkt herunterladen
+- **Hintergrundaufträge** – Kurssicherung und Duplizieren von Aktivitäten laufen als Hintergrundauftrag (Cron) mit Statusanzeige im Assistenten, in den Einstellungen abschaltbar
 - **Weitere Aktivitäten** – eine Schaltfläche öffnet den Kurs im Bearbeitungsmodus mit der vollständigen Aktivitätenauswahl von Moodle
   anwenden und speichern
 - **Lernpfade, Kompetenzen und Statistik** – Abschlussverfolgung und Voraussetzungen, lineare Lernpfade,

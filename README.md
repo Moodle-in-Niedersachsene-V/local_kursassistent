@@ -17,6 +17,7 @@ can extend the building blocks freely.
 - **Activities**: jump to Moodle's "Add an activity" with the type and target section preselected
 - **Course setup**: change the course format, apply the content of a course template, apply
   and save section templates, create a new course (empty in a category you may use, or as a copy of an existing course), back up the course without enrolled users and download the backup directly
+- **Background jobs**: course backups and duplicating activities run as ad-hoc tasks (cron) with a status display in the assistant; can be switched off in the settings
 - **More activities**: a button opens the course in editing mode with Moodle's full activity chooser
 - **Learning paths, competencies and statistics**: completion tracking and prerequisites, linear
   learning paths, an overview with visibility, reordering by drag and drop and duplicating

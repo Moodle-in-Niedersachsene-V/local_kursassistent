@@ -86,6 +86,10 @@ class provider implements core_userlist_provider, metadata_provider, plugin_prov
             'local_kursassistent_lastcourse',
             'privacy:metadata:preference:lastcourse'
         );
+        $collection->add_user_preference(
+            'local_kursassistent_hintergrund',
+            'privacy:metadata:preference:hintergrund'
+        );
 
         return $collection;
     }
@@ -103,6 +107,15 @@ class provider implements core_userlist_provider, metadata_provider, plugin_prov
                 'local_kursassistent_lastcourse',
                 $value,
                 get_string('privacy:metadata:preference:lastcourse', 'local_kursassistent')
+            );
+        }
+        $auftraege = get_user_preferences('local_kursassistent_hintergrund', null, $userid);
+        if ($auftraege !== null) {
+            writer::export_user_preference(
+                'local_kursassistent',
+                'local_kursassistent_hintergrund',
+                $auftraege,
+                get_string('privacy:metadata:preference:hintergrund', 'local_kursassistent')
             );
         }
     }

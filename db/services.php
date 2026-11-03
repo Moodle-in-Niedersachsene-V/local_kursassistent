@@ -297,6 +297,14 @@ $functions = [
         'ajax' => true,
         'capabilities' => 'local/kursassistent:use, moodle/backup:backupcourse, moodle/backup:downloadfile',
     ],
+    'local_kursassistent_get_job_status' => [
+        'classname' => 'local_kursassistent\\external\\kursverwaltung',
+        'methodname' => 'get_job_status',
+        'description' => 'Liefert den Status des letzten Hintergrundauftrags',
+        'type' => 'read',
+        'ajax' => true,
+        'capabilities' => 'local/kursassistent:use',
+    ],
     'local_kursassistent_create_backup' => [
         'classname' => 'local_kursassistent\\external\\kursverwaltung',
         'methodname' => 'create_backup',

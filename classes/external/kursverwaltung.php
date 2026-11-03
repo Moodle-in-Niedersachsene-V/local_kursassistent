@@ -160,25 +160,7 @@ class kursverwaltung extends external_api {
 
         $dateien = [];
         if ($cancreate && $candownload) {
-            $fs = get_file_storage();
-            $files = $fs->get_area_files($context->id, 'backup', 'course', 0, 'timecreated DESC', false);
-            foreach ($files as $file) {
-                $url = \moodle_url::make_pluginfile_url(
-                    $context->id,
-                    'backup',
-                    'course',
-                    0,
-                    $file->get_filepath(),
-                    $file->get_filename(),
-                    true
-                );
-                $dateien[] = [
-                    'filename' => $file->get_filename(),
-                    'size' => display_size($file->get_filesize()),
-                    'time' => userdate($file->get_timecreated(), get_string('strftimedatetimeshort', 'langconfig')),
-                    'url' => $url->out(false),
-                ];
-            }
+            $dateien = self::sicherungsdateien($params['courseid'], $context);
         }
 
         return [
@@ -187,6 +169,62 @@ class kursverwaltung extends external_api {
             'files' => $dateien,
             'restoreurl' => (new \moodle_url('/backup/restorefile.php', ['contextid' => $context->id]))->out(false),
         ];
+    }
+
+    /**
+     * Sammelt die Sicherungen des Kurses aus dem Sicherungsbereich des Kurses und aus dem
+     * privaten Sicherungsbereich der angemeldeten Person.
+     *
+     * Moodle legt Sicherungen je nach Einstellung in einem der beiden Bereiche ab. Im privaten
+     * Bereich liegen Sicherungen aller Kurse, deshalb zählen dort nur Dateien mit der Kurs-ID im Namen.
+     *
+     * @param int $courseid
+     * @param \context $context Kontext des Kurses
+     * @return array
+     */
+    private static function sicherungsdateien(int $courseid, \context $context): array {
+        global $USER;
+
+        $fs = get_file_storage();
+        $usercontext = \context_user::instance($USER->id);
+        $quellen = [
+            [$context->id, 'backup', 'course'],
+            [$usercontext->id, 'user', 'backup'],
+        ];
+
+        $dateien = [];
+        foreach ($quellen as [$contextid, $component, $filearea]) {
+            $files = $fs->get_area_files($contextid, $component, $filearea, 0, 'timecreated DESC', false);
+            foreach ($files as $file) {
+                if ($component === 'user' && strpos($file->get_filename(), '-course-' . $courseid . '-') === false) {
+                    continue;
+                }
+                $url = \moodle_url::make_pluginfile_url(
+                    $contextid,
+                    $component,
+                    $filearea,
+                    0,
+                    $file->get_filepath(),
+                    $file->get_filename(),
+                    true
+                );
+                $dateien[] = [
+                    'zeit' => $file->get_timecreated(),
+                    'filename' => $file->get_filename(),
+                    'size' => display_size($file->get_filesize()),
+                    'time' => userdate($file->get_timecreated(), get_string('strftimedatetimeshort', 'langconfig')),
+                    'url' => $url->out(false),
+                ];
+            }
+        }
+
+        usort($dateien, function ($a, $b) {
+            return $b['zeit'] <=> $a['zeit'];
+        });
+        return array_map(function ($datei) {
+            unset($datei['zeit']);
+            return $datei;
+        }, $dateien);
     }
 
     /**
@@ -220,13 +258,13 @@ class kursverwaltung extends external_api {
     }
 
     /**
-     * Sichert den Kurs ohne Eingeschriebene und ohne Nutzerdaten in den Sicherungsbereich des Kurses.
+     * Sichert den Kurs ohne Eingeschriebene und ohne Nutzerdaten, im Hintergrund oder sofort.
      *
      * @param int $courseid
      * @return array
      */
     public static function create_backup(int $courseid): array {
-        global $CFG, $USER;
+        global $USER;
 
         $params = self::validate_parameters(self::create_backup_parameters(), ['courseid' => $courseid]);
         $context = \context_course::instance($params['courseid']);
@@ -235,40 +273,13 @@ class kursverwaltung extends external_api {
         require_capability('moodle/backup:backupcourse', $context);
         require_capability('moodle/backup:downloadfile', $context);
 
-        require_once($CFG->dirroot . '/backup/util/includes/backup_includes.php');
-
-        \core_php_time_limit::raise(600);
-        raise_memory_limit(MEMORY_EXTRA);
-
-        $controller = new \backup_controller(
-            \backup::TYPE_1COURSE,
-            $params['courseid'],
-            \backup::FORMAT_MOODLE,
-            \backup::INTERACTIVE_NO,
-            \backup::MODE_GENERAL,
-            $USER->id
-        );
-        try {
-            $plan = $controller->get_plan();
-            // Ohne Eingeschriebene: keine Nutzer, Rollenzuweisungen, Abschlüsse, Kommentare, Protokolle und Bewertungsverläufe.
-            $einstellungen = ['users', 'anonymize', 'role_assignments', 'userscompletion', 'comments', 'logs', 'grade_histories'];
-            foreach ($einstellungen as $name) {
-                if ($plan->setting_exists($name)) {
-                    $setting = $plan->get_setting($name);
-                    if ($setting->get_status() == \base_setting::NOT_LOCKED) {
-                        $setting->set_value(false);
-                    }
-                }
-            }
-            $controller->set_status(\backup::STATUS_AWAITING);
-            $controller->execute_plan();
-            $ergebnis = $controller->get_results();
-        } finally {
-            $controller->destroy();
+        if (\local_kursassistent\hintergrund::aktiv()) {
+            \local_kursassistent\hintergrund::einreihen('sicherung', (int) $USER->id, $params['courseid']);
+            return ['filename' => '', 'queued' => true];
         }
 
-        $datei = $ergebnis['backup_destination'] ?? null;
-        return ['filename' => $datei ? $datei->get_filename() : ''];
+        $name = \local_kursassistent\kurssicherung::erstellen($params['courseid'], (int) $USER->id);
+        return ['filename' => $name, 'queued' => false];
     }
 
     /**
@@ -278,7 +289,65 @@ class kursverwaltung extends external_api {
      */
     public static function create_backup_returns(): external_single_structure {
         return new external_single_structure([
-            'filename' => new external_value(PARAM_TEXT, 'Dateiname der Sicherung'),
+            'filename' => new external_value(PARAM_TEXT, 'Dateiname der Sicherung, leer im Hintergrund'),
+            'queued' => new external_value(PARAM_BOOL, 'Läuft als Hintergrundauftrag'),
+        ]);
+    }
+
+    /**
+     * Parameter für get_job_status.
+     *
+     * @return external_function_parameters
+     */
+    public static function get_job_status_parameters(): external_function_parameters {
+        return new external_function_parameters([
+            'courseid' => new external_value(PARAM_INT, 'Kurs-ID'),
+            'art' => new external_value(PARAM_ALPHA, 'sicherung oder kopie'),
+        ]);
+    }
+
+    /**
+     * Liefert den Status des letzten Hintergrundauftrags der angemeldeten Person.
+     *
+     * @param int $courseid
+     * @param string $art
+     * @return array
+     */
+    public static function get_job_status(int $courseid, string $art): array {
+        global $USER;
+
+        $params = self::validate_parameters(self::get_job_status_parameters(), ['courseid' => $courseid, 'art' => $art]);
+        $context = \context_course::instance($params['courseid']);
+        self::validate_context($context);
+        require_capability('local/kursassistent:use', $context);
+        if (!in_array($params['art'], ['sicherung', 'kopie'], true)) {
+            throw new \invalid_parameter_exception('art');
+        }
+
+        $status = \local_kursassistent\hintergrund::lese((int) $USER->id, $params['art'], $params['courseid']);
+        $url = '';
+        if ($status['targetcourseid']) {
+            $url = (new \moodle_url('/course/view.php', ['id' => $status['targetcourseid']]))->out(false);
+        }
+        return [
+            'status' => $status['status'],
+            'text' => $status['text'],
+            'targetcourseid' => $status['targetcourseid'],
+            'targetcourseurl' => $url,
+        ];
+    }
+
+    /**
+     * Rückgabestruktur für get_job_status.
+     *
+     * @return external_single_structure
+     */
+    public static function get_job_status_returns(): external_single_structure {
+        return new external_single_structure([
+            'status' => new external_value(PARAM_ALPHA, 'keiner, wartet, laeuft, fertig oder fehler'),
+            'text' => new external_value(PARAM_TEXT, 'Meldung'),
+            'targetcourseid' => new external_value(PARAM_INT, 'Kurs, in dem die Kopie liegt'),
+            'targetcourseurl' => new external_value(PARAM_RAW, 'Link zum Zielkurs'),
         ]);
     }
 }

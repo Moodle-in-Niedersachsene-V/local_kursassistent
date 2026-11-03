@@ -25,8 +25,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_kursassistent';
-$plugin->version   = 2026100147;
+$plugin->version   = 2026100149;
 $plugin->requires  = 2025041400; // Moodle 5.x.
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '2.18.2 (Build: 2026100147)';
+$plugin->release   = '2.19.0 (Build: 2026100149)';
 $plugin->maintainer = 'Moodle in Niedersachsen e. V.';

@@ -2836,7 +2836,7 @@ class local_kursassistent_external extends external_api {
         int $targetcourseid = 0,
         int $targetsectionnum = -1
     ): array {
-        global $CFG, $DB;
+        global $CFG, $DB, $USER;
 
         $params = self::validate_parameters(self::duplicate_activity_parameters(), [
             'courseid' => $courseid,
@@ -2863,6 +2863,25 @@ class local_kursassistent_external extends external_api {
 
         $zielkursid = empty($params['targetcourseid']) ? (int) $course->id : (int) $params['targetcourseid'];
 
+        if ($zielkursid !== (int) $course->id) {
+            require_capability('moodle/restore:restoretargetimport', \context_course::instance($zielkursid));
+        }
+
+        // Als Hintergrundauftrag: Die Kopie entsteht beim nächsten Cron-Lauf.
+        if (\local_kursassistent\hintergrund::aktiv()) {
+            \local_kursassistent\hintergrund::einreihen('kopie', (int) $USER->id, (int) $course->id, [
+                'cmid' => (int) $cm->id,
+                'zielkurs' => $zielkursid,
+                'zielabschnitt' => (int) $params['targetsectionnum'],
+            ]);
+            return [
+                'success' => true,
+                'queued' => true,
+                'targetcourseid' => $zielkursid,
+                'targetcourseurl' => (new \moodle_url('/course/view.php', ['id' => $zielkursid]))->out(false),
+            ];
+        }
+
         if ($zielkursid === (int) $course->id) {
             // Ohne ausdrücklichen Zielabschnitt landet die Kopie im Abschnitt des Originals.
             $zielabschnittid = null;
@@ -2883,15 +2902,13 @@ class local_kursassistent_external extends external_api {
 
             return [
                 'success' => true,
+                'queued' => false,
                 'targetcourseid' => (int) $course->id,
                 'targetcourseurl' => (new \moodle_url('/course/view.php', ['id' => $course->id]))->out(false),
             ];
         }
 
         // Ab hier: Kopie in einen anderen Kurs.
-        $zielcontext = \context_course::instance($zielkursid);
-        require_capability('moodle/restore:restoretargetimport', $zielcontext);
-
         \local_kursassistent\aktivitaet_kopierer::in_anderen_kurs(
             (int) $cm->id,
             $zielkursid,
@@ -2900,6 +2917,7 @@ class local_kursassistent_external extends external_api {
 
         return [
             'success' => true,
+            'queued' => false,
             'targetcourseid' => $zielkursid,
             'targetcourseurl' => (new \moodle_url('/course/view.php', ['id' => $zielkursid]))->out(false),
         ];
@@ -2913,6 +2931,7 @@ class local_kursassistent_external extends external_api {
     public static function duplicate_activity_returns(): external_single_structure {
         return new external_single_structure([
             'success' => new external_value(PARAM_BOOL, 'Erfolgreich'),
+            'queued' => new external_value(PARAM_BOOL, 'Läuft als Hintergrundauftrag'),
             'targetcourseid' => new external_value(PARAM_INT, 'Kurs, in dem die Kopie liegt'),
             'targetcourseurl' => new external_value(PARAM_URL, 'Link zum Zielkurs'),
         ]);
